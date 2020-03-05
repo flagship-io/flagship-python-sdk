@@ -11,9 +11,15 @@ class Flagship:
         def start(self, config):
             self._config = config
             self._is_initialized = True
+            # self._cache_manager = self._config.get('cache_manager')
 
         def create_visitor(self, visitor_id, context):
             return FlagshipVisitor(visitor_id, context)
+
+        def get_or_create_visitor(self, visitor_id, context):
+            if self._cache_manager:
+                return self._cache_manager.get(visitor_id, context)
+            return self.create_visitor(visitor_id, context)
 
         def close(self):
             instance = None
@@ -24,3 +30,8 @@ class Flagship:
         if not Flagship.instance:
             Flagship.instance = Flagship.__Flagship(*args, **kwargs)
         return Flagship.instance
+
+
+toto = 2
+titi = toto.__getattribute__('__str__').__call__()
+print(titi)
