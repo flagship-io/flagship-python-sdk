@@ -2,6 +2,10 @@
 
 This documents will describe how to implement the Flagship python SDK in few steps.
 
+## Principal workflow
+
+![alt text](img/workflow.png "Workflow")
+
 ## Install the library
 
 The python sdk is available on pip package manager. Simply type the following command in your terminal : 
@@ -26,3 +30,7 @@ fs.start(config(env_id))
 ## Create a visitor
 
 `visitor = fs.createVisitor(id)`
+
+## Send a hit
+
+`visitor.sendHit(Event(Event.UserEngagement, 'click_button_kpi'))`
