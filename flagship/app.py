@@ -1,5 +1,6 @@
 from flagship.visitor import FlagshipVisitor
-
+from flagship.helpers.api import APIClient
+from flagship.config import Config
 
 class Flagship:
 
@@ -8,17 +9,17 @@ class Flagship:
         def __init__(self):
             self._is_initialized = False
 
-        def start(self, config):
+        def start(self, config: Config):
             self._config = config
             self._is_initialized = True
             # self._cache_manager = self._config.get('cache_manager')
 
         def create_visitor(self, visitor_id, context):
-            return FlagshipVisitor(visitor_id, context)
+            return FlagshipVisitor(self._config.env_id, visitor_id, context)
 
         def get_or_create_visitor(self, visitor_id, context):
-            if self._cache_manager:
-                return self._cache_manager.get(visitor_id, context)
+            # if self._cache_manager:
+            #     return self._cache_manager.get(visitor_id, context)
             return self.create_visitor(visitor_id, context)
 
         def close(self):
@@ -31,7 +32,3 @@ class Flagship:
             Flagship.instance = Flagship.__Flagship(*args, **kwargs)
         return Flagship.instance
 
-
-toto = 2
-titi = toto.__getattribute__('__str__').__call__()
-print(titi)

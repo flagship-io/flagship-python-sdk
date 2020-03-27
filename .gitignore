@@ -1,3 +1,10 @@
 env/
 .pytest_cache
-*/__pycache__/*
+*/__pycache__/*django-sample-python-sdk/
+django-sample-python-sdk
+.idea/
+.idea
+script.py
+flagship/__pycache__
+*/__pycache/
+__pycache__/
