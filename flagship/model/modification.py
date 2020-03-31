@@ -31,6 +31,7 @@ class Modifications:
         values_obj = modifications_obj['value']
         for key in values_obj:
             value = values_obj[key]
-            if value is None or type(value) == int or type(value) == str or type(value) == float or type(value) == bool:
+            t = type(value)
+            if value is None or t == int or t == str or t == float or t == bool:
                 values[key] = Modification(key, variation_group_id, variation_id, reference, value)
         return Modifications(variation_group_id, variation_id, reference, value_type, values)

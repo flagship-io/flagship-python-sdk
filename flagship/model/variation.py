@@ -17,9 +17,12 @@ class Variation:
 
     @staticmethod
     def parse(variation_group_id, variation_obj):
-        variation_id = variation_obj['id']
-        reference = variation_obj['reference']
-        modifications = Modifications.parse(variation_group_id, variation_id, reference, variation_obj['modifications'])
-        allocation = 100 if 'allocation' not in variation_obj else variation_obj['allocation']
-        return Variation(variation_group_id, variation_id, reference, modifications, allocation)
-
+        try:
+            variation_id = variation_obj['id']
+            reference = variation_obj['reference'] if 'reference' in variation_obj else True
+            modifications = Modifications.parse(variation_group_id, variation_id, reference, variation_obj['modifications'])
+            allocation = 100 if 'allocation' not in variation_obj else variation_obj['allocation']
+            return Variation(variation_group_id, variation_id, reference, modifications, allocation)
+        except (ValueError, Exception):
+            print('Variation parsing error')
+            return None

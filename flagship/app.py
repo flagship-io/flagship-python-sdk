@@ -6,6 +6,8 @@ class Flagship:
 
     class __Flagship:
 
+        _config: Config
+
         def __init__(self):
             self._is_initialized = False
 
@@ -15,7 +17,7 @@ class Flagship:
             # self._cache_manager = self._config.get('cache_manager')
 
         def create_visitor(self, visitor_id, context):
-            return FlagshipVisitor(self._config.env_id, visitor_id, context)
+            return FlagshipVisitor(self._config, visitor_id, context)
 
         def get_or_create_visitor(self, visitor_id, context):
             # if self._cache_manager:
