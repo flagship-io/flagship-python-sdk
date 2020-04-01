@@ -2,11 +2,12 @@ from datetime import datetime
 
 from flagship.decorators import exception_handler
 from flagship.helpers.api import APIClient
+from flagship.helpers.hits import Hit
 
 
 class FlagshipVisitor:
 
-    def __init__(self, config, visitor_id, context=dict()):
+    def __init__(self, config, visitor_id, context: dict):
         self._env_id = config.env_id
         self._api_key = config.api_key
         self._visitor_id = visitor_id
@@ -22,21 +23,23 @@ class FlagshipVisitor:
             self._last_call = datetime.now()
         return super().__getattribute__(name)
 
-    def send_hit(self):
-        pass
+    def send_hit(self, hit: Hit):
+        if issubclass(type(hit), Hit):
+            hit.add_config(self._env_id, self._visitor_id)
+            print('ok hit : {}' .format(hit))
 
     def synchronize_modifications(self):
         self.campaigns = self._api_client.synchronize_modifications(self._visitor_id, self._context)
         for campaign in self.campaigns:
             self._modifications.update(campaign.get_modifications())
 
-    def activate_modification(self, key):
+    def activate_modification(self, key: str):
         if key in self._modifications:
             modification = self._modifications[key]
             self._api_client.activate_modification(self._visitor_id, modification.variation_group_id,
                                                    modification.variation_id)
 
-    def get_modification(self, key, default_value, activate=False):
+    def get_modification(self, key: str, default_value, activate=False):
         if key not in self._modifications:
             return default_value
         elif self._modifications[key].value is None:
@@ -47,12 +50,6 @@ class FlagshipVisitor:
             if activate:
                 self.activate_modification(key)
             return self._modifications[key].value
-
-    def get_modifications(self, keys, values, activate=False):
-        pass
-
-    def activate_modifications(self, keys):
-        pass
 
     def __update_context_value(self, key, value, synchronize=False):
         t = type(value)
