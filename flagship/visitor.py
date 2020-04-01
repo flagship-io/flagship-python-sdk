@@ -30,10 +30,22 @@ class FlagshipVisitor:
         for campaign in self.campaigns:
             self._modifications.update(campaign.get_modifications())
 
+    def activate_modification(self, key):
+        if key in self._modifications:
+            modification = self._modifications[key]
+            self._api_client.activate_modification(self._visitor_id, modification.variation_group_id,
+                                                   modification.variation_id)
+
     def get_modification(self, key, default_value, activate=False):
-        if key not in self._modifications or self._modifications[key].value is None:
+        if key not in self._modifications:
+            return default_value
+        elif self._modifications[key].value is None:
+            if activate:
+                self.activate_modification(key)
             return default_value
         else:
+            if activate:
+                self.activate_modification(key)
             return self._modifications[key].value
 
     def get_modifications(self, keys, values, activate=False):
