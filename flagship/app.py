@@ -6,8 +6,6 @@ class Flagship:
 
     class __Flagship:
 
-        _config: Config
-
         def __init__(self):
             self._is_initialized = False
 

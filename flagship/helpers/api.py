@@ -1,11 +1,13 @@
 import json
 import requests
 
+from flagship.helpers.hits import Hit
 from flagship.model.campaign import Campaign
 
 
 class APIClient:
     __end_point = 'https://decision.flagship.io/v2/'
+    __ariane = 'https://ariane.abtasty.com/ '
     # __end_point = 'https://decision-api.flagship.io/v1/'
     __campaigns = '/campaigns/?exposeAllKeys=true'
     __activate = 'activate'
@@ -56,4 +58,14 @@ class APIClient:
         }
         url = self.__end_point + self.__activate
         r = requests.post(url, headers=header, json=body)
+        print('[' + str(r.status_code) + '] : ' + url + ' payload : ' + json.dumps(body))
+
+    def send_hit_request(self, visitor_id: str, hit: Hit):
+        body = {
+            "cid": self._env_id,
+            "vid": visitor_id
+        }
+        body.update(hit.get_data())
+        url = self.__ariane
+        r = requests.post(url, json=body)
         print('[' + str(r.status_code) + '] : ' + url + ' payload : ' + json.dumps(body))

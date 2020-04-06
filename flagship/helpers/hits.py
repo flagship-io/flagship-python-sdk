@@ -48,10 +48,6 @@ class Hit:
             self._k_timestamp: int(round(time.time() * 1000))
         }
 
-    def add_config(self, env_id, visitor_id):
-        self._data[self._k_env_id] = env_id
-        self._data[self._k_visitor_id] = visitor_id
-
     def with_ip(self, ip: str):
         self._data[self._k_ip] = ip
         return self
@@ -67,6 +63,9 @@ class Hit:
     def with_locale(self, locale: str):
         self._data[self._k_locale] = locale
         return self
+
+    def get_data(self):
+        return self._data
 
     def __str__(self):
         return 'Hit : ' + json.dumps(self._data)
@@ -171,3 +170,8 @@ class Transaction(Hit):
     def with_item_count(self, item_nb: int):
         self._data[self._k_transaction_item_count] = item_nb
         return self
+
+    def with_coupon_code(self, coupon : str):
+        self._data[self._k_transaction_coupon] = coupon
+        return self
+

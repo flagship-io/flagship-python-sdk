@@ -25,8 +25,7 @@ class FlagshipVisitor:
 
     def send_hit(self, hit: Hit):
         if issubclass(type(hit), Hit):
-            hit.add_config(self._env_id, self._visitor_id)
-            print('ok hit : {}' .format(hit))
+            self._api_client.send_hit_request(self._visitor_id, hit)
 
     def synchronize_modifications(self):
         self.campaigns = self._api_client.synchronize_modifications(self._visitor_id, self._context)
@@ -51,6 +50,11 @@ class FlagshipVisitor:
                 self.activate_modification(key)
             return self._modifications[key].value
 
+    def get_modification_data(self, key: str):
+        if key not in self._modifications:
+            return None
+        return self._modifications[key]
+
     def __update_context_value(self, key, value, synchronize=False):
         t = type(value)
         if type(key) is not str:
@@ -62,8 +66,9 @@ class FlagshipVisitor:
         if synchronize is True:
             self.synchronize_modifications()
 
-    @exception_handler
+    @exception_handler(43)
     def update_context(self, context, synchronize=False):
+        v = 1/0
         if isinstance(context, tuple) and len(context) == 2:
             self.__update_context_value(context[0], context[1])
         elif isinstance(context, dict):
