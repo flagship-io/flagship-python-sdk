@@ -68,7 +68,7 @@ class FlagshipVisitor:
 
     @exception_handler(43)
     def update_context(self, context, synchronize=False):
-        v = 1/0
+       # v = 1/0
         if isinstance(context, tuple) and len(context) == 2:
             self.__update_context_value(context[0], context[1])
         elif isinstance(context, dict):
@@ -76,9 +76,13 @@ class FlagshipVisitor:
                 self.__update_context_value(k, v)
         if synchronize:
             self.synchronize_modifications()
-
+        print('Context : ' + str(self._context))
         # if self._cache:
         #     self._cache.save(self._visitor_id, context)
+
+    def update_preset_context(self, synchronize=False, **context):
+        print("coucou")
+
 
     def close(self):
         pass

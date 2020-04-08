@@ -9,3 +9,5 @@ flagship/__pycache__
 */__pycache/
 __pycache__/
 save_requirements.txt
+venv
+venv3.5

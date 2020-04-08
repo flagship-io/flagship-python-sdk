@@ -19,7 +19,7 @@ class APIClient:
 
     @property
     def fs_url(self):
-        return f'{self._url}/{self._env_id}'
+        return '{}/{}'.format(self._url, self._env_id)
 
     def __send_campaign_request(self, visitor_id, context):
         header = {
