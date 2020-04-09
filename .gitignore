@@ -11,3 +11,5 @@ __pycache__/
 save_requirements.txt
 venv
 venv3.5
+venv2.7
+flagship/__init__.pyc
