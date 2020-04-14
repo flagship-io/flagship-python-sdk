@@ -2,7 +2,6 @@ import json
 import time
 from enum import Enum
 
-
 class HitType(Enum):
     PAGE = 'SCREENVIEW'
     EVENT = 'EVENT'
@@ -10,7 +9,7 @@ class HitType(Enum):
     ITEM = 'ITEM'
 
 
-class Hit:
+class Hit(object):
     _k_origin = 'dl'  # origin
     _k_env_id = 'cid'  # env_id
     _k_visitor_id = 'vid'  # visitor id
@@ -43,24 +42,24 @@ class Hit:
 
     def __init__(self, hit_type):
         self._data = {
-            self._k_type: hit_type.value,
+            self._k_type: hit_type.name,
             self._k_ds: 'APP',
             self._k_timestamp: int(round(time.time() * 1000))
         }
 
-    def with_ip(self, ip: str):
+    def with_ip(self, ip):
         self._data[self._k_ip] = ip
         return self
 
-    def with_resolution(self, width: int, height: int):
+    def with_resolution(self, width, height):
         self._data[self._k_resolution] = '{}x{}'.format(width, height)
         return self
 
-    def with_session_number(self, number: int):
+    def with_session_number(self, number):
         self._data[self._k_session] = number
         return self
 
-    def with_locale(self, locale: str):
+    def with_locale(self, locale):
         self._data[self._k_locale] = locale
         return self
 
@@ -72,8 +71,9 @@ class Hit:
 
 
 class Page(Hit):
-    def __init__(self, origin: str):
-        super().__init__(HitType.PAGE)
+    def __init__(self, origin):
+        # super(self).__init__(HitType.PAGE)
+        Hit.__init__(self, HitType.PAGE)
         data = {
             self._k_origin: origin
         }
@@ -86,18 +86,20 @@ class EventCategory(Enum):
 
 
 class Event(Hit):
-    def __init__(self, category: EventCategory, action: str):
+    def __init__(self, category, action):
+        Hit.__init__(self, HitType.EVENT)
         if isinstance(category, EventCategory):
-            super().__init__(HitType.EVENT)
+            # super(self).__init__(HitType.EVENT)
+            # Hit.__init__(self, HitType.EVENT)
             data = {
-                self._k_event_category: category.value,
+                self._k_event_category: category.name,
                 self._k_event_action: action
             }
             self._data.update(data)
         else:
             pass
 
-    def with_event_label(self, label: str):
+    def with_event_label(self, label):
         self._data[self._k_event_label] = label
         return self
 
@@ -109,69 +111,71 @@ class Event(Hit):
 
 
 class Item(Hit):
-    def __init__(self, transaction_id: str, product_name: str):
-        super().__init__(HitType.ITEM)
+    def __init__(self, transaction_id, product_name):
+        # super(self).__init__(HitType.ITEM)
+        Hit.__init__(self, HitType.ITEM)
         data = {
             self._k_transaction_id: transaction_id,
             self._k_item_name: product_name
         }
         self._data.update(data)
 
-    def with_price(self, price: float):
+    def with_price(self, price):
         self._data[self._k_item_price] = price
         return self
 
-    def with_item_quantity(self, item_quantity: int):
+    def with_item_quantity(self, item_quantity):
         self._data[self._k_item_quantity] = item_quantity
         return self
 
-    def with_item_code(self, item_code: str):
+    def with_item_code(self, item_code):
         self._data[self._k_item_code] = item_code
         return self
 
-    def with_item_category(self, category: str):
+    def with_item_category(self, category):
         self._data[self._k_item_category] = category
         return self
 
 
 class Transaction(Hit):
-    def __init__(self, transaction_id: str, affiliation: str):
-        super().__init__(HitType.TRANSACTION)
+    def __init__(self, transaction_id, affiliation):
+        # super(self).__init__(HitType.TRANSACTION)
+        Hit.__init__(self, HitType.TRANSACTION)
         data = {
             self._k_transaction_id: transaction_id,
             self._k_transaction_affiliation: affiliation
         }
         self._data.update(data)
 
-    def with_total_revenue(self, revenue: float):
+    def with_total_revenue(self, revenue):
         self._data[self._k_transaction_revenue] = revenue
         return self
 
-    def with_shipping_cost(self, shipping: float):
+    def with_shipping_cost(self, shipping):
         self._data[self._k_transaction_shipping] = shipping
         return self
 
-    def with_shipping_method(self, shipping_method: float):
+    def with_shipping_method(self, shipping_method):
         self._data[self._k_transaction_shipping_method] = shipping_method
         return self
 
-    def with_taxes(self, taxes: float):
+    def with_taxes(self, taxes):
         self._data[self._k_transaction_tax] = taxes
         return self
 
-    def with_currency(self, currency: str):
+    def with_currency(self, currency):
         self._data[self._k_transaction_currency] = currency
         return self
 
-    def with_payment_method(self, payment: str):
+    def with_payment_method(self, payment):
         self._data[self._k_transaction_payment_method] = payment
         return self
 
-    def with_item_count(self, item_nb: int):
+    def with_item_count(self, item_nb):
         self._data[self._k_transaction_item_count] = item_nb
         return self
 
-    def with_coupon_code(self, coupon : str):
+    def with_coupon_code(self, coupon):
         self._data[self._k_transaction_coupon] = coupon
         return self
 

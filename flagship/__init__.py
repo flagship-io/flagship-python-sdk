@@ -1,1 +1,2 @@
-from flagship.app import Flagship
+# from flagship.app import Flagship
+from flagship import *

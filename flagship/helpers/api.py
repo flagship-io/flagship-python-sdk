@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import json
 import requests
 
@@ -41,7 +42,7 @@ class APIClient:
         campaigns = list()
         try:
             campaigns = Campaign.parse_campaigns(response.json())
-            print(*campaigns, sep='\n')
+            print("{}".format(campaigns))
         except ValueError:
             print("Parsing campaign error")
         return campaigns
@@ -60,7 +61,7 @@ class APIClient:
         r = requests.post(url, headers=header, json=body)
         print('[' + str(r.status_code) + '] : ' + url + ' payload : ' + json.dumps(body))
 
-    def send_hit_request(self, visitor_id: str, hit: Hit):
+    def send_hit_request(self, visitor_id, hit):
         body = {
             "cid": self._env_id,
             "vid": visitor_id

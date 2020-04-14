@@ -1,13 +1,12 @@
 from datetime import datetime
-
-from flagship.decorators import exception_handler
+from flagship.decorators import exception_handler, types_validator
 from flagship.helpers.api import APIClient
 from flagship.helpers.hits import Hit
 
 
 class FlagshipVisitor:
 
-    def __init__(self, config, visitor_id, context: dict):
+    def __init__(self, config, visitor_id, context):
         self._env_id = config.env_id
         self._api_key = config.api_key
         self._visitor_id = visitor_id
@@ -18,27 +17,35 @@ class FlagshipVisitor:
         self.campaigns = list()
         self._modifications = dict()
 
-    def __getattribute__(self, name):
-        if name != '_last_call':
-            self._last_call = datetime.now()
-        return super().__getattribute__(name)
+    # def __getattribute__(self, name):
+    #     if name != '_last_call':
+    #         self._last_call = datetime.now()
+    #     return super(self).__getattribute__(name)
 
-    def send_hit(self, hit: Hit):
+    @exception_handler()
+    @types_validator(True, Hit)
+    def send_hit(self, hit):
         if issubclass(type(hit), Hit):
             self._api_client.send_hit_request(self._visitor_id, hit)
 
+    @exception_handler()
+    @types_validator(True)
     def synchronize_modifications(self):
         self.campaigns = self._api_client.synchronize_modifications(self._visitor_id, self._context)
         for campaign in self.campaigns:
             self._modifications.update(campaign.get_modifications())
 
-    def activate_modification(self, key: str):
+    @exception_handler()
+    @types_validator(True, str)
+    def activate_modification(self, key):
         if key in self._modifications:
             modification = self._modifications[key]
             self._api_client.activate_modification(self._visitor_id, modification.variation_group_id,
                                                    modification.variation_id)
 
-    def get_modification(self, key: str, default_value, activate=False):
+    @exception_handler()
+    @types_validator(True, str, [str, bool, int, float], bool)
+    def get_modification(self, key, default_value, activate=False):
         if key not in self._modifications:
             return default_value
         elif self._modifications[key].value is None:
@@ -50,7 +57,9 @@ class FlagshipVisitor:
                 self.activate_modification(key)
             return self._modifications[key].value
 
-    def get_modification_data(self, key: str):
+    @exception_handler()
+    @types_validator(True, str)
+    def get_modification_data(self, key):
         if key not in self._modifications:
             return None
         return self._modifications[key]
@@ -66,9 +75,9 @@ class FlagshipVisitor:
         if synchronize is True:
             self.synchronize_modifications()
 
-    @exception_handler(43)
+    @exception_handler()
+    @types_validator(True, [dict, tuple], bool)
     def update_context(self, context, synchronize=False):
-       # v = 1/0
         if isinstance(context, tuple) and len(context) == 2:
             self.__update_context_value(context[0], context[1])
         elif isinstance(context, dict):
@@ -79,9 +88,6 @@ class FlagshipVisitor:
         print('Context : ' + str(self._context))
         # if self._cache:
         #     self._cache.save(self._visitor_id, context)
-
-    def update_preset_context(self, synchronize=False, **context):
-        print("coucou")
 
 
     def close(self):

@@ -13,3 +13,5 @@ venv
 venv3.5
 venv2.7
 flagship/__init__.pyc
+venv3.8
+*.pyc

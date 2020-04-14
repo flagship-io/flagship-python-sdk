@@ -1,7 +1,7 @@
-
+from flagship.decorators import types_validator
 
 class Config:
-
+    @types_validator(True, str, str, bool)
     def __init__(self, env_id, api_key, debug=True):
         self.env_id = env_id
         self.api_key = api_key
