@@ -38,8 +38,7 @@ def types_validator(self=False, *types):
 
                 if raise_error:
                     inspection_args = inspect.getargspec(func).args
-                    method_name = func.__name__ if func.__name__ is not '__init__' else \
-                        args[0].__class__.__name__
+                    method_name = func.__name__ if func.__name__ is not '__init__' else args[0].__class__.__name__
                     raise TypingError("Arguments '{}' for '{}' function is not valid. Expecting {} type."
                                       .format(inspection_args[i], method_name, types[j]))
                 # if not isinstance(args[i], type):
