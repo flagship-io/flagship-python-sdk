@@ -2,6 +2,9 @@ import json
 import time
 from enum import Enum
 
+from flagship.decorators import types_validator, exception_handler
+
+
 class HitType(Enum):
     PAGE = 'SCREENVIEW'
     EVENT = 'EVENT'
@@ -40,6 +43,8 @@ class Hit(object):
     _k_transaction_item_count = 'icn'
     _k_transaction_coupon = 'tcc'
 
+    @exception_handler()
+    @types_validator(True, HitType)
     def __init__(self, hit_type):
         self._data = {
             self._k_type: hit_type.name,
@@ -47,18 +52,26 @@ class Hit(object):
             self._k_timestamp: int(round(time.time() * 1000))
         }
 
+    @exception_handler()
+    @types_validator(True, str)
     def with_ip(self, ip):
         self._data[self._k_ip] = ip
         return self
 
+    @exception_handler()
+    @types_validator(True, int, int)
     def with_resolution(self, width, height):
         self._data[self._k_resolution] = '{}x{}'.format(width, height)
         return self
 
+    @exception_handler()
+    @types_validator(True, int)
     def with_session_number(self, number):
         self._data[self._k_session] = number
         return self
 
+    @exception_handler()
+    @types_validator(True, str)
     def with_locale(self, locale):
         self._data[self._k_locale] = locale
         return self
@@ -71,6 +84,8 @@ class Hit(object):
 
 
 class Page(Hit):
+    @exception_handler()
+    @types_validator(True, str)
     def __init__(self, origin):
         # super(self).__init__(HitType.PAGE)
         Hit.__init__(self, HitType.PAGE)
@@ -86,6 +101,8 @@ class EventCategory(Enum):
 
 
 class Event(Hit):
+    @exception_handler()
+    @types_validator(True, EventCategory, str)
     def __init__(self, category, action):
         Hit.__init__(self, HitType.EVENT)
         if isinstance(category, EventCategory):
@@ -99,10 +116,14 @@ class Event(Hit):
         else:
             pass
 
+    @exception_handler()
+    @types_validator(True, str)
     def with_event_label(self, label):
         self._data[self._k_event_label] = label
         return self
 
+    @exception_handler()
+    @types_validator(True, [int, float, str, bool])
     def with_event_value(self, value):
         t = type(value)
         if t == int or t == str or t == float or t == bool:
@@ -111,6 +132,8 @@ class Event(Hit):
 
 
 class Item(Hit):
+    @exception_handler()
+    @types_validator(True, str, str)
     def __init__(self, transaction_id, product_name):
         # super(self).__init__(HitType.ITEM)
         Hit.__init__(self, HitType.ITEM)
@@ -120,24 +143,34 @@ class Item(Hit):
         }
         self._data.update(data)
 
+    @exception_handler()
+    @types_validator(True, [int, float])
     def with_price(self, price):
         self._data[self._k_item_price] = price
         return self
 
+    @exception_handler()
+    @types_validator(True, int)
     def with_item_quantity(self, item_quantity):
         self._data[self._k_item_quantity] = item_quantity
         return self
 
+    @exception_handler()
+    @types_validator(True, str)
     def with_item_code(self, item_code):
         self._data[self._k_item_code] = item_code
         return self
 
+    @exception_handler()
+    @types_validator(True, str)
     def with_item_category(self, category):
         self._data[self._k_item_category] = category
         return self
 
 
 class Transaction(Hit):
+    @exception_handler()
+    @types_validator(True, str, str)
     def __init__(self, transaction_id, affiliation):
         # super(self).__init__(HitType.TRANSACTION)
         Hit.__init__(self, HitType.TRANSACTION)
@@ -147,34 +180,50 @@ class Transaction(Hit):
         }
         self._data.update(data)
 
+    @exception_handler()
+    @types_validator(True, [int, float])
     def with_total_revenue(self, revenue):
         self._data[self._k_transaction_revenue] = revenue
         return self
 
+    @exception_handler()
+    @types_validator(True, [int, float])
     def with_shipping_cost(self, shipping):
         self._data[self._k_transaction_shipping] = shipping
         return self
 
+    @exception_handler()
+    @types_validator(True, str)
     def with_shipping_method(self, shipping_method):
         self._data[self._k_transaction_shipping_method] = shipping_method
         return self
 
+    @exception_handler()
+    @types_validator(True, [int, float])
     def with_taxes(self, taxes):
         self._data[self._k_transaction_tax] = taxes
         return self
 
+    @exception_handler()
+    @types_validator(True, str)
     def with_currency(self, currency):
         self._data[self._k_transaction_currency] = currency
         return self
 
+    @exception_handler()
+    @types_validator(True, str)
     def with_payment_method(self, payment):
         self._data[self._k_transaction_payment_method] = payment
         return self
 
+    @exception_handler()
+    @types_validator(True, int)
     def with_item_count(self, item_nb):
         self._data[self._k_transaction_item_count] = item_nb
         return self
 
+    @exception_handler()
+    @types_validator(True, str)
     def with_coupon_code(self, coupon):
         self._data[self._k_transaction_coupon] = coupon
         return self

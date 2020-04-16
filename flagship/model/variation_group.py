@@ -1,6 +1,8 @@
 import json
+import logging
 import random
 
+from flagship import decorators
 from flagship.model.variation import Variation
 from flagship.model.targeting import TargetingGroup
 
@@ -49,6 +51,9 @@ class VariationGroup:
                 targeting_groups = TargetingGroup.parse(targeting_group_obj)
 
             return VariationGroup(variation_group_id, variations, targeting_groups, selected_variation_id)
+
         except (ValueError, Exception):
-            print('Variation group parsing error')
+            if decorators.customer_event_handler is not None:
+                decorators.customer_event_handler.on_log(logging.ERROR,
+                                                         "An error occurred while parsing variation group json object.")
             return None

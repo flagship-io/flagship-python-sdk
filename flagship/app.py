@@ -1,13 +1,19 @@
 from __future__ import absolute_import
 
+import logging
+
+from flagship import decorators
 from flagship.config import Config
 from flagship.visitor import FlagshipVisitor
 from flagship.decorators import exception_handler
 from flagship.decorators import types_validator
-
+from handler import _DefaultFlagshipEventHandler, FlagshipEventHandler
 
 class Flagship:
+
     class __Flagship:
+
+        _config = None  # type: Config
 
         def __init__(self):
             self._is_initialized = False
@@ -20,12 +26,14 @@ class Flagship:
             :param config: Configuration to initialize.
             """
             self._config = config
+            decorators.customer_event_handler = self._config.event_handler
+            decorators.errors_handler = self._config.errors_handler
             self._is_initialized = True
-            # self._cache_manager = self._config.get('cache_manager')
+            self._config.event_handler.on_log(logging.DEBUG, "Started")
 
         @exception_handler()
         @types_validator(True, str, dict)
-        def create_visitor(self, visitor_id, context):  # type: (str, dict) -> FlagshipVisitor(object, str, dict)
+        def create_visitor(self, visitor_id, context={}):  # type: (str, dict) -> FlagshipVisitor(object, str, dict)
             """
             Create or get a visitor instance.
 
@@ -33,7 +41,9 @@ class Flagship:
             :param context: Visitor context.
             :return: FlagshipVisitor
             """
-            return FlagshipVisitor(self._config, visitor_id, context)
+            visitor = FlagshipVisitor(self._config, visitor_id, context)
+            self._config.event_handler.on_log(logging.DEBUG, "Visitor '{}' created. Context : {}".format(visitor_id, str(context)))
+            return visitor
 
         def close(self):
             __instance = None
@@ -49,7 +59,6 @@ class Flagship:
         """
         if not Flagship.__instance:
             Flagship.__instance = Flagship.__Flagship()
-
         return Flagship.__instance
 
     # def __new__(cls, *args, **kwargs):

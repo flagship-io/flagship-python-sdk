@@ -1,3 +1,9 @@
+import logging
+import traceback
+
+from flagship import decorators
+from flagship.decorators import exception_handler
+from flagship.errors import FlagshipParsingError
 from flagship.model.variation_group import VariationGroup
 
 
@@ -34,7 +40,9 @@ class Campaign:
                     variation_groups.append(new_variation_group)
             return Campaign(campaign_id, variation_groups)
         except (ValueError, Exception):
-            print('Parsing campaign obj error')
+            if decorators.customer_event_handler is not None:
+                decorators.customer_event_handler.on_log(logging.ERROR,
+                                                         "An error occurred while parsing campaign json object.")
             return None
 
     @staticmethod

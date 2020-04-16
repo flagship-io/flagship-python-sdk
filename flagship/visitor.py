@@ -1,4 +1,7 @@
+import logging
 from datetime import datetime
+
+from flagship.config import Config
 from flagship.decorators import exception_handler, types_validator
 from flagship.helpers.api import APIClient
 from flagship.helpers.hits import Hit
@@ -6,7 +9,12 @@ from flagship.helpers.hits import Hit
 
 class FlagshipVisitor:
 
+    # __config = None  # type: Config
+
     def __init__(self, config, visitor_id, context):
+        # type: (Config, str, dict) -> None
+        # FlagshipVisitor.__config = config
+        self._config = config
         self._env_id = config.env_id
         self._api_key = config.api_key
         self._visitor_id = visitor_id
@@ -47,6 +55,10 @@ class FlagshipVisitor:
     @types_validator(True, str, [str, bool, int, float], bool)
     def get_modification(self, key, default_value, activate=False):
         if key not in self._modifications:
+            self._config.event_handler.on_log(logging.ERROR,
+                                              "get_modification : no modification for the key {}, default value "
+                                              "returned."
+                                              .format(key))
             return default_value
         elif self._modifications[key].value is None:
             if activate:

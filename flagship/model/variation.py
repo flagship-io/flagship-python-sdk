@@ -1,3 +1,6 @@
+import logging
+
+from flagship import decorators
 from flagship.model.modification import Modifications
 
 
@@ -24,5 +27,7 @@ class Variation:
             allocation = 100 if 'allocation' not in variation_obj else variation_obj['allocation']
             return Variation(variation_group_id, variation_id, reference, modifications, allocation)
         except (ValueError, Exception):
-            print('Variation parsing error')
+            if decorators.customer_event_handler is not None:
+                decorators.customer_event_handler.on_log(logging.ERROR,
+                                                         "An error occurred while parsing variation group json object.")
             return None
