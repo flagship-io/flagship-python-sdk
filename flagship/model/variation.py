@@ -15,8 +15,11 @@ class Variation:
         self.selected = selected
 
     def __str__(self):
-        return 'variation = {} {} {} {} {} {}'.format(self.variation_group_id, self.variation_id, self.reference,
-                                                      self.modifications, self.allocation, self.selected)
+        return '{{ "variation_group_id": "{}", "variation_id": "{}", "reference": {}, "modifications": {},' \
+               ' "allocation": {}, "selected": {} }} '.format(self.variation_group_id, self.variation_id,
+                                                              "true" if self.reference is True else "false",
+                                                              self.modifications, self.allocation,
+                                                              "true" if self.selected is True else "false")
 
     @staticmethod
     def parse(variation_group_id, variation_obj):

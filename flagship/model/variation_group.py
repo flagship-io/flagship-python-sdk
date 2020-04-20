@@ -16,7 +16,7 @@ class VariationGroup:
         self.selected_variation_id = selected_variation_id
 
     def __str__(self):
-        return 'variation_group_id = {} {}'.format(self.variation_group_id, *self.variations)
+        return '{{ "variation_group_id" : "{}", "variations" : {} }}'.format(self.variation_group_id, *self.variations)
 
     @staticmethod
     def parse(variation_group_obj, bucketing):

@@ -2,8 +2,6 @@ import logging
 import traceback
 
 from flagship import decorators
-from flagship.decorators import exception_handler
-from flagship.errors import FlagshipParsingError
 from flagship.model.variation_group import VariationGroup
 
 
@@ -22,7 +20,7 @@ class Campaign:
         return modifications
 
     def __str__(self):
-        return 'campaign_id = {}, {}'.format(self.campaign_id, *self.variation_groups)
+        return '{{"campaign_id" : "{}", "variation group" : {} }}'.format(self.campaign_id, *self.variation_groups)
 
     @staticmethod
     def parse(json):

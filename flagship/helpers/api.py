@@ -39,13 +39,7 @@ class APIClient:
         }
         url = self.__end_point + '' + self._env_id + '' + self.__campaigns
         r = requests.post(url, headers=header, json=body)
-        self._config.event_handler.on_log(logging.INFO if (r.status_code in range(200, 300)) else logging.ERROR,
-                                          '[Request][{}] {} - payload: {} - response: {}'.format(
-            str(r.status_code),
-            url,
-            str(json.dumps(body)),
-            str(r.content)
-        ))
+        self.__log_request(url, r, body)
         return r
 
     def synchronize_modifications(self, visitor_id, context):
@@ -70,7 +64,7 @@ class APIClient:
         }
         url = self.__end_point + self.__activate
         r = requests.post(url, headers=header, json=body)
-        print('[' + str(r.status_code) + '] : ' + url + ' payload : ' + json.dumps(body))
+        self.__log_request(url, r, body)
 
     def send_hit_request(self, visitor_id, hit):
         body = {
@@ -80,4 +74,14 @@ class APIClient:
         body.update(hit.get_data())
         url = self.__ariane
         r = requests.post(url, json=body)
-        print('[' + str(r.status_code) + '] : ' + url + ' payload : ' + json.dumps(body))
+        self.__log_request(url, r, body)
+
+
+    def __log_request(self, url, request, body):
+        self._config.event_handler.on_log(logging.INFO if (request.status_code in range(200, 300)) else logging.ERROR,
+                                          '[Request][{}] {} - payload: {} - response: {}'.format(
+                                              str(request.status_code),
+                                              url,
+                                              str(json.dumps(body)),
+                                              str(request.content)
+                                          ))

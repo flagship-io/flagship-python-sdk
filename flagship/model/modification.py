@@ -7,8 +7,19 @@ class Modification:
         self.value = value
 
     def __str__(self):
-        return 'modification = {} {} {} {}'.format(self.variation_group_id, self.variation_id, self.reference,
-                                                   self.value)
+        return '{{ "variation_group_id": "{}", "variation_id": "{}", "reference": {},  "key": "{}", "value": {} }}'\
+            .format(self.variation_group_id, self.variation_id, "true" if self.reference is True else "false", self.key,
+                    self.value_to_str(self.value))
+
+    def value_to_str(self, value):
+        if value is None:
+            return "null"
+        elif isinstance(value, str) or isinstance(value, unicode):
+            return '"{}"'.format(value)
+        elif isinstance(value, bool):
+            return "true" if value is True else "false"
+        else:
+            return value
 
 
 class Modifications:
@@ -21,8 +32,20 @@ class Modifications:
         self.value_type = value_type
 
     def __str__(self):
-        return 'modifications = {} {} {} {}'.format(self.variation_group_id, self.variation_id, self.reference,
-                                                    self.value_type, self.values)
+        return '{{ "variation_group_id": "{}", "variation_id": "{}", "reference": {}, "value_type": "{}",' \
+               ' "values":{} }}'.format(self.variation_group_id, self.variation_id,
+                                        "true" if self.reference is True else "false", self.value_type,
+                                        self.__modifications_to_str())
+
+    def __modifications_to_str(self):
+        values = dict(self.values)
+        result = '['
+        for k, v in values.items():
+            result += '{{ "key": "{}", "modification":{} }},'.format(k, str(v))
+
+        result = result[:-1]
+        result += ']'
+        return result
 
     @staticmethod
     def parse(variation_group_id, variation_id, reference, modifications_obj):

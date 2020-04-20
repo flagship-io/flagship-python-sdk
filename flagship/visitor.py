@@ -42,6 +42,15 @@ class FlagshipVisitor:
         self.campaigns = self._api_client.synchronize_modifications(self._visitor_id, self._context)
         for campaign in self.campaigns:
             self._modifications.update(campaign.get_modifications())
+        self._config.event_handler.on_log(logging.INFO,
+                                          "[synchronize_modifications] : Visitor '{} Campaigns = {}"
+                                          .format(self._visitor_id, self.__campaigns_to_str()))
+
+    def __campaigns_to_str(self):
+        result = '\n     '
+        for c in self.campaigns:
+            result += (str(c) + '\n     ')
+        return result
 
     @exception_handler()
     @types_validator(True, str)
@@ -50,13 +59,17 @@ class FlagshipVisitor:
             modification = self._modifications[key]
             self._api_client.activate_modification(self._visitor_id, modification.variation_group_id,
                                                    modification.variation_id)
+        else:
+            self._config.event_handler.on_log(logging.ERROR,
+                                              "[activate_modification] : no modification for the key '{}'."
+                                              .format(key))
 
     @exception_handler()
     @types_validator(True, str, [str, bool, int, float], bool)
     def get_modification(self, key, default_value, activate=False):
         if key not in self._modifications:
             self._config.event_handler.on_log(logging.ERROR,
-                                              "get_modification : no modification for the key {}, default value "
+                                              "[get_modification] : no modification for the key '{}', default value "
                                               "returned."
                                               .format(key))
             return default_value
@@ -79,9 +92,10 @@ class FlagshipVisitor:
     def __update_context_value(self, key, value, synchronize=False):
         t = type(value)
         if type(key) is not str:
-            print("Update context : key {} must be a str.".format(key))
+            self._config.event_handler.on_log(logging.ERROR, "[update_context] : key '{}' must be a str.".format(key))
         elif t is not str and t is not int and t is not bool and t is not float:
-            print("Update context : value {} must be a str, int, bool, float.".format(value))
+            self._config.event_handler.on_log(logging.ERROR, "[update_context] : value '{}' must be one of "
+                                                             "the following types: str, int, bool, float.".format(key))
         else:
             self._context[key] = value
         if synchronize is True:
@@ -97,7 +111,8 @@ class FlagshipVisitor:
                 self.__update_context_value(k, v)
         if synchronize:
             self.synchronize_modifications()
-        print('Context : ' + str(self._context))
+        self._config.event_handler.on_log(logging.DEBUG, "[update_context] : Visitor '{}' Context = {}."
+                                          .format(self._visitor_id, self._context))
         # if self._cache:
         #     self._cache.save(self._visitor_id, context)
 
