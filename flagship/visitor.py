@@ -35,6 +35,8 @@ class FlagshipVisitor:
     def send_hit(self, hit):
         if issubclass(type(hit), Hit):
             self._api_client.send_hit_request(self._visitor_id, hit)
+        else:
+            self._config.event_handler.on_log(logging.ERROR, "[send_hit] : {} not a Hit subclass.".format(str(hit)))
 
     @exception_handler()
     @types_validator(True)
@@ -42,7 +44,7 @@ class FlagshipVisitor:
         self.campaigns = self._api_client.synchronize_modifications(self._visitor_id, self._context)
         for campaign in self.campaigns:
             self._modifications.update(campaign.get_modifications())
-        self._config.event_handler.on_log(logging.INFO,
+        self._config.event_handler.on_log(logging.DEBUG,
                                           "[synchronize_modifications] : Visitor '{} Campaigns = {}"
                                           .format(self._visitor_id, self.__campaigns_to_str()))
 
@@ -109,10 +111,10 @@ class FlagshipVisitor:
         elif isinstance(context, dict):
             for (k, v) in context.items():
                 self.__update_context_value(k, v)
-        if synchronize:
-            self.synchronize_modifications()
         self._config.event_handler.on_log(logging.DEBUG, "[update_context] : Visitor '{}' Context = {}."
                                           .format(self._visitor_id, self._context))
+        if synchronize:
+            self.synchronize_modifications()
         # if self._cache:
         #     self._cache.save(self._visitor_id, context)
 

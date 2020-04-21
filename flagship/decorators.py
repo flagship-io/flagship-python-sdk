@@ -1,17 +1,13 @@
 import inspect
 import traceback
 
-from flagship.errors import TypingError, FlagshipErrorHandler
-from handler import FlagshipEventHandler
+from flagship.errors import TypingError
+from flagship.handler import FlagshipEventHandler
 
-errors_handler = None  # type: FlagshipErrorHandler
 customer_event_handler = None  # type: FlagshipEventHandler
-
 
 def exception_handler(**params):
     default = params['default'] if 'default' in params else None
-    log = params['log'] if 'log' in params else False
-    exception = params['exception'] if 'exception' in params else None
 
     # errors_handler = params['errors_handler'] if 'errors_handler' in params else None
 
@@ -20,18 +16,14 @@ def exception_handler(**params):
             try:
                 return func(*args, **kwargs)
             except TypingError as t:
-                if errors_handler is not None:
+                if customer_event_handler is not None:
                     tb = traceback.format_exc()
-                    errors_handler.new_error_raised(t, tb)
                     customer_event_handler.on_exception_raised(t, tb)
                 return func(*args, **kwargs)
             except Exception as e:
-                if errors_handler is not None:
+                if customer_event_handler is not None:
                     tb = traceback.format_exc()
-                    errors_handler.new_error_raised(e, tb)
                     customer_event_handler.on_exception_raised(e, tb)
-                    if log is True:
-                        print('\033[91m' + 'Error {} : '.format(e) + tb + '\033[0m')
                 return default
 
         return wrapper
@@ -59,7 +51,6 @@ def types_validator(self=False, *types):
                                     .format(inspection_args[i], method_name, types[j]))
                     raise e
             return func(*args, **kwargs)
-            # raise TypingError("Arguments supplied for types_validator() are not valid.")
 
         return wrapper
 

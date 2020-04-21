@@ -74,14 +74,13 @@ class APIClient:
         body.update(hit.get_data())
         url = self.__ariane
         r = requests.post(url, json=body)
-        self.__log_request(url, r, body)
+        self.__log_request(url, r, body, True)
 
-
-    def __log_request(self, url, request, body):
+    def __log_request(self, url, request, body, is_hit=False):
         self._config.event_handler.on_log(logging.INFO if (request.status_code in range(200, 300)) else logging.ERROR,
                                           '[Request][{}] {} - payload: {} - response: {}'.format(
                                               str(request.status_code),
                                               url,
                                               str(json.dumps(body)),
-                                              str(request.content)
+                                              str(request.content) if is_hit is False else ""
                                           ))

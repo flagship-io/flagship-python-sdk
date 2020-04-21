@@ -7,7 +7,6 @@ from flagship.config import Config
 from flagship.visitor import FlagshipVisitor
 from flagship.decorators import exception_handler
 from flagship.decorators import types_validator
-from handler import _DefaultFlagshipEventHandler, FlagshipEventHandler
 
 class Flagship:
 
@@ -27,7 +26,6 @@ class Flagship:
             """
             self._config = config
             decorators.customer_event_handler = self._config.event_handler
-            decorators.errors_handler = self._config.errors_handler
             self._is_initialized = True
             self._config.event_handler.on_log(logging.DEBUG, "Started")
 

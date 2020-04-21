@@ -1,10 +1,3 @@
-class FlagshipErrorHandler:
-    def __init__(self):
-        pass
-
-    def new_error_raised(self, exception, traceback):
-        pass
-
 
 class FlagshipError(Exception):
     def __init__(self, message):
