@@ -1,3 +1,5 @@
+from six import string_types
+
 class Modification:
     def __init__(self, key, variation_group_id, variation_id, reference, value):
         self.key = key
@@ -11,10 +13,11 @@ class Modification:
             .format(self.variation_group_id, self.variation_id, "true" if self.reference is True else "false", self.key,
                     self.value_to_str(self.value))
 
-    def value_to_str(self, value):
+    @staticmethod
+    def value_to_str(value):
         if value is None:
             return "null"
-        elif isinstance(value, str) or isinstance(value, unicode):
+        elif isinstance(value, str) or isinstance(value, string_types):
             return '"{}"'.format(value)
         elif isinstance(value, bool):
             return "true" if value is True else "false"
@@ -55,6 +58,6 @@ class Modifications:
         for key in values_obj:
             value = values_obj[key]
             t = type(value)
-            if value is None or t is int or t is float or t is str or t is bool or t is unicode:
+            if value is None or t is int or t is float or t is str or t is bool or t is string_types:
                 values[key] = Modification(key, variation_group_id, variation_id, reference, value)
         return Modifications(variation_group_id, variation_id, reference, value_type, values)

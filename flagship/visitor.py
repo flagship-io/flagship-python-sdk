@@ -5,6 +5,7 @@ from flagship.config import Config
 from flagship.decorators import exception_handler, types_validator
 from flagship.helpers.api import APIClient
 from flagship.helpers.hits import Hit
+from flagship.model.modification import Modification
 
 
 class FlagshipVisitor:
@@ -47,6 +48,16 @@ class FlagshipVisitor:
         self._config.event_handler.on_log(logging.DEBUG,
                                           "[synchronize_modifications] : Visitor '{} Campaigns = {}"
                                           .format(self._visitor_id, self.__campaigns_to_str()))
+        self.__log_modifications()
+
+    def __log_modifications(self):
+        results = '{'
+        for mk, mv in self._modifications.items():
+            results += '"{}": {},'.format(mv.key, Modification.value_to_str(mv.value))
+        results = results[:-1]
+        results += '}'
+        self._config.event_handler.on_log(logging.DEBUG, "[synchronize_modifications] : Visitor '{} "
+                                                         "Modifications = {}".format(self._visitor_id, results))
 
     def __campaigns_to_str(self):
         result = '\n     '

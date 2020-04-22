@@ -1,4 +1,3 @@
-
 class FlagshipError(Exception):
     def __init__(self, message):
         super(Exception, self).__init__(message)
@@ -17,6 +16,11 @@ class ContextError(Exception):
 class TypingError(TypeError):
     def __init__(self, message):
         super(TypeError, self).__init__(message)
+
+
+class ParamError(ValueError):
+    def __init__(self, message):
+        super(ValueError, self).__init__(message)
 
 # class DecisionAPIError(Exception):
 #     def __init__(self, message, errors):
