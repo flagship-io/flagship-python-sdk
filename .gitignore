@@ -4,7 +4,6 @@ env/
 django-sample-python-sdk
 .idea/
 .idea
-script.py
 flagship/__pycache__
 */__pycache/
 __pycache__/
