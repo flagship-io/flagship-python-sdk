@@ -22,6 +22,16 @@ class ParamError(ValueError):
     def __init__(self, message):
         super(ValueError, self).__init__(message)
 
+
+class InitializationError(Exception):
+    def __init__(self, message):
+        # type: (str) -> None
+        """
+        Raised then the SDK has not been started successfully.
+        :param message:
+        """
+        super(Exception, self).__init__(message)
+
 # class DecisionAPIError(Exception):
 #     def __init__(self, message, errors):
 #
