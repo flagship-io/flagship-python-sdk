@@ -4,7 +4,8 @@ import traceback
 from flagship.errors import TypingError, ParamError
 from flagship.handler import FlagshipEventHandler
 
-customer_event_handler = None  # type: FlagshipEventHandler
+customer_event_handler = FlagshipEventHandler()  # type: FlagshipEventHandler
+# customer_event_handler = None  # type: FlagshipEventHandler
 
 
 def exception_handler(**params):
@@ -25,7 +26,10 @@ def exception_handler(**params):
                 if customer_event_handler is not None:
                     tb = traceback.format_exc()
                     customer_event_handler.on_exception_raised(e, tb)
-                return default
+                if customer_event_handler.catch_all_exceptions is True:
+                    return default
+                else:
+                    raise e
 
         return wrapper
 

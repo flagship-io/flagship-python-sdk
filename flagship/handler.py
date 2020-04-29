@@ -10,10 +10,11 @@ class FlagshipEventHandler:
     start_color = '\033[{}m'
     end_color = '\033[0m'
 
-    def __init__(self):
+    def __init__(self, catch_all_exceptions=False):
         """
         Implement this class in order to centralize all SDK events.
         """
+        self.catch_all_exceptions = catch_all_exceptions
         self.logger = logging.getLogger(self.tag)
         self.logger.setLevel(logging.DEBUG)
         ch = logging.StreamHandler()
