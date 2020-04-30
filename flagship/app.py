@@ -58,7 +58,8 @@ class Flagship:
                 raise InitializationError("Flagship SDK has not been initialized or started successfully.")
             else:
                 visitor = FlagshipVisitor(self._config, visitor_id, context)
-                self._config.event_handler.on_log(logging.DEBUG, "Visitor '{}' created. Context : {}".format(visitor_id, str(context)))
+                self._config.event_handler.on_log(logging.DEBUG, "Visitor '{}' created. Context : {}".
+                                                  format(visitor_id, str(context)))
                 return visitor
 
 

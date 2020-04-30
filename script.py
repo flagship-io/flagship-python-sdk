@@ -40,21 +40,21 @@ def init():
     # visitor2 = Flagship.instance().create_visitor(23, 22)
     visitor.synchronize_modifications()
 
-    # v1 = visitor.get_modification(3, 'default1')
-    v0 = visitor.get_modification("kzjfke", 9487, True)
+    print(str(visitor.get_modification_with_info("k1", "coucou", True)))
+    print(str(visitor.get_modification_with_info("kzjfke", 9487, True)))
     v1 = visitor.get_modification('k1', 'default1', True)
     v2 = visitor.get_modification('k2', 'default2', True)
     v3 = visitor.get_modification('k3', 'default3', True)
     v6 = visitor.get_modification('k6', 'default6', True)
     v7 = visitor.get_modification('k7', 'default7', True)
-
     print("v1 = " + str(v1))
     print("v2 = " + str(v2))
     print("v3 = " + str(v3))
     print("v6 = " + str(v6))
     print("v7 = " + str(v7))
 
-    visitor.activate_modification('jeoz')
+    act = visitor.activate_modification('jeoz')
+    print(act)
 
     visitor.update_context(('age', 666))
     visitor.update_context({'name': 'toto', 'tx': 9.99})
@@ -65,20 +65,32 @@ def init():
 
     v = {'titi': 3}
     t = ('toto', 3)
-    visitor.update_context((1, 3), False)
+
+   # test returned tuples
+
+    updt = visitor.update_context((1, 3), False)
+    print("False update = " + str(updt))
+    updt2 = visitor.update_context({'toto': 34, 3: 4}, True)
+    print("False update2 = " + str(updt2))
+
     # visitor.update_preset_context(True, toto="3", titi=True, tata=2, t=v)
 
-    qa_python_2(visitor)
-    qa_python_3(visitor)
+
+
+
+    # qa_python_2(visitor)
+    # qa_python_3(visitor)
 
 
 def send_visitor_hits(visitor):
     # type: (FlagshipVisitor) -> None
-    visitor.send_hit(Page("script.py")
-                     .with_ip("133.3.223.1")
-                     .with_locale("fr-fr")
-                     .with_resolution(640, 480)
-                     .with_session_number(3))
+    toto = visitor.send_hit(Page("script.py")
+                            .with_ip("133.3.223.1")
+                            .with_locale("fr-fr")
+                            .with_resolution(640, 480)
+                            .with_session_number(3))
+
+    print("))) " + str(toto[0]) + ' ' + (str(toto[1])))
 
     visitor.send_hit(Event(EventCategory.USER_ENGAGEMENT, "kpi_qa_python_1")
                      .with_ip('6.6.6.6')

@@ -58,6 +58,8 @@ class Modifications:
         for key in values_obj:
             value = values_obj[key]
             t = type(value)
+            if isinstance(value, string_types):
+                value = str(value)
             if value is None or t is int or t is float or t is str or t is bool or t is unicode:
                 values[key] = Modification(key, variation_group_id, variation_id, reference, value)
         return Modifications(variation_group_id, variation_id, reference, value_type, values)
