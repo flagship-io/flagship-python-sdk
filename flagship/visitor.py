@@ -134,8 +134,6 @@ class FlagshipVisitor:
             self._config.event_handler.on_log(logging.ERROR, log)
             return default_value, False, log, None
         elif self._modifications[key].value is None:
-            # if activate:
-            #     self.activate_modification(key)
             return default_value, True, '', self.activate_modification(key) if activate else None
         else:
             value = self._modifications[key].value
@@ -160,8 +158,6 @@ class FlagshipVisitor:
             return key, False, log, None
         else:
             self._context[key] = value
-        # if synchronize is True:
-        #     self.synchronize_modifications()
         return key, True, '', self.synchronize_modifications() if synchronize is True else None
 
     @exception_handler()
@@ -199,7 +195,7 @@ class FlagshipVisitor:
         # if self._cache:
         #     self._cache.save(self._visitor_id, context)
 
-        return result, self.synchronize_modifications() if synchronize else ()
+        return result, self.synchronize_modifications() if synchronize else None
 
     def close(self):
         pass

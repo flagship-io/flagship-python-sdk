@@ -42,6 +42,7 @@ def init():
 
     print(str(visitor.get_modification_with_info("k1", "coucou", True)))
     print(str(visitor.get_modification_with_info("kzjfke", 9487, True)))
+
     v1 = visitor.get_modification('k1', 'default1', True)
     v2 = visitor.get_modification('k2', 'default2', True)
     v3 = visitor.get_modification('k3', 'default3', True)
