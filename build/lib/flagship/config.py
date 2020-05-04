@@ -6,8 +6,8 @@ from flagship.handler import FlagshipEventHandler
 class Config:
 
     @exception_handler(log=True)
-    @types_validator(True, str)
-    def __init__(self, env_id, api_key="", **kwargs):
+    @types_validator(True, str, str)
+    def __init__(self, env_id, api_key, **kwargs):
         # type: (str, str, object) -> None
         """
 

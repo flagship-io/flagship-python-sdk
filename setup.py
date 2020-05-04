@@ -12,5 +12,15 @@ setuptools.setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/abtasty/flagship-python-sdk",
-    packages=setuptools.find_packages()
+    packages=setuptools.find_packages(),
+    project_urls={
+        #'Documentation': 'http://developers.flagship.io/python/v0.0.1/',
+        'Source': 'https://github.com/abtasty/flagship-python-sdk'
+    },
+    install_requires=[
+        'requests',
+        'typing',
+        'six',
+        'enum34'
+    ]
 )

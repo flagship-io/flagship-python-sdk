@@ -1,0 +1,47 @@
+Metadata-Version: 2.1
+Name: flagship
+Version: 0.0.1
+Summary: Flagship Python SDK
+Home-page: https://github.com/abtasty/flagship-python-sdk
+Author: Flagship Team
+Author-email: support@flagship.io
+License: UNKNOWN
+Project-URL: Source, https://github.com/abtasty/flagship-python-sdk
+Description: # Getting started with python SDK for Flagship
+        
+        This documents will describe how to implement the Flagship python SDK in few steps.
+        
+        ## Principal workflow
+        
+        ![alt text](img/workflow.png "Workflow")
+        
+        ## Install the library
+        
+        The python sdk is available on pip package manager. Simply type the following command in your terminal : 
+        
+        `pip install flagship`
+        
+        ## Import Flagship in your project
+        
+        First place the following import at the most apropriate location in your code : 
+        
+        `from flagship import Flagship`
+        
+        ## Initialize Flagship
+        
+        To initialize the library, get an instance of the Flagship class and call the inner start method passing a configuration :
+        
+        
+        `fs = Flagship()
+        fs.start(config(env_id))
+        `
+        
+        ## Create a visitor
+        
+        `visitor = fs.createVisitor(id)`
+        
+        ## Send a hit
+        
+        `visitor.sendHit(Event(Event.UserEngagement, 'click_button_kpi'))`
+Platform: UNKNOWN
+Description-Content-Type: text/markdown
