@@ -70,7 +70,8 @@ class FlagshipVisitor:
         results = '{'
         for mk, mv in self._modifications.items():
             results += '"{}": {},'.format(mv.key, Modification.value_to_str(mv.value))
-        results = results[:-1]
+        if len(results) > 1:
+            results = results[:-1]
         results += '}'
         self._config.event_handler.on_log(logging.DEBUG, "[synchronize_modifications] : Visitor '{} "
                                                          "Modifications = {}".format(self._visitor_id, results))

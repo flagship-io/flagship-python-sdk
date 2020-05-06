@@ -46,7 +46,8 @@ class Modifications:
         for k, v in values.items():
             result += '{{ "key": "{}", "modification":{} }},'.format(k, str(v))
 
-        result = result[:-1]
+        if len(result) > 1:
+            result = result[:-1]
         result += ']'
         return result
 

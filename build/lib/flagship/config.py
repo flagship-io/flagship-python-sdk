@@ -6,8 +6,8 @@ from flagship.handler import FlagshipEventHandler
 class Config:
 
     @exception_handler(log=True)
-    @types_validator(True, str, str)
-    def __init__(self, env_id, api_key, **kwargs):
+    @types_validator(True, str)
+    def __init__(self, env_id, api_key="", **kwargs):
         # type: (str, str, object) -> None
         """
 
@@ -16,7 +16,7 @@ class Config:
         :param env_id: environment ID provided by Flagship
         :param api_key: api key provided by Flagship.
         :param kwargs: <br>
-        'errors_handler': custom FlagshipErrorHandler to provide for error handling.
+        'event_handler': custom FlagshipEventHandler to provide for log and error handling.
 
         """
         self.env_id = env_id

@@ -39,7 +39,7 @@ def exception_handler(**params):
 def types_validator(self=False, *types):
     def decorator_typing(func):
         def wrapper(*args, **kwargs):
-            for i in range(0 if self is False else 1, len(args)):
+            for i in range(0 if self is False else 1, len(args)-1):
                 j = i if self is False else i - 1
                 current_type = types[j]
                 raise_error = True

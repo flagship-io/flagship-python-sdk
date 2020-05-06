@@ -11,9 +11,9 @@ from flagship.model.campaign import Campaign
 
 
 class APIClient:
-    # __end_point = 'https://decision.flagship.io/v2/'
     __ariane = 'https://ariane.abtasty.com/ '
     __end_point = 'https://decision-api.flagship.io/v1/'
+    __end_point_v2 = 'https://decision.flagship.io/v2/'
     __campaigns = '/campaigns/?exposeAllKeys=true'
     __activate = 'activate'
 
@@ -27,6 +27,12 @@ class APIClient:
     def fs_url(self):
         return '{}/{}'.format(self._url, self._env_id)
 
+    def get_endpoint(self):
+        if not self.api_key or len(self.api_key) == 0:
+            return self.__end_point
+        else:
+            return self.__end_point_v2
+
     def __send_campaign_request(self, visitor_id, context):
         header = {
             "x-api-key": self.api_key
@@ -37,7 +43,7 @@ class APIClient:
             "context": context
 
         }
-        url = self.__end_point + '' + self._env_id + '' + self.__campaigns
+        url = self.get_endpoint() + '' + self._env_id + '' + self.__campaigns
         r = requests.post(url, headers=header, json=body)
         self.__log_request(url, r, body)
         return r
@@ -62,7 +68,7 @@ class APIClient:
             "caid": variation_group_id,
             "vaid": variation_id
         }
-        url = self.__end_point + self.__activate
+        url = self.get_endpoint() + self.__activate
         r = requests.post(url, headers=header, json=body)
         return self.__log_request(url, r, body)
 
