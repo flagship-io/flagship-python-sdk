@@ -11,7 +11,7 @@ from flagship.model.campaign import Campaign
 
 
 class APIClient:
-    __ariane = 'https://ariane.abtasty.com/ '
+    __ariane = 'https://ariane.abtasty.com/'
     __end_point = 'https://decision-api.flagship.io/v1/'
     __end_point_v2 = 'https://decision.flagship.io/v2/'
     __campaigns = '/campaigns/?exposeAllKeys=true'

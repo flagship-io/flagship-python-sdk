@@ -198,5 +198,3 @@ class FlagshipVisitor:
 
         return result, self.synchronize_modifications() if synchronize else None
 
-    def close(self):
-        pass

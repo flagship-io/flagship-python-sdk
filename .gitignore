@@ -16,3 +16,4 @@ venv3.8
 *.pyc
 tests-public
 build
+.coverage

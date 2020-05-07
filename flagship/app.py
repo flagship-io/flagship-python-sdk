@@ -1,6 +1,3 @@
-from __future__ import absolute_import
-
-import logging
 
 from flagship import decorators
 from flagship.config import Config
@@ -8,6 +5,8 @@ from flagship.errors import InitializationError
 from flagship.visitor import FlagshipVisitor
 from flagship.decorators import exception_handler
 from flagship.decorators import types_validator
+import logging
+
 
 class Flagship:
 
@@ -20,7 +19,7 @@ class Flagship:
 
         @exception_handler()
         @types_validator(True, Config)
-        def start(self, config):    # type: (Config) -> None
+        def start(self, config):  # type: (Config) -> None
             """
             Start the flagship sdk or raise a InitializationError if an error occurred.
 

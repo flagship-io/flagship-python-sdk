@@ -33,8 +33,8 @@ class CustomEventHandler(FlagshipEventHandler):
 def init():
     print(sys.version)
     t = CustomEventHandler()
-    Flagship.instance().start(
-        Config("bkk4s7gcmjcg07fke9dg", "j2jL0rzlgVaODLw2Cl4JC3f4MflKrMgIaQOENv36", event_handler=t))
+    Flagship.instance().start(Config("bkk4s7gcmjcg07fke9dg", "j2jL0rzlgVaODLw2Cl4JC3f4MflKrMgIaQOENv36",
+                                     event_handler=t))
     # print(Flagship()._config)
     visitor = Flagship.instance().create_visitor("8888", {'isVIPUser': True})  # type: FlagshipVisitor
     # visitor2 = Flagship.instance().create_visitor(23, 22)
