@@ -18,3 +18,8 @@ tests-public
 build
 .coverage
 bucketing.json
+build/
+dist/
+dist
+flagship.egg-info
+img
