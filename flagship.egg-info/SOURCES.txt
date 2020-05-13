@@ -2,12 +2,10 @@ README.md
 setup.py
 flagship/__init__.py
 flagship/app.py
-flagship/cache.py
 flagship/config.py
 flagship/decorators.py
 flagship/errors.py
 flagship/handler.py
-flagship/variation.py
 flagship/visitor.py
 flagship.egg-info/PKG-INFO
 flagship.egg-info/SOURCES.txt
@@ -24,4 +22,8 @@ flagship/model/targeting.py
 flagship/model/variation.py
 flagship/model/variation_group.py
 tests/__init__.py
+tests/test_config.py
+tests/test_decorator.py
+tests/test_init.py
 tests/test_singleton.py
+tests/test_visitor.py
