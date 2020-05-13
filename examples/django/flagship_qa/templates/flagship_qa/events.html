@@ -1,0 +1,260 @@
+{% extends './base.html' %}
+
+{% block content %}
+
+    <div class="container mt-5" id="app">
+        <h2 class="mt-5">
+            Send Hit
+        </h2>
+        <form v-on:submit.prevent="sendHit()">
+            <div class="form-group">
+                <label>Hit type</label>
+                <select class="form-control" v-model="hit.t">
+                    <option v-for="t in hitTypes" :key="t" :value="t">
+                        [[t]]
+                    </option>
+                </select>
+            </div>
+
+            <div v-if="hit.t == 'EVENT'" class="form-group">
+                <label>Event Action (Required)</label>
+                <input
+                        type="text"
+                        class="form-control"
+                        placeholder="Event Action"
+                        v-model="hit.ea"
+                />
+            </div>
+
+            <div v-if="hit.t == 'EVENT'" class="form-group">
+                <label>Event Label (optional)</label>
+                <input
+                        type="text"
+                        class="form-control"
+                        placeholder="Event Label"
+                        v-model="hit.el"
+                />
+            </div>
+
+            <div v-if="hit.t == 'EVENT'" class="form-group">
+                <label>Event Value (optional)</label>
+                <input
+                        type="text"
+                        class="form-control"
+                        placeholder="Event Value"
+                        v-model.number="hit.ev"
+                />
+            </div>
+
+            <div v-if="hit.t == 'PAGE'" class="form-group">
+                <label>Page name (Required)</label>
+                <input
+                        type="text"
+                        class="form-control"
+                        placeholder="fr-fr"
+                        v-model="hit.dl"
+                />
+            </div>
+
+             <div v-if="['TRANSACTION', 'ITEM'].includes(hit.t)" class="form-group">
+                <label>Transaction ID (Required)</label>
+                <input
+                        type="text"
+                        class="form-control"
+                        placeholder="Transaction ID"
+                        v-model="hit.tid"
+                />
+            </div>
+
+            <div v-if="['TRANSACTION'].includes(hit.t)" class="form-group">
+                <label>Transaction Affiliation (Required)</label>
+                <input
+                        type="text"
+                        class="form-control"
+                        placeholder="Transaction Affiliation"
+                        v-model="hit.ta"
+                />
+            </div>
+
+            <div v-if="['TRANSACTION'].includes(hit.t)" class="form-group">
+                <label>Shipping costs (optional)</label>
+                <input
+                        type="text"
+                        class="form-control"
+                        placeholder="Shipping costs"
+                        v-model.number="hit.ts"
+                />
+            </div>
+
+            <div v-if="['TRANSACTION'].includes(hit.t)" class="form-group">
+                <label>Shipping method (optional)</label>
+                <input
+                        type="text"
+                        class="form-control"
+                        placeholder="Shipping method"
+                        v-model="hit.sm"
+                />
+            </div>
+
+            <div v-if="['TRANSACTION'].includes(hit.t)" class="form-group">
+                <label>Item count (optional)</label>
+                <input
+                        type="text"
+                        class="form-control"
+                        placeholder="nb of items"
+                        v-model.number="hit.icn"
+                />
+            </div>
+
+            <div v-if="['TRANSACTION'].includes(hit.t)" class="form-group">
+                <label>Payment method (optional)</label>
+                <input
+                        type="text"
+                        class="form-control"
+                        placeholder="Shipping method"
+                        v-model="hit.pm"
+                />
+            </div>
+
+            <div v-if="['TRANSACTION'].includes(hit.t)" class="form-group">
+                <label>Transaction Taxes (optional)</label>
+                <input
+                        type="text"
+                        class="form-control"
+                        placeholder="Taxes"
+                        v-model.number="hit.tt"
+                />
+            </div>
+
+            <div v-if="['TRANSACTION'].includes(hit.t)" class="form-group">
+                <label>Transaction Revenue (optional)</label>
+                <input
+                        type="text"
+                        class="form-control"
+                        placeholder="Transaction Revenue"
+                        v-model.number="hit.tr"
+                />
+            </div>
+
+            <div v-if="['TRANSACTION'].includes(hit.t)" class="form-group">
+                <label>Coupon code (optional)</label>
+                <input
+                        type="text"
+                        class="form-control"
+                        placeholder="Coupon"
+                        v-model="hit.tcc"
+                />
+            </div>
+
+            <div v-if="['TRANSACTION'].includes(hit.t)" class="form-group">
+                <label>Currency (optional)</label>
+                <input
+                        type="text"
+                        class="form-control"
+                        placeholder="Currency"
+                        v-model="hit.tc"
+                />
+            </div>
+
+            <div v-if="['ITEM'].includes(hit.t)" class="form-group">
+                <label>Item Name (Required)</label>
+                <input
+                        type="text"
+                        class="form-control"
+                        placeholder="Item Name"
+                        v-model="hit.in"
+                />
+            </div>
+
+            <div v-if="['ITEM'].includes(hit.t)" class="form-group">
+                <label>Item Quantity (optional)</label>
+                <input
+                        type="text"
+                        class="form-control"
+                        placeholder="Item Quantity"
+                        v-model.number="hit.iq"
+                />
+            </div>
+
+            <div v-if="['ITEM'].includes(hit.t)" class="form-group">
+                <label>Item Price (optional)</label>
+                <input
+                        type="text"
+                        class="form-control"
+                        placeholder="Item Price"
+                        v-model.number="hit.ip"
+                />
+            </div>
+
+            <div v-if="['ITEM'].includes(hit.t)" class="form-group">
+                <label>Item Code (optional)</label>
+                <input
+                        type="text"
+                        class="form-control"
+                        placeholder="Item code"
+                        v-model="hit.ic"
+                />
+            </div>
+
+            <div v-if="['ITEM'].includes(hit.t)" class="form-group">
+                <label>Item Category (optional)</label>
+                <input
+                        type="text"
+                        class="form-control"
+                        placeholder="Item code"
+                        v-model="hit.iv"
+                />
+            </div>
+
+            <div v-if="['TRANSACTION', 'ITEM', 'PAGE', 'EVENT'].includes(hit.t)" class="form-group">
+                <label>Device Resolution in Width (optional)</label>
+                <input
+                        type="text"
+                        class="form-control"
+                        placeholder="640"
+                        v-model.number="hit.srw"
+                />
+            </div>
+
+            <div v-if="['TRANSACTION', 'ITEM', 'PAGE', 'EVENT'].includes(hit.t)" class="form-group">
+                <label>Device Resolution in Height (optional)</label>
+                <input
+                        type="text"
+                        class="form-control"
+                        placeholder="480"
+                        v-model.number="hit.srh"
+                />
+            </div>
+
+            <div v-if="['TRANSACTION', 'ITEM', 'PAGE', 'EVENT'].includes(hit.t)" class="form-group">
+                <label>IP (optional)</label>
+                <input
+                        type="text"
+                        class="form-control"
+                        placeholder="127.0.0.1"
+                        v-model="hit.uip"
+                />
+            </div>
+
+            <div v-if="['TRANSACTION', 'ITEM', 'PAGE', 'EVENT'].includes(hit.t)" class="form-group">
+                <label>Locale (optional)</label>
+                <input
+                        type="text"
+                        class="form-control"
+                        placeholder="fr-fr"
+                        v-model="hit.ul"
+                />
+            </div>
+
+
+            <div class="alert alert-danger" v-if="eventError">
+                [[eventError.error]]
+            </div>
+            <div class="alert alert-success" v-if="eventOk">
+                Hit sent OK !
+            </div>
+
+            <button type="submit" class="btn btn-info">Send event</button>
+        </form>
+    </div>
+{% endblock %}
