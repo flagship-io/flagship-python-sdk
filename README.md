@@ -15,7 +15,7 @@
 
 ## Docs
 
-- [Installation](https://developers.flagship.iohttp:/python/v1.0.0/#install-the-library)
+- [Installation](http://developers.flagship.io/python/v1.0.0/#install-the-library)
 - [Get Started](https://developers.flagship.io/python/v1.0.0/#getting-started)
 - [Initialize and start](https://developers.flagship.io/python/v1.0.0/#import-and-initialize-the-library)
 - [Create a visitor](https://developers.flagship.io/python/v1.0.0/#create-a-visitor)
