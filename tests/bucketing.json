@@ -1,0 +1,138 @@
+{
+    "content": {
+        "campaigns": [
+            {
+                "variationGroups": [
+                    {
+                        "variations": [
+                            {
+                                "allocation": 100, 
+                                "modifications": {
+                                    "type": "FLAG", 
+                                    "value": {
+                                        "featureEnabled": true
+                                    }
+                                }, 
+                                "id": "xxxx"
+                            }
+                        ], 
+                        "targeting": {
+                            "targetingGroups": [
+                                {
+                                    "targetings": [
+                                        {
+                                            "operator": "EQUALS", 
+                                            "value": true, 
+                                            "key": "isVIPUser"
+                                        }
+                                    ]
+                                }
+                            ]
+                        }, 
+                        "id": "yyyy"
+                    }, 
+                    {
+                        "variations": [
+                            {
+                                "allocation": 100, 
+                                "modifications": {
+                                    "type": "FLAG", 
+                                    "value": {
+                                        "featureEnabled": false
+                                    }
+                                }, 
+                                "id": "cccc"
+                            }
+                        ], 
+                        "targeting": {
+                            "targetingGroups": [
+                                {
+                                    "targetings": [
+                                        {
+                                            "operator": "EQUALS", 
+                                            "value": false, 
+                                            "key": "isVIPUser"
+                                        }
+                                    ]
+                                }
+                            ]
+                        }, 
+                        "id": "vvvv"
+                    }
+                ], 
+                "type": "toggle", 
+                "id": "aaaa"
+            }, 
+            {
+                "variationGroups": [
+                    {
+                        "variations": [
+                            {
+                                "allocation": 25, 
+                                "modifications": {
+                                    "type": "JSON", 
+                                    "value": {
+                                        "rank_plus": null, 
+                                        "rank": null
+                                    }
+                                }, 
+                                "id": "zzzz", 
+                                "reference": true
+                            }, 
+                            {
+                                "allocation": 25, 
+                                "modifications": {
+                                    "type": "JSON", 
+                                    "value": {
+                                        "rank_plus": null, 
+                                        "rank": 1111
+                                    }
+                                }, 
+                                "id": "eeee"
+                            }, 
+                            {
+                                "allocation": 25, 
+                                "modifications": {
+                                    "type": "JSON", 
+                                    "value": {
+                                        "rank_plus": null, 
+                                        "rank": 3333
+                                    }
+                                }, 
+                                "id": "rrrr"
+                            }, 
+                            {
+                                "allocation": 25, 
+                                "modifications": {
+                                    "type": "JSON", 
+                                    "value": {
+                                        "rank_plus": 22.22, 
+                                        "rank": 2222
+                                    }
+                                }, 
+                                "id": "tttt"
+                            }
+                        ], 
+                        "targeting": {
+                            "targetingGroups": [
+                                {
+                                    "targetings": [
+                                        {
+                                            "operator": "EQUALS", 
+                                            "value": "password", 
+                                            "key": "access"
+                                        }
+                                    ]
+                                }
+                            ]
+                        }, 
+                        "id": "yyyy"
+                    }
+                ], 
+                "type": "ab", 
+                "id": "iiii"
+            }
+        ]
+    }, 
+    "last_modified": "Fri,  05 Jun 2023 12:20:40 GMT"
+}
