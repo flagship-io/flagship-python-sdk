@@ -11,12 +11,15 @@ on:
 
 jobs:
   build:
-
+    env:
+      coverage: 0
+      old_coverage: 0
     runs-on: ubuntu-latest
     strategy:
       matrix:
         python-version: [2.7, 3.5, 3.6, 3.7, 3.8]
 
+    if: contains(github.event.head_commit.message, '#ci-auto') == false
     steps:
     - uses: actions/checkout@v2
     - name: Set up Python ${{ matrix.python-version }}
@@ -31,3 +34,25 @@ jobs:
     - name: Test with pytest
       run: |
         pytest
+    - name: Coverage
+      if: matrix.python-version == 3.8
+      run: |
+        pip install coverage
+        coverage run --source=flagship -m pytest ./tests/
+        echo ::set-env name=coverage::$(echo $(coverage report -m) | tail -c 4)
+        echo ::set-env name=old_coverage::$(grep -Po -m 1 '(?<=coverage-)(.*?)(?=%25-green)' ./README.md)
+    - name: Git update coverage
+      if: ${{ env.old_coverage != env.coverage && matrix.python-version == 3.8}}
+      run: |
+        echo $old_coverage
+        echo $coverage
+        sed -i -e 's/coverage-${{ env.old_coverage }}%25/coverage-${{ env.coverage }}%25/g' ./README.md
+        cat ./README.md
+        git remote add github "https://$GITHUB_ACTOR:$GITHUB_TOKEN@github.com/$GITHUB_REPOSITORY.git"
+        git config --local user.email "ci@abtasty.com"
+        git config --local user.name "CI action"
+        git pull github ${GITHUB_REF} --ff-only
+        git add .
+        git commit -am "Update coverage #ci-auto"
+        git push github HEAD:${GITHUB_REF}
+    
