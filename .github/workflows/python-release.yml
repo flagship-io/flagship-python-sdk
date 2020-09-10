@@ -71,7 +71,7 @@ jobs:
         python3 -m pip install --user --upgrade twine        
         rm -rf dist/
         python3 setup.py sdist bdist_wheel
-        python3 -m twine upload dist/*
+        printf '${{env.PYPI_USER}}\n${{env.PYPI_TOKEN}}' | python3 -m twine upload dist/*
 
       
     
