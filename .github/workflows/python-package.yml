@@ -39,7 +39,7 @@ jobs:
       run: |
         pip install coverage
         coverage run --source=flagship -m pytest ./tests/
-        echo ::set-env name=coverage::$(echo $(coverage report -m) | tail -c 4)
+        echo ::set-env name=coverage::$(echo $(coverage report -m) | grep -Po '([^ ]*(?=%$))')
         echo ::set-env name=old_coverage::$(grep -Po -m 1 '(?<=coverage-)(.*?)(?=%25-green)' ./README.md)
     - name: Git update coverage
       if: ${{ env.old_coverage != env.coverage && matrix.python-version == 3.8}}
