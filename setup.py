@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name='flagship',
-    version='h.h.h',
+    version='12.12.12',
     author="Flagship Team",
     author_email="support@flagship.io",
     description="Flagship Python SDK",
