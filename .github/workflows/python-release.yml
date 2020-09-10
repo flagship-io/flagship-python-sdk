@@ -20,7 +20,7 @@ jobs:
     strategy:
       matrix:
         python-version: [2.7, 3.5, 3.6, 3.7, 3.8]
-    if: contains(github.event.head_commit.message, '#ci-auto') == false && contains(github.event.head_commit.message, '#release-'${{env.FLAGSHIP_VERSION_NAME}}) == false
+    if: contains(github.event.head_commit.message, '#ci-auto') == false && contains(github.event.head_commit.message, '#release-${{env.FLAGSHIP_VERSION_NAME}}') == false
     steps:
     - uses: actions/checkout@v2
     - name: Set up Python ${{ matrix.python-version }}
