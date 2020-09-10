@@ -30,3 +30,5 @@ tests/__pycache__/test_init.cpython-27-PYTEST.pyc
 tests/__pycache__/test_singleton.cpython-27-PYTEST.pyc
 tests/__pycache__/test_visitor.cpython-27-PYTEST.pyc
 *.pyc
+dist/
+.coverage

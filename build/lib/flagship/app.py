@@ -27,6 +27,7 @@ class Flagship:
             :param api_key: Flagship secure api key.
             :param config: Configuration to initialize.
             """
+            self._bucketing_manager = None
             self._config = config
             if self._config.env_id != env_id:
                 self._config.env_id = env_id
