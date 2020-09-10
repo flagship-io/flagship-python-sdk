@@ -1,0 +1,58 @@
+# This workflow will install Python dependencies, run tests and lint with a variety of Python versions
+# For more information see: https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
+
+name: Python package
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+    env:
+      coverage: 0
+      old_coverage: 0
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [2.7, 3.5, 3.6, 3.7, 3.8]
+
+    if: contains(github.event.head_commit.message, '#ci-auto') == false
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pytest
+        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+    - name: Test with pytest
+      run: |
+        pytest
+    - name: Coverage
+      if: matrix.python-version == 3.8
+      run: |
+        pip install coverage
+        coverage run --source=flagship -m pytest ./tests/
+        echo ::set-env name=coverage::$(echo $(coverage report -m) | grep -Po '([^ ]*(?=%$))')
+        echo ::set-env name=old_coverage::$(grep -Po -m 1 '(?<=coverage-)(.*?)(?=%25-green)' ./README.md)
+    - name: Git update coverage
+      if: ${{ env.old_coverage != env.coverage && matrix.python-version == 3.8}}
+      run: |
+        echo $old_coverage
+        echo $coverage
+        sed -i -e 's/coverage-${{ env.old_coverage }}%25/coverage-${{ env.coverage }}%25/g' ./README.md
+        cat ./README.md
+        git remote add github "https://$GITHUB_ACTOR:$GITHUB_TOKEN@github.com/$GITHUB_REPOSITORY.git"
+        git config --local user.email "ci@abtasty.com"
+        git config --local user.name "CI action"
+        git pull github ${GITHUB_REF} --ff-only
+        git add .
+        git commit -am "Update coverage #ci-auto"
+        git push github HEAD:${GITHUB_REF}
+    
