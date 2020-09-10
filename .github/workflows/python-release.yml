@@ -72,7 +72,7 @@ jobs:
         git remote add github "https://$GITHUB_ACTOR:$GITHUB_TOKEN@github.com/$GITHUB_REPOSITORY.git"
         git config --local user.email "ci@abtasty.com"
         git config --local user.name "CI action"
-        git pull github ${GITHUB_REF} --ff-only
+        git pull github ${GITHUB_REF}
         git add .
         git commit -am "Update version setup.py #ci-auto"
         git push --delete github ${{env.FLAGSHIP_VERSION_NAME}}
