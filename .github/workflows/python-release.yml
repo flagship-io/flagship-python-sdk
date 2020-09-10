@@ -75,7 +75,9 @@ jobs:
         git pull github ${GITHUB_REF} --ff-only
         git add .
         git commit -am "Update version setup.py #ci-auto"
+        git push --delete github ${{env.FLAGSHIP_VERSION_NAME}}
         git push github HEAD:${GITHUB_REF}
+        git push github master --force
         
     - name: Pypi publish
       if: matrix.python-version == 3.8
