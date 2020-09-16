@@ -15,13 +15,13 @@
 
 ## Docs
 
-- [Installation](http://developers.flagship.io/python/v1.0.0/#install-the-library)
-- [Get Started](https://developers.flagship.io/python/v1.0.0/#getting-started)
-- [Initialize and start](https://developers.flagship.io/python/v1.0.0/#import-and-initialize-the-library)
-- [Create a visitor](https://developers.flagship.io/python/v1.0.0/#create-a-visitor)
-- [Campaign integration](https://developers.flagship.io/python/v1.0.0/#campaign-integration)
-- [Hit tracking](https://developers.flagship.io/python/v1.0.0/#hit-tracking)
-- [Release Notes](https://developers.flagship.io/python/v1.0.0/#releases)
+- [Installation](https://developers.flagship.io/docs/sdk/python/v2.0#installation)
+- [Get Started](https://developers.flagship.io/docs/sdk/python/v2.0#getting-started)
+- [Initialize and start](https://developers.flagship.io/docs/sdk/python/v2.0#initialization)
+- [Create a visitor](https://developers.flagship.io/docs/sdk/python/v2.0#updating-the-user-context)
+- [Campaign integration](https://developers.flagship.io/docs/sdk/python/v2.0#campaign-synchronization)
+- [Hit tracking](https://developers.flagship.io/docs/sdk/python/v2.0#hit-tracking)
+- [Release Notes](https://developers.flagship.io/docs/sdk/python/v2.0#release-notes)
 
 ## Examples
 
