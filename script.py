@@ -20,6 +20,7 @@ class CustomEventHandler(FlagshipEventHandler):
         FlagshipEventHandler.on_exception_raised(self, exception, traceback)
         pass
 
+
 def init():
     print(sys.version)
     t = CustomEventHandler()
@@ -36,8 +37,11 @@ def init():
     # visitor3 = Flagship.instance().create_visitor("visitorId 3", {'isVIPUser': True})  # type: FlagshipVisitor
     # visitor.synchronize_modifications()
 
-
-    v = Flagship.instance().create_visitor("visitorId 1", {'isVIPUser': True})
+    v = Flagship.instance().create_visitor("visitorId 1",
+                                           {
+                                               'isVIPUser': True,
+                                               'sdk_deviceModel': 'Google Pixel 4'
+                                           })
     v2 = Flagship.instance().create_visitor("visitorId 2", {'isVIPUser': False})
 
     count = 0
@@ -47,6 +51,7 @@ def init():
         v.synchronize_modifications()
         v.activate_modification('featureEnabled')
         v.send_hit(Page("page 1"))
+        print("===== Target = " + v.get_modification('target', 'default', False))
 
         v2.update_context(('isVIPUser', count % 2 == 1))
         v2.synchronize_modifications()
@@ -59,5 +64,6 @@ def init():
         #     run = False
 
     # Flagship.instance().close()
+
 
 init()

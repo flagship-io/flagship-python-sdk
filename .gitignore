@@ -32,3 +32,5 @@ tests/__pycache__/test_visitor.cpython-27-PYTEST.pyc
 *.pyc
 dist/
 .coverage
+visitorId 1.cache
+visitorId 2.cache
