@@ -84,8 +84,7 @@ def a_test_bucketing_init():
             os.remove("bucketing.json")
         except Exception as e:
             print("No Bucketing file")
-        json_response = '{"campaigns":[{"variationGroups":[{"variations":[{"allocation":100,"modifications":{"type":"FLAG","value":{"featureEnabled":true}},"id":"xxxx"}],"targeting":{"targetingGroups":[{"targetings":[{"operator":"EQUALS","value":true,"key":"isVIPUser"}]}]},"id":"yyyy"},{"variations":[{"allocation":100,"modifications":{"type":"FLAG","value":{"featureEnabled":false}},"id":"cccc"}],"targeting":{"targetingGroups":[{"targetings":[{"operator":"EQUALS","value":false,"key":"isVIPUser"}]}]},"id":"vvvv"}],"type":"toggle","id":"aaaa"},{"variationGroups":[{"variations":[{"allocation":25,"modifications":{"type":"JSON","value":{"rank_plus":null,"rank":null}},"id":"zzzz","reference":true},{"allocation":25,"modifications":{"type":"JSON","value":{"rank_plus":null,"rank":1111}},"id":"eeee"},{"allocation":25,"modifications":{"type":"JSON","value":{"rank_plus":null,"rank":3333}},"id":"rrrr"},{"allocation":25,"modifications":{"type":"JSON","value":{"rank_plus":22.22,"rank":2222}},"id":"tttt"}],"targeting":{"targetingGroups":[{"targetings":[{"operator":"EQUALS","value":"password","key":"access"}]}]},"id":"yyyy"}],"type":"ab","id":"iiii"}]}'
-
+        json_response = '{"campaigns":[{"variationGroups":[{"variations":[{"allocation":100,"modifications":{"type":"FLAG","value":{"featureEnabled":true}},"id":"xxxx"}],"targeting":{"targetingGroups":[{"targetings":[{"operator":"EQUALS","value":true,"key":"isVIPUser"}]}]},"id":"yyyy"},{"variations":[{"allocation":100,"modifications":{"type":"FLAG","value":{"featureEnabled":false}},"id":"cccc"}],"targeting":{"targetingGroups":[{"targetings":[{"operator":"EQUALS","value":false,"key":"isVIPUser"}]}]},"id":"vvvv"}],"type":"toggle","id":"aaaa"},{"id":"bu6lgeu3bdt014iawwww","type":"perso","variationGroups":[{"id":"bu6lgeu3bdt014iaxxxx","targeting":{"targetingGroups":[{"targetings":[{"operator":"CONTAINS","key":"sdk_deviceModel","value":["Google Pixel 3","Google Pixel X","Google Pixel 0"]}]}]},"variations":[{"id":"bu6lgeu3bdt014iacccc","modifications":{"type":"JSON","value":{"target":null}},"reference":true},{"id":"bu6lgeu3bdt014iavvvv","modifications":{"type":"JSON","value":{"target":"is"}},"allocation":100}]},{"id":"bu6lttip17b01emhbbbb","targeting":{"targetingGroups":[{"targetings":[{"operator":"NOT_CONTAINS","key":"sdk_deviceModel","value":["Google Pixel 9","Google Pixel 9000"]}]}]},"variations":[{"id":"bu6lttip17b01emhnnnn","modifications":{"type":"JSON","value":{"target":null}},"reference":true},{"id":"bu6lttip17b01emhqqqq","modifications":{"type":"JSON","value":{"target":"is not"}},"allocation":100}]}]},{"variationGroups":[{"variations":[{"allocation":25,"modifications":{"type":"JSON","value":{"rank_plus":null,"rank":null}},"id":"zzzz","reference":true},{"allocation":25,"modifications":{"type":"JSON","value":{"rank_plus":null,"rank":1111}},"id":"eeee"},{"allocation":25,"modifications":{"type":"JSON","value":{"rank_plus":null,"rank":3333}},"id":"rrrr"},{"allocation":25,"modifications":{"type":"JSON","value":{"rank_plus":22.22,"rank":2222}},"id":"tttt"}],"targeting":{"targetingGroups":[{"targetings":[{"operator":"EQUALS","value":"password","key":"access"}]}]},"id":"yyyy"}],"type":"ab","id":"iiii"}]}'
         headers = {
             "Last-Modified": "Fri,  05 Jun 2020 12:20:40 GMT"
         }
@@ -93,6 +92,9 @@ def a_test_bucketing_init():
         responses.add(responses.GET,
                       'https://cdn.flagship.io/my_env_id/bucketing.json',
                       json=json.loads(json_response), status=200, adding_headers=headers)
+        responses.add(responses.POST,
+                                            'https://decision.flagship.io/v2/my_env_id/events',
+                                            json=json.loads('{}'), status=200)
 
         fs = Flagship.instance()
         fs.start("my_env_id", "my_api_key", Config(mode=Config.Mode.BUCKETING, polling_interval=-1))
@@ -104,6 +106,12 @@ def a_test_bucketing_init():
             assert last_modified == "Fri,  05 Jun 2020 12:20:40 GMT"
             # test_bucketing_304()
 
+        visitor = fs.create_visitor("visitor_1", {'sdk_deviceModel': 'Google Pixel 9000'})
+        assert visitor.get_modification("target", "default", False) == 'default'
+        visitor.update_context(('sdk_deviceModel', 'Google Pixel 10'), True)
+        assert visitor.get_modification("target", "default", False) == 'is not'
+        visitor.update_context(('sdk_deviceModel', 'Google Pixel XXX'), True)
+        assert visitor.get_modification("target", "default", False) == 'is'
     except Exception as e:
         print(e)
         assert False
