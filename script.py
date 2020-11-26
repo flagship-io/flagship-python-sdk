@@ -1,4 +1,6 @@
 # coding: utf8
+from datetime import date, datetime
+import random
 import sys
 import time
 
@@ -23,7 +25,6 @@ class CustomEventHandler(FlagshipEventHandler):
 def init():
     print(sys.version)
     t = CustomEventHandler()
-
     Flagship.instance().start("bkk4s7gcmjcg07fke9dg", "j2jL0rzlgVaODLw2Cl4JC3f4MflKrMgIaQOENv36",
                               Config(event_handler=t, mode=Config.Mode.BUCKETING, polling_interval=5, timeout=0.1))
     # Flagship.instance().start("bkk4s7gcmjcg07fke9dg", "j2jL0rzlgVaODLw2Cl4JC3f4MflKrMgIaQOENv36",

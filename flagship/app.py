@@ -54,11 +54,13 @@ class Flagship:
 
         @exception_handler()
         @types_validator(True, str, dict)
-        def create_visitor(self, visitor_id, context={}):  # type: (str, dict) -> FlagshipVisitor(object, str, dict)
+        def create_visitor(self, visitor_id=None, authenticated=False, context={}):
+            # type: (str, bool, dict) -> FlagshipVisitor(BucketingManager, Config, str, bool, dict)
             """
             Create a visitor instance. Raise a InitializationError if the SDK has not been successfully initialized.
 
             :param visitor_id: Unique visitor identifier.
+            :param authenticated: Specify if the current visitor is authenticated or anonymous
             :param context: Visitor context.
             :return: FlagshipVisitor or None if the
             """
@@ -66,7 +68,7 @@ class Flagship:
                 raise InitializationError("Flagship SDK has not been initialized or started successfully.")
             else:
                 context.update(PresetContext.load())
-                visitor = FlagshipVisitor(self._bucketing_manager, self._config, visitor_id, context)
+                visitor = FlagshipVisitor(self._bucketing_manager, self._config, visitor_id, authenticated, context)
                 self._config.event_handler.on_log(logging.DEBUG, "Visitor '{}' created. Context : {}".
                                                   format(visitor_id, str(context)))
                 return visitor

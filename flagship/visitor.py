@@ -1,4 +1,5 @@
 import logging
+import random
 from datetime import datetime
 
 from flagship.config import Config
@@ -9,23 +10,62 @@ from flagship.helpers.hits import Hit
 from flagship.helpers.preset_context import PresetContext
 from flagship.model.campaign import Campaign
 from flagship.model.modification import Modification
+from datetime import datetime
 
 
 class FlagshipVisitor:
 
-    def __init__(self, bucketing_manager, config, visitor_id, context):
-        # type: (BucketingManager, Config, str, dict) -> None
+    def __init__(self, bucketing_manager, config, visitor_id, authenticated, context):
+        # type: (BucketingManager, Config, str, bool, dict) -> None
         self._bucketing_manager = bucketing_manager
         self._config = config
         self._api_manager = ApiManager(config)
         self._env_id = config.env_id
         self._api_key = config.api_key
-        self._visitor_id = visitor_id
+        self._visitor_id = None
+        self._anonymous_id = None
         self._context = dict()
         self.update_context(context)
         self._last_call = datetime.now()
         self.campaigns = list()
         self._modifications = dict()
+
+        self.__init_visitor(visitor_id, authenticated)
+
+    def __init_visitor(self, visitor_id, authenticated):
+        if visitor_id is None or len(visitor_id) <= 0:
+            self._visitor_id = self.__gen_visitor_id()
+        else:
+            self._visitor_id = visitor_id
+        if self._config.mode is Config.Mode.API:
+            if authenticated:
+                self._anonymous_id = self.__gen_visitor_id()
+
+    def authenticate(self, visitorId, context=None, synchronize=False):
+        if visitorId is not None and len(visitorId) >= 0:
+            self._anonymous_id = visitorId
+            self._visitor_id = visitorId
+            if context is not None:
+                self.update_context(context)
+            if synchronize:
+                self.synchronize_modifications()
+
+    def unauthenticate(self, context=None, synchronize=False):
+        if self._anonymous_id is None:
+            self._anonymous_id = self.__gen_visitor_id()
+        self._visitor_id = self._anonymous_id
+        self._anonymous_id = None
+        if context is not None:
+            self.update_context(context)
+        if synchronize:
+            self.synchronize_modifications()
+
+    def getContext(self):
+        return self._context
+
+    @staticmethod
+    def __gen_visitor_id():
+        return datetime.now().strftime('%Y%m%d%H%M%S') + str(random.randint(10000, 99999))
 
     def _is_panic_mode(self):
         if self._api_manager is not None and self._api_manager.panic_mode is True:
