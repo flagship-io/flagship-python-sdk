@@ -42,23 +42,31 @@ class FlagshipVisitor:
                 self._anonymous_id = self.__gen_visitor_id()
 
     def authenticate(self, visitorId, context=None, synchronize=False):
-        if visitorId is not None and len(visitorId) >= 0:
-            self._anonymous_id = visitorId
-            self._visitor_id = visitorId
+        if self._config is Config.Mode.API:
+            if visitorId is not None and len(visitorId) >= 0:
+                self._anonymous_id = visitorId
+                self._visitor_id = visitorId
+                if context is not None:
+                    self.update_context(context)
+                if synchronize:
+                    self.synchronize_modifications()
+        else:
+            log = "authenticateVisitor() is ignored in BUCKETING mode."
+            self._config.event_handler.on_log(logging.WARNING, log)
+
+    def unauthenticate(self, context=None, synchronize=False):
+        if self._config is Config.Mode.API:
+            if self._anonymous_id is None:
+                self._anonymous_id = self.__gen_visitor_id()
+            self._visitor_id = self._anonymous_id
+            self._anonymous_id = None
             if context is not None:
                 self.update_context(context)
             if synchronize:
                 self.synchronize_modifications()
-
-    def unauthenticate(self, context=None, synchronize=False):
-        if self._anonymous_id is None:
-            self._anonymous_id = self.__gen_visitor_id()
-        self._visitor_id = self._anonymous_id
-        self._anonymous_id = None
-        if context is not None:
-            self.update_context(context)
-        if synchronize:
-            self.synchronize_modifications()
+        else:
+            log = "unauthenticateVisitor() is ignored in BUCKETING mode."
+            self._config.event_handler.on_log(logging.WARNING, log)
 
     def getContext(self):
         return self._context
@@ -110,7 +118,7 @@ class FlagshipVisitor:
         """
 
         if self._config.mode is Config.Mode.API:
-            self.campaigns = self._api_manager.synchronize_modifications(self._visitor_id, self._context)
+            self.campaigns = self._api_manager.synchronize_modifications(self._visitor_id, self._anonymous_id, self._context)
         else:
             if self._is_panic_mode() is False:
                 self._modifications.clear()
@@ -174,7 +182,8 @@ class FlagshipVisitor:
         if self._is_panic_mode() is False:
             if key in self._modifications:
                 modification = self._modifications[key]
-                return self._api_manager.activate_modification(self._visitor_id, modification.variation_group_id,
+                return self._api_manager.activate_modification(self._visitor_id, self._anonymous_id,
+                                                               modification.variation_group_id,
                                                                modification.variation_id)
             else:
                 log = "[activate_modification] : no modification for the key '{}'.".format(key)

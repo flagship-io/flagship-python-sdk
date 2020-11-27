@@ -33,7 +33,7 @@ class ApiManager:
     def get_endpoint(self):
         return self.__end_point_v2
 
-    def __send_campaign_request(self, visitor_id, context):
+    def __send_campaign_request(self, visitor_id, anoymousId, context):
         context_to_send = self.__clean_context(context)
         header = {
             "x-api-key": self.api_key
@@ -44,6 +44,8 @@ class ApiManager:
             "context": context_to_send
 
         }
+        if anoymousId is not None:
+            body["anonymousId"]: anoymousId
         try:
             url = self.get_endpoint() + '' + self._env_id + '' + self.__campaigns
             r = requests.post(url, headers=header, json=body, timeout=self._config.timeout)
@@ -53,8 +55,8 @@ class ApiManager:
             self._config.event_handler.on_log(logging.ERROR, "Connection Timeout")
             return None
 
-    def synchronize_modifications(self, visitor_id, context):
-        response = self.__send_campaign_request(visitor_id, context)
+    def synchronize_modifications(self, visitor_id, anonymousId, context):
+        response = self.__send_campaign_request(visitor_id, anonymousId, context)
         campaigns = list()
         if response is not None:
             json_response = response.json()
@@ -76,16 +78,26 @@ class ApiManager:
             return True
         return False
 
-    def activate_modification(self, visitor_id, variation_group_id, variation_id):
+    def activate_modification(self, visitor_id, anonymous_id, variation_group_id, variation_id):
         header = {
             "x-api-key": self.api_key
         }
         body = {
             "cid": self._env_id,
-            "vid": visitor_id,
+            # "vid": visitor_id,
             "caid": variation_group_id,
             "vaid": variation_id
         }
+        if visitor_id is not None and len(visitor_id) > 0 and anonymous_id is not None:
+            body["anonymousId"] = anonymous_id
+            body["visitorId"] = visitor_id
+        elif visitor_id is not None and len(visitor_id) > 0 and anonymous_id is None:
+            body["anonymousId"] = None
+            body["visitorId"] = visitor_id
+        else:
+            body["anonymousId"] = None
+            body["visitorId"] = anonymous_id
+
         url = self.get_endpoint() + self.__activate
         r = requests.post(url, headers=header, json=body)
         return self.__log_request(url, r, body)
@@ -111,11 +123,18 @@ class ApiManager:
                 context_to_send.pop(n)
         return context_to_send
 
-    def send_hit_request(self, visitor_id, hit):
+    def send_hit_request(self, visitor_id, anonymous_id, hit):
         body = {
             "cid": self._env_id,
-            "vid": visitor_id
+            # "vid": visitor_id
         }
+        if visitor_id is not None and len(visitor_id) > 0 and anonymous_id is not None:
+            body["cuid"] = visitor_id
+            body["vid"] = anonymous_id
+        elif visitor_id is not None and len(visitor_id) > 0 and anonymous_id is None:
+            body["vid"] = visitor_id
+        else:
+            body["vid"] = anonymous_id
         body.update(hit.get_data())
         url = self.__ariane
         r = requests.post(url, json=body)
