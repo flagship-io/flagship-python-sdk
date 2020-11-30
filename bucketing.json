@@ -6,14 +6,104 @@
                     {
                         "variations": [
                             {
-                                "allocation": 100, 
+                                "allocation": 50, 
                                 "modifications": {
-                                    "type": "FLAG", 
+                                    "type": "JSON", 
                                     "value": {
-                                        "featureEnabled": true
+                                        "isABtastyClient": true, 
+                                        "btn-color": "#8bbcc9", 
+                                        "list": [
+                                            {
+                                                "char-counter": 15
+                                            }
+                                        ], 
+                                        "backgroundColor": "#b6edfc", 
+                                        "fontColor": "#993399", 
+                                        "configs": {
+                                            "title": [
+                                                {
+                                                    "btn-title": "TitleFromJson"
+                                                }
+                                            ]
+                                        }
                                     }
                                 }, 
-                                "id": "bmsorfe4jaeg0gi1bhq0"
+                                "id": "brp8f4idqg4g03fhki2g", 
+                                "reference": true
+                            }, 
+                            {
+                                "allocation": 50, 
+                                "modifications": {
+                                    "type": "JSON", 
+                                    "value": {
+                                        "isABtastyClient": true, 
+                                        "btn-color": "#8bbcc9", 
+                                        "list": [
+                                            {
+                                                "char-counter": 16
+                                            }
+                                        ], 
+                                        "backgroundColor": "#b6edfc", 
+                                        "fontColor": "#500534", 
+                                        "configs": {
+                                            "title": [
+                                                {
+                                                    "btn-title": "TitleFromJsonBis"
+                                                }
+                                            ]
+                                        }
+                                    }
+                                }, 
+                                "id": "brp8f4idqg4g03fhki30"
+                            }
+                        ], 
+                        "targeting": {
+                            "targetingGroups": [
+                                {
+                                    "targetings": [
+                                        {
+                                            "operator": "EQUALS", 
+                                            "value": 10, 
+                                            "key": "Number_Key"
+                                        }
+                                    ]
+                                }
+                            ]
+                        }, 
+                        "id": "brp8f4idqg4g03fhki20"
+                    }
+                ], 
+                "type": "ab", 
+                "id": "brp8f4idqg4g03fhki10"
+            }, 
+            {
+                "variationGroups": [
+                    {
+                        "variations": [
+                            {
+                                "allocation": 50, 
+                                "modifications": {
+                                    "type": "JSON", 
+                                    "value": {
+                                        "colorKey": "#23a646", 
+                                        "titleKey1": "News", 
+                                        "titleKey2": "Opinion"
+                                    }
+                                }, 
+                                "id": "bufunssn3n5g2h5aute0", 
+                                "reference": true
+                            }, 
+                            {
+                                "allocation": 50, 
+                                "modifications": {
+                                    "type": "JSON", 
+                                    "value": {
+                                        "colorKey": "#a62346", 
+                                        "titleKey1": "Sports", 
+                                        "titleKey2": "Culture"
+                                    }
+                                }, 
+                                "id": "bufunssn3n5g2h5auteg"
                             }
                         ], 
                         "targeting": {
@@ -23,445 +113,17 @@
                                         {
                                             "operator": "EQUALS", 
                                             "value": true, 
-                                            "key": "isVIPUser"
+                                            "key": "isPoc"
                                         }
                                     ]
                                 }
                             ]
                         }, 
-                        "id": "bmsorfe4jaeg0gi1bhpg"
-                    }, 
-                    {
-                        "variations": [
-                            {
-                                "allocation": 100, 
-                                "modifications": {
-                                    "type": "FLAG", 
-                                    "value": {
-                                        "featureEnabled": false
-                                    }
-                                }, 
-                                "id": "bmsorfe4jaeg0gi1bhr0"
-                            }
-                        ], 
-                        "targeting": {
-                            "targetingGroups": [
-                                {
-                                    "targetings": [
-                                        {
-                                            "operator": "EQUALS", 
-                                            "value": false, 
-                                            "key": "isVIPUser"
-                                        }
-                                    ]
-                                }
-                            ]
-                        }, 
-                        "id": "bmsorfe4jaeg0gi1bhqg"
-                    }
-                ], 
-                "type": "toggle", 
-                "id": "bmsorfe4jaeg0gi1bhog"
-            }, 
-            {
-                "variationGroups": [
-                    {
-                        "variations": [
-                            {
-                                "allocation": 50, 
-                                "modifications": {
-                                    "type": "JSON", 
-                                    "value": {
-                                        "array": null, 
-                                        "complex": null, 
-                                        "value1": null, 
-                                        "object": null, 
-                                        "value2": null
-                                    }
-                                }, 
-                                "id": "bsbgq4rjhsqg11tntt30", 
-                                "reference": true
-                            }, 
-                            {
-                                "allocation": 50, 
-                                "modifications": {
-                                    "type": "JSON", 
-                                    "value": {
-                                        "array": [
-                                            1, 
-                                            2, 
-                                            3
-                                        ], 
-                                        "complex": {
-                                            "carray": [
-                                                {
-                                                    "cobject": 0
-                                                }
-                                            ]
-                                        }, 
-                                        "value1": 1, 
-                                        "object": {
-                                            "value": 123456
-                                        }, 
-                                        "value2": "Deux"
-                                    }
-                                }, 
-                                "id": "bsbgq4rjhsqg11tntt3g"
-                            }
-                        ], 
-                        "targeting": {
-                            "targetingGroups": [
-                                {
-                                    "targetings": [
-                                        {
-                                            "operator": "EQUALS", 
-                                            "value": "", 
-                                            "key": "fs_all_users"
-                                        }
-                                    ]
-                                }
-                            ]
-                        }, 
-                        "id": "bsbgq4rjhsqg11tntt2g"
+                        "id": "bufunssn3n5g2h5autdg"
                     }
                 ], 
                 "type": "ab", 
-                "id": "bsbgq4rjhsqg11tntt1g"
-            }, 
-            {
-                "variationGroups": [
-                    {
-                        "variations": [
-                            {
-                                "modifications": {
-                                    "type": "FLAG", 
-                                    "value": {
-                                        "feature_name": null
-                                    }
-                                }, 
-                                "id": "btmc00c09hdg4ahev37g", 
-                                "reference": true
-                            }, 
-                            {
-                                "allocation": 100, 
-                                "modifications": {
-                                    "type": "FLAG", 
-                                    "value": {
-                                        "feature_name": "1.0.0"
-                                    }
-                                }, 
-                                "id": "btmc00c09hdg4ahev380"
-                            }
-                        ], 
-                        "targeting": {
-                            "targetingGroups": [
-                                {
-                                    "targetings": [
-                                        {
-                                            "operator": "EQUALS", 
-                                            "value": "toto", 
-                                            "key": "fs_users"
-                                        }, 
-                                        {
-                                            "operator": "EQUALS", 
-                                            "value": 30, 
-                                            "key": "age"
-                                        }
-                                    ]
-                                }, 
-                                {
-                                    "targetings": [
-                                        {
-                                            "operator": "EQUALS", 
-                                            "value": 50, 
-                                            "key": "daysSinceLastLaunch"
-                                        }
-                                    ]
-                                }
-                            ]
-                        }, 
-                        "id": "btmc00c09hdg4ahev370"
-                    }
-                ], 
-                "type": "deployment", 
-                "id": "btmc00c09hdg4ahev360"
-            }, 
-            {
-                "variationGroups": [
-                    {
-                        "variations": [
-                            {
-                                "modifications": {
-                                    "type": "JSON", 
-                                    "value": {
-                                        "target": null
-                                    }
-                                }, 
-                                "id": "bu6lgeu3bdt014iap5ag", 
-                                "reference": true
-                            }, 
-                            {
-                                "allocation": 100, 
-                                "modifications": {
-                                    "type": "JSON", 
-                                    "value": {
-                                        "target": "is"
-                                    }
-                                }, 
-                                "id": "bu6lgeu3bdt014iap5b0"
-                            }
-                        ], 
-                        "targeting": {
-                            "targetingGroups": [
-                                {
-                                    "targetings": [
-                                        {
-                                            "operator": "CONTAINS", 
-                                            "value": [
-                                                "Google Pixel 3", 
-                                                "Google Pixel X", 
-                                                "Google Pixel 0"
-                                            ], 
-                                            "key": "sdk_deviceModel"
-                                        }
-                                    ]
-                                }
-                            ]
-                        }, 
-                        "id": "bu6lgeu3bdt014iap5a0"
-                    }, 
-                    {
-                        "variations": [
-                            {
-                                "modifications": {
-                                    "type": "JSON", 
-                                    "value": {
-                                        "target": null
-                                    }
-                                }, 
-                                "id": "bu6lttip17b01emh0l6g", 
-                                "reference": true
-                            }, 
-                            {
-                                "allocation": 100, 
-                                "modifications": {
-                                    "type": "JSON", 
-                                    "value": {
-                                        "target": "is not"
-                                    }
-                                }, 
-                                "id": "bu6lttip17b01emh0l70"
-                            }
-                        ], 
-                        "targeting": {
-                            "targetingGroups": [
-                                {
-                                    "targetings": [
-                                        {
-                                            "operator": "NOT_CONTAINS", 
-                                            "value": [
-                                                "Google Pixel 9", 
-                                                "Google Pixel 9000"
-                                            ], 
-                                            "key": "sdk_deviceModel"
-                                        }
-                                    ]
-                                }
-                            ]
-                        }, 
-                        "id": "bu6lttip17b01emh0l60"
-                    }
-                ], 
-                "type": "perso", 
-                "id": "bu6lgeu3bdt014iap590"
-            }, 
-            {
-                "variationGroups": [
-                    {
-                        "variations": [
-                            {
-                                "allocation": 20, 
-                                "modifications": {
-                                    "type": "JSON", 
-                                    "value": {
-                                        "ATB_app_analytics_group": "Control_geat-222", 
-                                        "ABT_app_freeship_exp": null, 
-                                        "isChallenger": false
-                                    }
-                                }, 
-                                "id": "bu7d4hokoidg2n2e4ag0", 
-                                "reference": true
-                            }, 
-                            {
-                                "allocation": 20, 
-                                "modifications": {
-                                    "type": "JSON", 
-                                    "value": {
-                                        "ATB_app_analytics_group": "Test_geat-222", 
-                                        "ABT_app_freeship_exp": "You qualify for FREE Shipping", 
-                                        "isChallenger": true
-                                    }
-                                }, 
-                                "id": "bu7d4hokoidg2n2e4agg"
-                            }
-                        ], 
-                        "targeting": {
-                            "targetingGroups": [
-                                {
-                                    "targetings": [
-                                        {
-                                            "operator": "EQUALS", 
-                                            "value": false, 
-                                            "key": "isFreeShipExcluded"
-                                        }, 
-                                        {
-                                            "operator": "GREATER_THAN_OR_EQUALS", 
-                                            "value": 60, 
-                                            "key": "basketValue"
-                                        }
-                                    ]
-                                }
-                            ]
-                        }, 
-                        "id": "bu7d4hokoidg2n2e4afg"
-                    }
-                ], 
-                "type": "ab", 
-                "id": "bu7d4hokoidg2n2e4aeg"
-            }, 
-            {
-                "variationGroups": [
-                    {
-                        "variations": [
-                            {
-                                "allocation": 20, 
-                                "modifications": {
-                                    "type": "JSON", 
-                                    "value": {
-                                        "visitorIdColor": null, 
-                                        "title": null
-                                    }
-                                }, 
-                                "id": "bmsor064jaeg0gm49cl0", 
-                                "reference": true
-                            }, 
-                            {
-                                "allocation": 20, 
-                                "modifications": {
-                                    "type": "JSON", 
-                                    "value": {
-                                        "visitorIdColor": "#028C9A", 
-                                        "title": "Ahoy"
-                                    }
-                                }, 
-                                "id": "bmsor064jaeg0gm49clg"
-                            }, 
-                            {
-                                "allocation": 20, 
-                                "modifications": {
-                                    "type": "JSON", 
-                                    "value": {
-                                        "visitorIdColor": "#00C2AD", 
-                                        "title": "Hi"
-                                    }
-                                }, 
-                                "id": "bmsor064jaeg0gm49cm0"
-                            }, 
-                            {
-                                "allocation": 20, 
-                                "modifications": {
-                                    "type": "JSON", 
-                                    "value": {
-                                        "visitorIdColor": "#7300C2", 
-                                        "title": "Hey"
-                                    }
-                                }, 
-                                "id": "bmsor064jaeg0gm49cmg"
-                            }, 
-                            {
-                                "allocation": 20, 
-                                "modifications": {
-                                    "type": "JSON", 
-                                    "value": {
-                                        "visitorIdColor": "#E5B21D", 
-                                        "title": "Hello"
-                                    }
-                                }, 
-                                "id": "bmsor064jaeg0gm49cn0"
-                            }
-                        ], 
-                        "targeting": {
-                            "targetingGroups": [
-                                {
-                                    "targetings": [
-                                        {
-                                            "operator": "LOWER_THAN_OR_EQUALS", 
-                                            "value": 5, 
-                                            "key": "daysSinceLastLaunch"
-                                        }
-                                    ]
-                                }
-                            ]
-                        }, 
-                        "id": "bmsor064jaeg0gm49ckg"
-                    }
-                ], 
-                "type": "ab", 
-                "id": "bmsor064jaeg0gm49cjg"
-            }, 
-            {
-                "variationGroups": [
-                    {
-                        "variations": [
-                            {
-                                "modifications": {
-                                    "type": "JSON", 
-                                    "value": {
-                                        "variation50": null
-                                    }
-                                }, 
-                                "id": "bs8r119sbs4016megg70", 
-                                "reference": true
-                            }, 
-                            {
-                                "allocation": 50, 
-                                "modifications": {
-                                    "type": "JSON", 
-                                    "value": {
-                                        "variation50": 1
-                                    }
-                                }, 
-                                "id": "bs8r119sbs4016megg7g"
-                            }, 
-                            {
-                                "allocation": 50, 
-                                "modifications": {
-                                    "type": "JSON", 
-                                    "value": {
-                                        "variation50": 2
-                                    }
-                                }, 
-                                "id": "bs8r119sbs4016megg80"
-                            }
-                        ], 
-                        "targeting": {
-                            "targetingGroups": [
-                                {
-                                    "targetings": [
-                                        {
-                                            "operator": "EQUALS", 
-                                            "value": "", 
-                                            "key": "fs_all_users"
-                                        }
-                                    ]
-                                }
-                            ]
-                        }, 
-                        "id": "bs8r119sbs4016megg6g"
-                    }
-                ], 
-                "type": "ab", 
-                "id": "bs8r119sbs4016megg5g"
+                "id": "bufunssn3n5g2h5autcg"
             }, 
             {
                 "variationGroups": [
@@ -472,15 +134,11 @@
                                 "modifications": {
                                     "type": "JSON", 
                                     "value": {
-                                        "background_img": null, 
-                                        "modal_text_color": null, 
-                                        "modal_text": null, 
-                                        "modal_text_cta": null, 
-                                        "modal_color": null, 
-                                        "modal": null
+                                        "btn-color": "#a87332", 
+                                        "backgroundColor": "#a8325f"
                                     }
                                 }, 
-                                "id": "bsufqrhb7nr00i5s4730", 
+                                "id": "bupu4pe4mb8g2nk0ga0g", 
                                 "reference": true
                             }, 
                             {
@@ -488,15 +146,11 @@
                                 "modifications": {
                                     "type": "JSON", 
                                     "value": {
-                                        "background_img": "https://go.forrester.com/wp-content/uploads/2020/01/Forrester_black.png", 
-                                        "modal_text_color": "#E6EE3E", 
-                                        "modal_text": "We are so happy that you have downloaded this Mobile App, we are going to offer a 10% discount on your first purchase", 
-                                        "modal_text_cta": "Get your discount", 
-                                        "modal_color": "#3EEEDB", 
-                                        "modal": true
+                                        "btn-color": "#32a852", 
+                                        "backgroundColor": "#3248a8"
                                     }
                                 }, 
-                                "id": "bsufqrhb7nr00i5s473g"
+                                "id": "bupu4pe4mb8g2nk0ga10"
                             }
                         ], 
                         "targeting": {
@@ -505,20 +159,20 @@
                                     "targetings": [
                                         {
                                             "operator": "EQUALS", 
-                                            "value": "", 
-                                            "key": "fs_all_users"
+                                            "value": true, 
+                                            "key": "devMode"
                                         }
                                     ]
                                 }
                             ]
                         }, 
-                        "id": "bsufqrhb7nr00i5s472g"
+                        "id": "bupu4pe4mb8g2nk0ga00"
                     }
                 ], 
                 "type": "ab", 
-                "id": "bsufqrhb7nr00i5s471g"
+                "id": "bupu4pe4mb8g2nk0g9v0"
             }
         ]
     }, 
-    "last_modified": "Fri, 20 Nov 2020 17:18:36 GMT"
+    "last_modified": "Thu, 26 Nov 2020 07:57:15 GMT"
 }

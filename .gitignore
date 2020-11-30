@@ -34,3 +34,25 @@ dist/
 .coverage
 visitorId 1.cache
 visitorId 2.cache
+flagship/app.pyc
+flagship/config.pyc
+flagship/decorators.pyc
+flagship/errors.pyc
+flagship/handler.pyc
+flagship/__init__.pyc
+flagship/visitor.pyc
+tests/__init__.pyc
+flagship/__pycache__/
+tests/__pycache__/
+tests/__pycache__/test_bucketing.cpython-38-pytest-5.4.3.pyc
+tests/__pycache__/test_bucketing.cpython-38-PYTEST.pyc
+tests/__pycache__/test_config.cpython-38-pytest-5.4.3.pyc
+tests/__pycache__/test_config.cpython-38-PYTEST.pyc
+tests/__pycache__/test_decorator.cpython-38-pytest-5.4.3.pyc
+tests/__pycache__/test_decorator.cpython-38-PYTEST.pyc
+tests/__pycache__/test_init.cpython-38-pytest-5.4.3.pyc
+tests/__pycache__/test_init.cpython-38-PYTEST.pyc
+tests/__pycache__/test_singleton.cpython-38-pytest-5.4.3.pyc
+tests/__pycache__/test_singleton.cpython-38-PYTEST.pyc
+tests/__pycache__/test_visitor.cpython-38-pytest-5.4.3.pyc
+tests/__pycache__/test_visitor.cpython-38-PYTEST.pyc

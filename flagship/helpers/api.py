@@ -45,14 +45,15 @@ class ApiManager:
 
         }
         if anoymousId is not None:
-            body["anonymousId"]: anoymousId
+            body["anonymousId"] = anoymousId
         try:
             url = self.get_endpoint() + '' + self._env_id + '' + self.__campaigns
+            print(str(self._config.timeout))
             r = requests.post(url, headers=header, json=body, timeout=self._config.timeout)
             self.__log_request(url, r, body)
             return r
-        except (ValueError, Exception):
-            self._config.event_handler.on_log(logging.ERROR, "Connection Timeout")
+        except Exception as e:
+            self._config.event_handler.on_log(logging.ERROR, str(e))
             return None
 
     def synchronize_modifications(self, visitor_id, anonymousId, context):
@@ -84,19 +85,16 @@ class ApiManager:
         }
         body = {
             "cid": self._env_id,
-            # "vid": visitor_id,
             "caid": variation_group_id,
             "vaid": variation_id
         }
         if visitor_id is not None and len(visitor_id) > 0 and anonymous_id is not None:
-            body["anonymousId"] = anonymous_id
-            body["visitorId"] = visitor_id
+            body["aid"] = anonymous_id
+            body["vid"] = visitor_id
         elif visitor_id is not None and len(visitor_id) > 0 and anonymous_id is None:
-            body["anonymousId"] = None
-            body["visitorId"] = visitor_id
+            body["vid"] = visitor_id
         else:
-            body["anonymousId"] = None
-            body["visitorId"] = anonymous_id
+            body["vid"] = anonymous_id
 
         url = self.get_endpoint() + self.__activate
         r = requests.post(url, headers=header, json=body)
@@ -126,7 +124,6 @@ class ApiManager:
     def send_hit_request(self, visitor_id, anonymous_id, hit):
         body = {
             "cid": self._env_id,
-            # "vid": visitor_id
         }
         if visitor_id is not None and len(visitor_id) > 0 and anonymous_id is not None:
             body["cuid"] = visitor_id

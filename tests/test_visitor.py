@@ -6,6 +6,7 @@ from flagship.app import Flagship
 from flagship.config import Config
 import responses
 
+from flagship.handler import FlagshipEventHandler
 from flagship.helpers.hits import Page, Event, EventCategory, Transaction, Item
 
 
@@ -24,7 +25,7 @@ def test_create_visitor():
     fs.start("my_env_id", "my_api_key", Config(event_handler=None))
 
     try:
-        visitor = fs.create_visitor("Pam", {'isVIP': True})
+        visitor = fs.create_visitor("Pam", False, {'isVIP': True})
         assert visitor._visitor_id == 'Pam'
         assert visitor._context['isVIP'] is True
         assert visitor._env_id == "my_env_id"
@@ -47,7 +48,7 @@ def test_visitor_update_context():
         def __init__(self):
             pass
 
-    visitor = fs.create_visitor("Pam", {'isVIP': True})
+    visitor = fs.create_visitor("Pam", False, {'isVIP': True})
     visitor.update_context(('one', 1), False)
     visitor.update_context(('two', 2, 2))
     visitor.update_context({
@@ -285,6 +286,7 @@ def test_visitor_send_hits():
     visitor.send_hit(FakeHit())
     assert len(responses.calls) == 6
 
+
 @responses.activate
 def test_visitor_panic():
     responses.reset()
@@ -319,13 +321,11 @@ def test_visitor_panic():
     assert visitor.get_modification("featureEnabled", False) is True
     assert len(responses.calls) == 4
 
-
     responses.reset()
     json_response_panic = '{"visitorId":"Toto3000","campaigns":[],"panic":true}'
     responses.add(responses.POST,
                   'https://decision.flagship.io/v2/my_env_id/campaigns/?exposeAllKeys=true&sendContextEvent=false',
                   json=json.loads(json_response_panic), status=200)
-
 
     responses.add(responses.POST,
                   'https://decision.flagship.io/v2/my_env_id/events', status=200)
@@ -349,3 +349,75 @@ def test_visitor_panic():
     assert visitor.get_modification("featureEnabled", False) is False
     assert len(responses.calls) == 2
 
+
+@responses.activate
+def test_visitor_authentication():
+    responses.reset()
+
+    json_response = '{"visitorId":"visitor_1","campaigns":[{"id":"xxxxd0qhl5801abv9ib0",' \
+                    '"variationGroupId":"xxxxd0qhl5801abv9ic0","variation":{"id":"xxxxd0qhl5801abv9icg",' \
+                    '"modifications":{"type":"FLAG","value":{"featureEnabled":true}}}}]} '
+
+    values = {}
+
+    class CustomEventHandler(FlagshipEventHandler):
+        def __init__(self):
+            FlagshipEventHandler.__init__(self)
+
+        def on_log(self, level, message):
+            FlagshipEventHandler.on_log(self, level, ">>> " + message)
+            pass
+
+        def on_exception_raised(self, exception, traceback):
+
+            pass
+
+
+    def campaign_callback(request):
+        payload = json.loads(request.body)
+        for k, v in values.items():
+            print(">> {} == {} ".format(k, v))
+            assert payload[k] == v
+        headers = {}
+        return 200, headers, json.dumps(json.loads(json_response))
+
+    responses.add_callback(responses.POST,
+                           'https://decision.flagship.io/v2/my_env_id/campaigns/?exposeAllKeys=true&sendContextEvent'
+                           '=false',
+                           callback=campaign_callback)
+
+    responses.add(responses.POST,
+                  'https://decision.flagship.io/v2/my_env_id/events', status=200)
+
+    responses.add(responses.POST, 'https://ariane.abtasty.com/', status=200)
+
+    values = {
+        "visitorId": "zefze"
+    }
+
+
+
+    fs = Flagship.instance()
+    fs.start("my_env_id", "my_api_key", Config(event_handler=CustomEventHandler(), mode=Config.Mode.API, timeout=3000))
+    visitor = fs.create_visitor()
+
+    assert len(visitor._visitor_id) == 19
+
+    visitor.authenticate("log_1", {"age": 31}, True)
+    assert visitor._visitor_id == "log_1"
+    assert len(visitor._anonymous_id) == 19
+    assert visitor.get_context()['age'] == 31
+
+    values = {
+        "zefz":"mlkmlkùmlk"
+    }
+
+    visitor.unauthenticate(dict(), True)
+    assert len(visitor._visitor_id) == 19
+    assert visitor._anonymous_id is None
+    assert len(visitor.get_context()) == 0
+
+    visitor.authenticate("log_2", {"age": 31}, True)
+    assert visitor._visitor_id == "log_2"
+    assert len(visitor._anonymous_id) == 19
+    assert visitor.get_context()['age'] == 31

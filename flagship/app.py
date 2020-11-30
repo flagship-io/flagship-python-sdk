@@ -53,7 +53,7 @@ class Flagship:
                 return False
 
         @exception_handler()
-        @types_validator(True, str, dict)
+        @types_validator(True, str, bool, dict)
         def create_visitor(self, visitor_id=None, authenticated=False, context={}):
             # type: (str, bool, dict) -> FlagshipVisitor(BucketingManager, Config, str, bool, dict)
             """
