@@ -52,6 +52,8 @@ class ApiManager:
             r = requests.post(url, headers=header, json=body, timeout=self._config.timeout)
             self.__log_request(url, r, body)
             return r
+        except AssertionError:
+            raise
         except Exception as e:
             self._config.event_handler.on_log(logging.ERROR, str(e))
             return None
