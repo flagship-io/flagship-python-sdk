@@ -40,7 +40,8 @@ class FlagshipVisitor:
         if self._config.mode is Config.Mode.API:
             if authenticated:
                 self._anonymous_id = self.__gen_visitor_id()
-
+            else:
+                self._anonymous_id = None
 
     def authenticate(self, visitor_id, context=None, synchronize=False):
         """
@@ -79,16 +80,19 @@ class FlagshipVisitor:
             You also have the possibility to update it manually by calling synchronizeModifications()
 
         """
+
         if self._config.mode is Config.Mode.API:
-            if self._anonymous_id is None:
-                self._anonymous_id = self.__gen_visitor_id()
-            self._visitor_id = self._anonymous_id
-            self._anonymous_id = None
-            if context is not None:
-                self._context.clear()
-                self.update_context(context)
-            if synchronize:
-                self.synchronize_modifications()
+            if self._anonymous_id is not None:
+                self._visitor_id = self._anonymous_id
+                self._anonymous_id = None
+                if context is not None:
+                    self._context.clear()
+                    self.update_context(context)
+                if synchronize:
+                    self.synchronize_modifications()
+            else:
+                log = "unauthenticateVisitor() is ignored as there is no current authenticated visitor."
+                self._config.event_handler.on_log(logging.WARNING, log)
         else:
             log = "unauthenticateVisitor() is ignored in BUCKETING mode."
             self._config.event_handler.on_log(logging.WARNING, log)
