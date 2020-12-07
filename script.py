@@ -24,8 +24,8 @@ def init():
     print(sys.version)
     t = CustomEventHandler()
 
-    Flagship.instance().start("bkk4s7gcmjcg07fke9dg", "j2jL0rzlgVaODLw2Cl4JC3f4MflKrMgIaQOENv36",
-                              Config(event_handler=t, mode=Config.Mode.BUCKETING, polling_interval=5, timeout=0.1))
+    Flagship.instance().start("bkk4s7gcmjcg07fke9dg", "Q6FDmj6F188nh75lhEato2MwoyXDS7y34VrAL4Aa",
+                              Config(event_handler=t, mode=Config.Mode.API, polling_interval=5, timeout=0.1))
     # Flagship.instance().start("bkk4s7gcmjcg07fke9dg", "j2jL0rzlgVaODLw2Cl4JC3f4MflKrMgIaQOENv36",
     #                           Config(event_handler=t, mode=Config.Mode.API))
 
@@ -37,27 +37,37 @@ def init():
     # visitor.synchronize_modifications()
 
 
-    v = Flagship.instance().create_visitor("visitorId 1", {'isVIPUser': True})
-    v2 = Flagship.instance().create_visitor("visitorId 2", {'isVIPUser': False})
-
-    count = 0
-    run = True
-    while run:
-        v.update_context(('isVIPUser', count % 2 == 0))
-        v.synchronize_modifications()
-        v.activate_modification('featureEnabled')
-        v.send_hit(Page("page 1"))
-
-        v2.update_context(('isVIPUser', count % 2 == 1))
-        v2.synchronize_modifications()
-        v2.activate_modification('featureEnabled')
-        v2.send_hit(Page("page 2"))
-
-        time.sleep(2)
-        count += 1
-        # if count == 20:
+    # v = Flagship.instance().create_visitor("visitorId 1", {'isVIPUser': True})
+    # v2 = Flagship.instance().create_visitor("visitorId 2", {'isVIPUser': False})
+    #
+    # count = 0
+    # run = True
+    # while run:
+    #     v.update_context(('isVIPUser', count % 2 == 0))
+    #     v.synchronize_modifications()
+    #     v.activate_modification('featureEnabled')
+    #     v.send_hit(Page("page 1"))
+    #
+    #     v2.update_context(('isVIPUser', count % 2 == 1))
+    #     v2.synchronize_modifications()
+    #     v2.activate_modification('featureEnabled')
+    #     v2.send_hit(Page("page 2"))
+    #
+    #     time.sleep(2)
+    #     count += 1
+    #     # if count == 20:
         #     run = False
 
     # Flagship.instance().close()
+    count = 40
+    while count >= 0:
+        v = Flagship.instance().create_visitor("visitorId_{}".format(count), {'isVIPUser': True})
+        v.synchronize_modifications()
+        json = v.get_modification_info("isref")
+        print("REF = " + str(json["isReference"]) + " - " + str(v.get_modification("isref", False)))
+        count = count - 1
+
+
+
 
 init()
