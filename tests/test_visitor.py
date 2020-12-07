@@ -167,14 +167,15 @@ def test_visitor_get_modification2():
                      '"variationGroupId":"xxxxesjojh803lh57qp0","variation":{"id":"xxxxesjojh803lh57qpg",' \
                      '"modifications":{"type":"FLAG","value":{"my_flag_nb":100}}}},{"id":"xxxxsp9j5mf4g0fdhkv2g",' \
                      '"variationGroupId":"xxxxp9j5mf4g0fdhkv3g","variation":{"id":"xxxxp9j5mf4g0fdhkv4g",' \
-                     '"modifications":{"type":"JSON","value":{"btn-color":"red"}}}},{"id":"xxxxrfe4jaeg0gi1bhog",' \
-                     '"variationGroupId":"xxxxrfe4jaeg0gi1bhpg","variation":{"id":"xxxxrfe4jaeg0gi1bhq0",' \
-                     '"modifications":{"type":"FLAG","value":{"featureEnabled":true}}}},{"id":"xxxx9b1q4vl00quhh0rg",' \
-                     '"variationGroupId":"xxxx9b1q4vl00quhh0sg","variation":{"id":"xxxx9b1q4vl00quhh0tg",' \
-                     '"modifications":{"type":"JSON","value":{"k1":"v1","k2":null,"k3":null,"k6":"v6","k7":null}}}},' \
-                     '{"id":"bsbgq4rjhsqg11tntt1g","variationGroupId":"bsbgq4rjhsqg11tntt2g","variation":{' \
-                     '"id":"bsbgq4rjhsqg11tntt3g","modifications":{"type":"JSON","value":{"array":[1,2,3],"complex":{' \
-                     '"carray":[{"cobject":0}]},"object":{"value":123456}}},"reference":false}}]} '
+                     '"modifications":{"type":"JSON","value":{"btn-color":"red"}},"reference":true}},' \
+                     '{"id":"xxxxrfe4jaeg0gi1bhog","variationGroupId":"xxxxrfe4jaeg0gi1bhpg","variation":{' \
+                     '"id":"xxxxrfe4jaeg0gi1bhq0","modifications":{"type":"FLAG","value":{"featureEnabled":true}}}},' \
+                     '{"id":"xxxx9b1q4vl00quhh0rg","variationGroupId":"xxxx9b1q4vl00quhh0sg","variation":{' \
+                     '"id":"xxxx9b1q4vl00quhh0tg","modifications":{"type":"JSON","value":{"k1":"v1","k2":null,' \
+                     '"k3":null,"k6":"v6","k7":null}}}},{"id":"bsbgq4rjhsqg11tntt1g",' \
+                     '"variationGroupId":"bsbgq4rjhsqg11tntt2g","variation":{"id":"bsbgq4rjhsqg11tntt3g",' \
+                     '"modifications":{"type":"JSON","value":{"array":[1,2,3],"complex":{"carray":[{"cobject":0}]},' \
+                     '"object":{"value":123456}}},"reference":false}}]} '
 
     fs = Flagship.instance()
     fs.start("my_env_id", "my_api_key", Config(event_handler=None, mode=Config.Mode.API))
@@ -194,6 +195,10 @@ def test_visitor_get_modification2():
     assert visitor.get_modification("aaaaaaaa", "bbbb", True) == 'bbbb'
     assert visitor.get_modification("btn-color", 'blue', True) == 'red'
     assert visitor.get_modification("k2", 'yellow', True) == 'yellow'
+
+    assert visitor.get_modification_info("btn-color")["isReference"] is True
+    assert visitor.get_modification_info("k2")["isReference"] is False
+
 
     assert visitor.get_modification("btn-color", "yellow") == 'red'
     assert visitor.get_modification("do_not_exists", 'None') is "None"
