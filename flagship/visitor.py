@@ -179,7 +179,8 @@ class FlagshipVisitor:
                 return {
                     "campaignId": self._modifications[key].campaign_id,
                     "variationGroupId": self._modifications[key].variation_group_id,
-                    "variationId": self._modifications[key].variation_id
+                    "variationId": self._modifications[key].variation_id,
+                    "isReference": self._modifications[key].reference
                 }
             else:
                 self._config.event_handler.on_log(logging.ERROR,
