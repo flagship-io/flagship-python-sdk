@@ -5,7 +5,7 @@ import time
 from flagship.app import Flagship
 from flagship.config import Config
 from flagship.handler import FlagshipEventHandler
-from flagship.helpers.hits import Page
+from flagship.helpers.hits import Page, Screen
 
 
 class CustomEventHandler(FlagshipEventHandler):
@@ -25,10 +25,14 @@ def init():
     print(sys.version)
     t = CustomEventHandler()
 
-    Flagship.instance().start("ENV_ID", "API_KEY",
-                              Config(event_handler=t, mode=Config.Mode.BUCKETING, polling_interval=5, timeout=0.1))
-    v = Flagship.instance().create_visitor("visitorId 1", {'isVIPUser': True})
+    Flagship.instance().start("bkk4s7gcmjcg07fke9dg", "Q6FDmj6F188nh75lhEato2MwoyXDS7y34VrAL4Aa",
+                              Config(event_handler=t, mode=Config.Mode.API, polling_interval=5, timeout=2))
+    v = Flagship.instance().create_visitor("visitorId_python", {'isVIPUser': True})
     v.synchronize_modifications()
+    value = v.get_modification("target", "default", True)
+    v.send_hit(Page("page").with_page_title("title"))
+    v.send_hit(Screen("screen"))
+    print(value)
 
 
 init()

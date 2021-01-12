@@ -8,7 +8,8 @@ from flagship.decorators import types_validator, exception_handler
 
 
 class HitType(Enum):
-    PAGE = 'SCREENVIEW'
+    PAGE = 'PAGEVIEW'
+    SCREENVIEW = 'SCREENVIEW'
     EVENT = 'EVENT'
     TRANSACTION = 'TRANSACTION'
     ITEM = 'ITEM'
@@ -16,6 +17,7 @@ class HitType(Enum):
 
 class Hit(object):
     _k_origin = 'dl'  # origin
+    _k_page = 'pt'
     _k_env_id = 'cid'  # env_id
     _k_visitor_id = 'vid'  # visitor id
     _k_type = 't'
@@ -108,6 +110,18 @@ class Hit(object):
         self._data[self._k_locale] = locale
         return self
 
+    @exception_handler()
+    @types_validator(True, {'types': str})
+    def with_page_title(self, title):
+        # type: (str) -> Hit
+        """
+               Set the page title from which this hit has been triggered.
+               :param title: page title.
+               :return: Hit
+               """
+        self._data[self._k_page] = title
+        return self
+
     def get_data(self):
         return self._data
 
@@ -128,6 +142,23 @@ class Page(Hit):
         Hit.__init__(self, HitType.PAGE)
         data = {
             self._k_origin: origin
+        }
+        self._data.update(data)
+
+
+class Screen(Hit):
+    @exception_handler()
+    @types_validator(True, {'types': str, 'max_length': 2048})
+    def __init__(self, screen_name):
+        # type: (str) -> None
+        """
+        Create a Screen hit.
+
+        :param screen name: current app interface name.
+        """
+        Hit.__init__(self, HitType.SCREENVIEW)
+        data = {
+            self._k_page: screen_name
         }
         self._data.update(data)
 
