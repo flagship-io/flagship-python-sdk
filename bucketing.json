@@ -1,6 +1,303 @@
 {
-    "last_modified": "Fri,  05 Jun 2020 12:20:40 GMT",
     "content": {
-        "panic": true
-    }
+        "campaigns": [
+            {
+                "variationGroups": [
+                    {
+                        "variations": [
+                            {
+                                "allocation": 20, 
+                                "modifications": {
+                                    "type": "JSON", 
+                                    "value": {
+                                        "visitorIdColor": null, 
+                                        "title": null
+                                    }
+                                }, 
+                                "id": "bmsor064jaeg0gm49cl0", 
+                                "reference": true
+                            }, 
+                            {
+                                "allocation": 20, 
+                                "modifications": {
+                                    "type": "JSON", 
+                                    "value": {
+                                        "visitorIdColor": "#028C9A", 
+                                        "title": "Ahoy"
+                                    }
+                                }, 
+                                "id": "bmsor064jaeg0gm49clg"
+                            }, 
+                            {
+                                "allocation": 20, 
+                                "modifications": {
+                                    "type": "JSON", 
+                                    "value": {
+                                        "visitorIdColor": "#00C2AD", 
+                                        "title": "Hi"
+                                    }
+                                }, 
+                                "id": "bmsor064jaeg0gm49cm0"
+                            }, 
+                            {
+                                "allocation": 20, 
+                                "modifications": {
+                                    "type": "JSON", 
+                                    "value": {
+                                        "visitorIdColor": "#7300C2", 
+                                        "title": "Hey"
+                                    }
+                                }, 
+                                "id": "bmsor064jaeg0gm49cmg"
+                            }, 
+                            {
+                                "allocation": 20, 
+                                "modifications": {
+                                    "type": "JSON", 
+                                    "value": {
+                                        "visitorIdColor": "#E5B21D", 
+                                        "title": "Hello"
+                                    }
+                                }, 
+                                "id": "bmsor064jaeg0gm49cn0"
+                            }
+                        ], 
+                        "targeting": {
+                            "targetingGroups": [
+                                {
+                                    "targetings": [
+                                        {
+                                            "operator": "LOWER_THAN_OR_EQUALS", 
+                                            "value": 5, 
+                                            "key": "daysSinceLastLaunch"
+                                        }
+                                    ]
+                                }
+                            ]
+                        }, 
+                        "id": "bmsor064jaeg0gm49ckg"
+                    }
+                ], 
+                "type": "ab", 
+                "id": "bmsor064jaeg0gm49cjg"
+            }, 
+            {
+                "variationGroups": [
+                    {
+                        "variations": [
+                            {
+                                "allocation": 100, 
+                                "modifications": {
+                                    "type": "FLAG", 
+                                    "value": {
+                                        "featureEnabled": false
+                                    }
+                                }, 
+                                "id": "bmsorfe4jaeg0gi1bhr0"
+                            }
+                        ], 
+                        "targeting": {
+                            "targetingGroups": [
+                                {
+                                    "targetings": [
+                                        {
+                                            "operator": "EQUALS", 
+                                            "value": false, 
+                                            "key": "isVIPUser"
+                                        }
+                                    ]
+                                }
+                            ]
+                        }, 
+                        "id": "bmsorfe4jaeg0gi1bhqg"
+                    }, 
+                    {
+                        "variations": [
+                            {
+                                "allocation": 100, 
+                                "modifications": {
+                                    "type": "FLAG", 
+                                    "value": {
+                                        "featureEnabled": true
+                                    }
+                                }, 
+                                "id": "bmsorfe4jaeg0gi1bhq0"
+                            }
+                        ], 
+                        "targeting": {
+                            "targetingGroups": [
+                                {
+                                    "targetings": [
+                                        {
+                                            "operator": "EQUALS", 
+                                            "value": true, 
+                                            "key": "isVIPUser"
+                                        }
+                                    ]
+                                }
+                            ]
+                        }, 
+                        "id": "bmsorfe4jaeg0gi1bhpg"
+                    }
+                ], 
+                "type": "toggle", 
+                "id": "bmsorfe4jaeg0gi1bhog"
+            }, 
+            {
+                "variationGroups": [
+                    {
+                        "variations": [
+                            {
+                                "modifications": {
+                                    "type": "JSON", 
+                                    "value": {
+                                        "target": null
+                                    }
+                                }, 
+                                "id": "bu6lgeu3bdt014iap5ag", 
+                                "reference": true
+                            }, 
+                            {
+                                "allocation": 100, 
+                                "modifications": {
+                                    "type": "JSON", 
+                                    "value": {
+                                        "target": "is"
+                                    }
+                                }, 
+                                "id": "bu6lgeu3bdt014iap5b0"
+                            }
+                        ], 
+                        "targeting": {
+                            "targetingGroups": [
+                                {
+                                    "targetings": [
+                                        {
+                                            "operator": "CONTAINS", 
+                                            "value": [
+                                                "Google Pixel 3", 
+                                                "Google Pixel X", 
+                                                "Google Pixel 0"
+                                            ], 
+                                            "key": "sdk_deviceModel"
+                                        }
+                                    ]
+                                }
+                            ]
+                        }, 
+                        "id": "bu6lgeu3bdt014iap5a0"
+                    }, 
+                    {
+                        "variations": [
+                            {
+                                "modifications": {
+                                    "type": "JSON", 
+                                    "value": {
+                                        "target": null
+                                    }
+                                }, 
+                                "id": "bu6lttip17b01emh0l6g", 
+                                "reference": true
+                            }, 
+                            {
+                                "allocation": 100, 
+                                "modifications": {
+                                    "type": "JSON", 
+                                    "value": {
+                                        "target": "is not"
+                                    }
+                                }, 
+                                "id": "bu6lttip17b01emh0l70"
+                            }
+                        ], 
+                        "targeting": {
+                            "targetingGroups": [
+                                {
+                                    "targetings": [
+                                        {
+                                            "operator": "NOT_CONTAINS", 
+                                            "value": [
+                                                "Google Pixel 9", 
+                                                "Google Pixel 9000"
+                                            ], 
+                                            "key": "sdk_deviceModel"
+                                        }
+                                    ]
+                                }
+                            ]
+                        }, 
+                        "id": "bu6lttip17b01emh0l60"
+                    }
+                ], 
+                "type": "perso", 
+                "id": "bu6lgeu3bdt014iap590"
+            }, 
+            {
+                "variationGroups": [
+                    {
+                        "variations": [
+                            {
+                                "allocation": 25, 
+                                "modifications": {
+                                    "type": "JSON", 
+                                    "value": {
+                                        "isref": "YES !"
+                                    }
+                                }, 
+                                "id": "bv6vpqjh6h101fk8lbt0", 
+                                "reference": true
+                            }, 
+                            {
+                                "allocation": 25, 
+                                "modifications": {
+                                    "type": "JSON", 
+                                    "value": {
+                                        "isref": "nope"
+                                    }
+                                }, 
+                                "id": "bv6vpqjh6h101fk8lbtg"
+                            }, 
+                            {
+                                "allocation": 25, 
+                                "modifications": {
+                                    "type": "JSON", 
+                                    "value": {
+                                        "isref": "not a all"
+                                    }
+                                }, 
+                                "id": "bv6vqg65k9h02cuc1ae0"
+                            }, 
+                            {
+                                "allocation": 25, 
+                                "modifications": {
+                                    "type": "JSON", 
+                                    "value": {
+                                        "isref": "haha try again"
+                                    }
+                                }, 
+                                "id": "bv6vqg65k9h02eufa3mg"
+                            }
+                        ], 
+                        "targeting": {
+                            "targetingGroups": [
+                                {
+                                    "targetings": [
+                                        {
+                                            "operator": "EQUALS", 
+                                            "value": "", 
+                                            "key": "fs_all_users"
+                                        }
+                                    ]
+                                }
+                            ]
+                        }, 
+                        "id": "bv6vpqjh6h101fk8lbsg"
+                    }
+                ], 
+                "type": "ab", 
+                "id": "bv6vpqjh6h101fk8lbrg"
+            }
+        ]
+    }, 
+    "last_modified": "Mon, 07 Dec 2020 10:02:36 GMT"
 }
