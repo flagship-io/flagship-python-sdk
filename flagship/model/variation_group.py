@@ -55,7 +55,7 @@ class VariationGroup:
                             Variation.parse(campaign_id, variation_group_id, variation_obj, bucketing))
                 selected_variation = None
                 for new_variation in new_variations:
-                    if cached_visitor is not None and new_variation.variation_id in cached_visitor['vaIds']:
+                    if cached_visitor is not None and new_variation.variation_id in cached_visitor['data']['vaIds']:
                         selected_variation = new_variation
                         print("> selected_variation_by_cache = " + selected_variation.variation_id)
                         break
@@ -73,6 +73,8 @@ class VariationGroup:
                 if selected_variation is not None:
                     selected_variation_id = selected_variation.variation_id
                     variations[selected_variation_id] = selected_variation
+                else:
+                    print("No selected variation : " + variation_group_id)
 
             targeting_groups = None
             if 'targeting' in variation_group_obj:
@@ -86,5 +88,5 @@ class VariationGroup:
             if decorators.customer_event_handler is not None:
                 decorators.customer_event_handler.on_log(logging.ERROR,
                                                          "An error occurred while parsing variation group json object : ".format(
-                                                             str(traceback.format_exc())))
+                                                             str(traceback.format_exc() + str(e))))
             return None

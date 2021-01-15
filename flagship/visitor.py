@@ -289,7 +289,9 @@ class FlagshipVisitor:
     def get_selected_variations(self):
         selected_variation_ids = list()
         if self._visitor_id is not None and self.campaigns is not None:
-            for campaign in self.campaigns:
-                for variation_group in campaign.variation_groups:
-                    selected_variation_ids.append(variation_group.selected_variation_id)
+            for k, v in self._modifications.items():
+                if v.variation_id not in selected_variation_ids:
+                    selected_variation_ids.append(v.variation_id)
+                # for variation_group in campaign.variation_groups:
+                #     selected_variation_ids.append(variation_group.selected_variation_id)
         return selected_variation_ids

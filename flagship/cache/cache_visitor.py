@@ -33,7 +33,7 @@ class VisitorCacheManager:
             if 'data' not in visitor_data or (isinstance(visitor_data['data'], dict) is False):
                 return False
             if 'vId' not in visitor_data['data'] or (len(visitor_data['data']['vId']) <= 0) or\
-                    ((isinstance(visitor_data['data']['vId'], unicode) is False) and (isinstance(visitor_data['data']['vId'], str) is False)):
+                    ((isinstance(visitor_data['data']['vId'], str) is False) and (isinstance(visitor_data['data']['vId'], unicode) is False)):
                 return False
             if 'vaIds' not in visitor_data['data'] or (isinstance(visitor_data['data']['vaIds'], list) is False):
                 return False
@@ -56,8 +56,8 @@ class VisitorCacheManager:
 
     def migrate_and_check_validity(self, visitor_id, visitor_data):
         try:
-            version = visitor_data['version']
             data = visitor_data
+            version = data['version']
             if version < VisitorCacheManager.__version__:
                 for v in range(version, VisitorCacheManager.__version__):
                     if v in self.__migrations:
@@ -67,10 +67,11 @@ class VisitorCacheManager:
                             return None
             elif version not in self.__migrations or self.__migrations[version].check_validity(data) is False:
                 return None
-            elif visitor_id != data['vId']:
+            elif visitor_id != data['data']['vId']:
                 return None
             return data
-        except (ValueError, Exception):
+        except Exception as e:
+            print(e)
             return None
 
     def _save_visitor_data(self, visitor_id, variations):
