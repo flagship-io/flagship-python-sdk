@@ -41,6 +41,7 @@ def init():
     v.synchronize_modifications()
 
     print("> Get visitorIdColor = " + v.get_modification('visitorIdColor', 'default', False))
+    print("> Get Title = " + v.get_modification('title', 'default', "default"))
     print("> Get featureEnabled = " + str(v.get_modification('featureEnabled', 'default', False)))
     print("> Get isRef = " + str(v.get_modification('isref', 'default', False)))
 

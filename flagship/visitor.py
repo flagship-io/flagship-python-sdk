@@ -77,9 +77,10 @@ class FlagshipVisitor:
                 self._modifications.clear()
                 bucketing_data = self._bucketing_manager.get_bucketing_data()
                 if bucketing_data is not None and 'content' in bucketing_data:
-                    cached_visitor = self._config.visitor_cache_manager._lookup_visitor_data(self._visitor_id)
-                    print("Look up visitor data = " + json.dumps(cached_visitor))
-                    self.campaigns = Campaign.parse_campaigns(bucketing_data['content'], self._visitor_id, cached_visitor)
+                    cached_visitor = self._config.visitor_cache_manager._lookup_visitor_data(
+                        self._visitor_id) if self._config.visitor_cache_manager is not None else None
+                    self.campaigns = Campaign.parse_campaigns(bucketing_data['content'], self._visitor_id,
+                                                              cached_visitor)
         if self._is_panic_mode() is False:
             self._api_manager.send_context_request(self._visitor_id, self._context)
             for campaign in self.campaigns:

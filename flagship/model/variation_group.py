@@ -50,7 +50,7 @@ class VariationGroup:
                     visitor_id = visitor_id.decode('utf-8')
                 new_variations = list()
                 for variation_obj in variation_group_obj['variations']:
-                    if 'allocation' in variation_obj:
+                    # if 'allocation' in variation_obj:
                         new_variations.append(
                             Variation.parse(campaign_id, variation_group_id, variation_obj, bucketing))
                 selected_variation = None

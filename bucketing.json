@@ -6,86 +6,6 @@
                     {
                         "variations": [
                             {
-                                "allocation": 20, 
-                                "modifications": {
-                                    "type": "JSON", 
-                                    "value": {
-                                        "visitorIdColor": null, 
-                                        "title": null
-                                    }
-                                }, 
-                                "id": "bmsor064jaeg0gm49cl0", 
-                                "reference": true
-                            }, 
-                            {
-                                "allocation": 20, 
-                                "modifications": {
-                                    "type": "JSON", 
-                                    "value": {
-                                        "visitorIdColor": "#028C9A", 
-                                        "title": "Ahoy"
-                                    }
-                                }, 
-                                "id": "bmsor064jaeg0gm49clg"
-                            }, 
-                            {
-                                "allocation": 20, 
-                                "modifications": {
-                                    "type": "JSON", 
-                                    "value": {
-                                        "visitorIdColor": "#00C2AD", 
-                                        "title": "Hi"
-                                    }
-                                }, 
-                                "id": "bmsor064jaeg0gm49cm0"
-                            }, 
-                            {
-                                "allocation": 20, 
-                                "modifications": {
-                                    "type": "JSON", 
-                                    "value": {
-                                        "visitorIdColor": "#7300C2", 
-                                        "title": "Hey"
-                                    }
-                                }, 
-                                "id": "bmsor064jaeg0gm49cmg"
-                            }, 
-                            {
-                                "allocation": 20, 
-                                "modifications": {
-                                    "type": "JSON", 
-                                    "value": {
-                                        "visitorIdColor": "#E5B21D", 
-                                        "title": "Hello"
-                                    }
-                                }, 
-                                "id": "bmsor064jaeg0gm49cn0"
-                            }
-                        ], 
-                        "targeting": {
-                            "targetingGroups": [
-                                {
-                                    "targetings": [
-                                        {
-                                            "operator": "LOWER_THAN_OR_EQUALS", 
-                                            "value": 5, 
-                                            "key": "daysSinceLastLaunch"
-                                        }
-                                    ]
-                                }
-                            ]
-                        }, 
-                        "id": "bmsor064jaeg0gm49ckg"
-                    }
-                ], 
-                "type": "ab", 
-                "id": "bmsor064jaeg0gm49cjg"
-            }, 
-            {
-                "variationGroups": [
-                    {
-                        "variations": [
-                            {
                                 "allocation": 100, 
                                 "modifications": {
                                     "type": "FLAG", 
@@ -296,8 +216,84 @@
                 ], 
                 "type": "ab", 
                 "id": "bv6vpqjh6h101fk8lbrg"
+            }, 
+            {
+                "variationGroups": [
+                    {
+                        "variations": [
+                            {
+                                "modifications": {
+                                    "type": "JSON", 
+                                    "value": {
+                                        "visitorIdColor": null, 
+                                        "title": null
+                                    }
+                                }, 
+                                "id": "bmsor064jaeg0gm49cl0", 
+                                "reference": true
+                            }, 
+                            {
+                                "allocation": 100, 
+                                "modifications": {
+                                    "type": "JSON", 
+                                    "value": {
+                                        "visitorIdColor": "#028C9A", 
+                                        "title": "Ahoy"
+                                    }
+                                }, 
+                                "id": "bmsor064jaeg0gm49clg"
+                            }, 
+                            {
+                                "modifications": {
+                                    "type": "JSON", 
+                                    "value": {
+                                        "visitorIdColor": "#00C2AD", 
+                                        "title": "Hi"
+                                    }
+                                }, 
+                                "id": "bmsor064jaeg0gm49cm0"
+                            }, 
+                            {
+                                "modifications": {
+                                    "type": "JSON", 
+                                    "value": {
+                                        "visitorIdColor": "#7300C2", 
+                                        "title": "Hey"
+                                    }
+                                }, 
+                                "id": "bmsor064jaeg0gm49cmg"
+                            }, 
+                            {
+                                "modifications": {
+                                    "type": "JSON", 
+                                    "value": {
+                                        "visitorIdColor": "#E5B21D", 
+                                        "title": "Hello"
+                                    }
+                                }, 
+                                "id": "bmsor064jaeg0gm49cn0"
+                            }
+                        ], 
+                        "targeting": {
+                            "targetingGroups": [
+                                {
+                                    "targetings": [
+                                        {
+                                            "operator": "LOWER_THAN_OR_EQUALS", 
+                                            "value": 5, 
+                                            "key": "daysSinceLastLaunch"
+                                        }
+                                    ]
+                                }
+                            ]
+                        }, 
+                        "id": "bmsor064jaeg0gm49ckg"
+                    }
+                ], 
+                "type": "ab", 
+                "id": "bmsor064jaeg0gm49cjg"
             }
         ]
     }, 
-    "last_modified": "Mon, 07 Dec 2020 10:02:36 GMT"
+    "last_modified": "Wed, 20 Jan 2021 11:30:04 GMT"
 }
