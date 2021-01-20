@@ -30,8 +30,9 @@ def init():
     v = Flagship.instance().create_visitor("visitorId_python", {'isVIPUser': True})
     v.synchronize_modifications()
     value = v.get_modification("target", "default", True)
-    v.send_hit(Page("page").with_page_title("title"))
-    v.send_hit(Screen("screen"))
+    v.send_hit(Page("https://pageviewurl.com").with_page_title("title"))
+    v.send_hit(Page("python page view").with_page_title("title"))
+    v.send_hit(Screen("python screen view"))
     print(value)
 
 

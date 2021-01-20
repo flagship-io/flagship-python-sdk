@@ -158,7 +158,7 @@ class Screen(Hit):
         """
         Hit.__init__(self, HitType.SCREENVIEW)
         data = {
-            self._k_page: screen_name
+            self._k_origin: screen_name
         }
         self._data.update(data)
 
