@@ -32,6 +32,7 @@ def test_bucketing_suite():
     b_test_bucketing_304()
     c_test_bucketing_200_again()
 
+
 @responses.activate
 def b_test_bucketing_304():
     json_response = '{}'
@@ -78,7 +79,6 @@ def b_test_bucketing_304():
 
 @responses.activate
 def a_test_bucketing_init():
-
     try:
         try:
             os.remove("bucketing.json")
@@ -93,8 +93,8 @@ def a_test_bucketing_init():
                       'https://cdn.flagship.io/my_env_id/bucketing.json',
                       json=json.loads(json_response), status=200, adding_headers=headers)
         responses.add(responses.POST,
-                                            'https://decision.flagship.io/v2/my_env_id/events',
-                                            json=json.loads('{}'), status=200)
+                      'https://decision.flagship.io/v2/my_env_id/events',
+                      json=json.loads('{}'), status=200)
 
         fs = Flagship.instance()
         fs.start("my_env_id", "my_api_key", Config(mode=Config.Mode.BUCKETING, polling_interval=-1))
@@ -136,6 +136,7 @@ def c_test_bucketing_200_again():
         last_modified = json_object['last_modified']
         assert last_modified is not None
         assert last_modified == "Fri,  05 Jun 2023 12:20:40 GMT"
+
 
 def get_random_string(length):
     letters = string.ascii_lowercase
@@ -373,3 +374,95 @@ def test_bucketing_panic():
 
     assert (len(responses.calls) == 7 or len(responses.calls) == 6)
     fs.close()
+
+
+def save_to_file(visitor_id, visitor_data):
+    try:
+        f = open("./cache/" + visitor_id + ".cache", "w")
+        f.write(json.dumps(visitor_data))
+        f.close()
+    except Exception as e:
+        print(e)
+
+
+def load_from_file(visitor_id):
+    try:
+        f = open("./cache/" + visitor_id + ".cache", "r")
+        visitor_data = f.read()
+        f.close()
+        return json.loads(visitor_data)
+    except Exception as e:
+        return dict()
+
+
+def delete_file(visitor_id):
+    try:
+        os.remove("./cache/" + visitor_id + ".cache")
+        print("delete file ./cache/" + visitor_id + ".cache")
+    except Exception as e:
+        print(e)
+
+
+@responses.activate
+def test_cache():
+    try:
+        try:
+            os.remove("bucketing.json")
+        except Exception as e:
+            print("No Bucketing file")
+        json_response = '{"campaigns":[{"variationGroups":[{"variations":[{"allocation":100,"modifications":{"type":"FLAG","value":{"featureEnabled":true}},"id":"xxxx"}],"targeting":{"targetingGroups":[{"targetings":[{"operator":"EQUALS","value":true,"key":"isVIPUser"}]}]},"id":"yyyy"},{"variations":[{"allocation":100,"modifications":{"type":"FLAG","value":{"featureEnabled":false}},"id":"cccc"}],"targeting":{"targetingGroups":[{"targetings":[{"operator":"EQUALS","value":false,"key":"isVIPUser"}]}]},"id":"vvvv"}],"type":"toggle","id":"aaaa"},{"id":"bu6lgeu3bdt014iawwww","type":"perso","variationGroups":[{"id":"bu6lgeu3bdt014iaxxxx","targeting":{"targetingGroups":[{"targetings":[{"operator":"CONTAINS","key":"sdk_deviceModel","value":["Google Pixel 3","Google Pixel X","Google Pixel 0"]}]}]},"variations":[{"id":"bu6lgeu3bdt014iacccc","modifications":{"type":"JSON","value":{"target":null}},"reference":true},{"id":"bu6lgeu3bdt014iavvvv","modifications":{"type":"JSON","value":{"target":"is"}},"allocation":100}]},{"id":"bu6lttip17b01emhbbbb","targeting":{"targetingGroups":[{"targetings":[{"operator":"NOT_CONTAINS","key":"sdk_deviceModel","value":["Google Pixel 9","Google Pixel 9000"]}]}]},"variations":[{"id":"bu6lttip17b01emhnnnn","modifications":{"type":"JSON","value":{"target":null}},"reference":true},{"id":"bu6lttip17b01emhqqqq","modifications":{"type":"JSON","value":{"target":"is not"}},"allocation":100}]}]},{"variationGroups":[{"variations":[{"allocation":25,"modifications":{"type":"JSON","value":{"rank_plus":null,"rank":null}},"id":"zzzz","reference":true},{"allocation":25,"modifications":{"type":"JSON","value":{"rank_plus":null,"rank":1111}},"id":"eeee"},{"allocation":25,"modifications":{"type":"JSON","value":{"rank_plus":null,"rank":3333}},"id":"rrrr"},{"allocation":25,"modifications":{"type":"JSON","value":{"rank_plus":22.22,"rank":2222}},"id":"tttt"}],"targeting":{"targetingGroups":[{"targetings":[{"operator":"EQUALS","value":"password","key":"access"}]}]},"id":"yyyy"}],"type":"ab","id":"iiii"}]}'
+        headers = {
+            "Last-Modified": "Fri,  05 Jun 2020 12:20:40 GMT"
+        }
+        responses.reset()
+        responses.add(responses.GET,
+                      'https://cdn.flagship.io/my_env_id/bucketing.json',
+                      json=json.loads(json_response), status=200, adding_headers=headers)
+        responses.add(responses.POST,
+                      'https://decision.flagship.io/v2/my_env_id/events',
+                      json=json.loads('{}'), status=200)
+
+        from flagship.cache.cache_visitor import VisitorCacheManager
+        class cache_manager(VisitorCacheManager):
+
+            def save(self, visitor_id, visitor_data):
+                save_to_file(visitor_id, visitor_data)
+
+            def lookup(self, visitor_id):
+                return load_from_file(visitor_id)
+
+        fs = Flagship.instance()
+        fs.start("my_env_id", "my_api_key",
+                 Config(mode=Config.Mode.BUCKETING, polling_interval=-1, visitor_cache_manager=cache_manager()))
+        delete_file("visitor_1234")
+        visitor = fs.create_visitor("visitor_1234", {'isVIPUser': True, 'daysSinceLastLaunch': 3, "access": "password"})
+
+        visitor.synchronize_modifications()
+        assert os.path.isfile("./cache/visitor_1234.cache")
+        data = load_from_file("visitor_1234")
+        assert 'version' in data
+        assert 'data' in data
+        assert 'vId' in data['data']
+        assert 'vaIds' in data['data']
+        assert 'rrrr' in data['data']['vaIds']
+        assert visitor.get_modification('rank_plus', 'default', False) == 'default'
+        assert visitor.get_modification('rank', 0, False) == 3333
+
+        new_variations = list()
+        new_variations.append("tttt")
+        data['data']['vaIds'] = new_variations
+        save_to_file('visitor_1234', data)
+
+        visitor.synchronize_modifications()
+        data = load_from_file("visitor_1234")
+        assert 'version' in data
+        assert 'data' in data
+        assert 'vId' in data['data']
+        assert 'vaIds' in data['data']
+        assert 'tttt' in data['data']['vaIds']
+        assert visitor.get_modification('rank_plus', 0, False) == 22.22
+        assert visitor.get_modification('rank', 0, False) == 2222
+
+    except Exception as e:
+        print(e)
+        assert False
