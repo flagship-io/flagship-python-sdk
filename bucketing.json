@@ -6,7 +6,6 @@
                     {
                         "variations": [
                             {
-                                "allocation": 20, 
                                 "modifications": {
                                     "type": "JSON", 
                                     "value": {
@@ -18,7 +17,6 @@
                                 "reference": true
                             }, 
                             {
-                                "allocation": 20, 
                                 "modifications": {
                                     "type": "JSON", 
                                     "value": {
@@ -29,7 +27,6 @@
                                 "id": "bmsor064jaeg0gm49clg"
                             }, 
                             {
-                                "allocation": 20, 
                                 "modifications": {
                                     "type": "JSON", 
                                     "value": {
@@ -40,7 +37,6 @@
                                 "id": "bmsor064jaeg0gm49cm0"
                             }, 
                             {
-                                "allocation": 20, 
                                 "modifications": {
                                     "type": "JSON", 
                                     "value": {
@@ -51,7 +47,7 @@
                                 "id": "bmsor064jaeg0gm49cmg"
                             }, 
                             {
-                                "allocation": 20, 
+                                "allocation": 100, 
                                 "modifications": {
                                     "type": "JSON", 
                                     "value": {
@@ -154,6 +150,47 @@
                                         "target": null
                                     }
                                 }, 
+                                "id": "bu6lttip17b01emh0l6g", 
+                                "reference": true
+                            }, 
+                            {
+                                "allocation": 100, 
+                                "modifications": {
+                                    "type": "JSON", 
+                                    "value": {
+                                        "target": "is not"
+                                    }
+                                }, 
+                                "id": "bu6lttip17b01emh0l70"
+                            }
+                        ], 
+                        "targeting": {
+                            "targetingGroups": [
+                                {
+                                    "targetings": [
+                                        {
+                                            "operator": "NOT_CONTAINS", 
+                                            "value": [
+                                                "Google Pixel 9", 
+                                                "Google Pixel 9000"
+                                            ], 
+                                            "key": "sdk_deviceModel"
+                                        }
+                                    ]
+                                }
+                            ]
+                        }, 
+                        "id": "bu6lttip17b01emh0l60"
+                    }, 
+                    {
+                        "variations": [
+                            {
+                                "modifications": {
+                                    "type": "JSON", 
+                                    "value": {
+                                        "target": null
+                                    }
+                                }, 
                                 "id": "bu6lgeu3bdt014iap5ag", 
                                 "reference": true
                             }, 
@@ -186,47 +223,6 @@
                             ]
                         }, 
                         "id": "bu6lgeu3bdt014iap5a0"
-                    }, 
-                    {
-                        "variations": [
-                            {
-                                "modifications": {
-                                    "type": "JSON", 
-                                    "value": {
-                                        "target": null
-                                    }
-                                }, 
-                                "id": "bu6lttip17b01emh0l6g", 
-                                "reference": true
-                            }, 
-                            {
-                                "allocation": 100, 
-                                "modifications": {
-                                    "type": "JSON", 
-                                    "value": {
-                                        "target": "is not"
-                                    }
-                                }, 
-                                "id": "bu6lttip17b01emh0l70"
-                            }
-                        ], 
-                        "targeting": {
-                            "targetingGroups": [
-                                {
-                                    "targetings": [
-                                        {
-                                            "operator": "NOT_CONTAINS", 
-                                            "value": [
-                                                "Google Pixel 9", 
-                                                "Google Pixel 9000"
-                                            ], 
-                                            "key": "sdk_deviceModel"
-                                        }
-                                    ]
-                                }
-                            ]
-                        }, 
-                        "id": "bu6lttip17b01emh0l60"
                     }
                 ], 
                 "type": "perso", 
@@ -296,8 +292,52 @@
                 ], 
                 "type": "ab", 
                 "id": "bv6vpqjh6h101fk8lbrg"
+            }, 
+            {
+                "variationGroups": [
+                    {
+                        "variations": [
+                            {
+                                "modifications": {
+                                    "type": "FLAG", 
+                                    "value": {
+                                        "release": null
+                                    }
+                                }, 
+                                "id": "c04bed3m649g0h9nkujg", 
+                                "reference": true
+                            }, 
+                            {
+                                "allocation": 100, 
+                                "modifications": {
+                                    "type": "FLAG", 
+                                    "value": {
+                                        "release": 100
+                                    }
+                                }, 
+                                "id": "c04bed3m649g0h9nkuk0"
+                            }
+                        ], 
+                        "targeting": {
+                            "targetingGroups": [
+                                {
+                                    "targetings": [
+                                        {
+                                            "operator": "EQUALS", 
+                                            "value": "", 
+                                            "key": "fs_all_users"
+                                        }
+                                    ]
+                                }
+                            ]
+                        }, 
+                        "id": "c04bed3m649g0h9nkuj0"
+                    }
+                ], 
+                "type": "deployment", 
+                "id": "c04bed3m649g0h9nkui0"
             }
         ]
     }, 
-    "last_modified": "Mon, 07 Dec 2020 10:02:36 GMT"
+    "last_modified": "Thu, 21 Jan 2021 03:01:53 GMT"
 }
