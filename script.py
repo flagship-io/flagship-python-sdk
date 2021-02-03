@@ -25,15 +25,11 @@ def init():
     print(sys.version)
     t = CustomEventHandler()
 
-    # Flagship.instance().start("bkk4s7gcmjcg07fke9dg", "Q6FDmj6F188nh75lhEato2MwoyXDS7y34VrAL4Aa",
-    #                           Config(event_handler=t, mode=Config.Mode.API, polling_interval=5, timeout=2))
-    Flagship.instance().start("bkev142bl68g07m5n69g", "YbG55489hK13O3pcfmBFy4ouGJCNdclZ2uOm9iae",
-                              Config(event_handler=t, mode=Config.Mode.API, polling_interval=5, timeout=2))
-    v = Flagship.instance().create_visitor("visitorId_python_APP_7", {'isVIPUser': True})
+    Flagship.instance().start("_my_env_id", "my_api_key",
+                              Config(event_handler=t, mode=Config.Mode.API, timeout=2))
+    v = Flagship.instance().create_visitor("visitor_uuid", {'isVIPUser': True})
     v.synchronize_modifications()
     value = v.get_modification("target", "default", True)
-    v.send_hit(Page("https://www.pageviewurl.com/my_page_title/coucou"))
-    v.send_hit(Page("python page view"))
     v.send_hit(Screen("python screen view"))
     print(value)
 
