@@ -6,7 +6,7 @@ from flagship.app import Flagship
 from flagship.config import Config
 import responses
 
-from flagship.helpers.hits import Page, Event, EventCategory, Transaction, Item
+from flagship.helpers.hits import Page, Event, EventCategory, Transaction, Item, Screen
 
 
 def test_create_visitor_wrong_param():
@@ -253,11 +253,14 @@ def test_visitor_send_hits():
 
     responses.add(responses.POST, 'https://ariane.abtasty.com/', status=200)
 
-    visitor.send_hit(Page("script.py")
+    visitor.send_hit(Screen("script.py")
                      .with_ip("133.3.223.1")
                      .with_locale("fr-fr")
                      .with_resolution(640, 480)
                      .with_session_number(3))
+
+    visitor.send_hit(Page("not working"))
+    visitor.send_hit(Page("http://working.com"))
 
     visitor.send_hit(Event(EventCategory.USER_ENGAGEMENT, "this is action")
                      .with_ip('6.6.6.6')
@@ -288,7 +291,7 @@ def test_visitor_send_hits():
             pass
 
     visitor.send_hit(FakeHit())
-    assert len(responses.calls) == 6
+    assert len(responses.calls) == 7
 
 @responses.activate
 def test_visitor_panic():
@@ -312,7 +315,7 @@ def test_visitor_panic():
 
     visitor.synchronize_modifications()
 
-    visitor.send_hit(Page("script.py")
+    visitor.send_hit(Screen("script.py")
                      .with_ip("133.3.223.1")
                      .with_locale("fr-fr")
                      .with_resolution(640, 480)

@@ -11,7 +11,7 @@ import responses
 
 from flagship.app import Flagship
 from flagship.config import Config
-from flagship.helpers.hits import Page
+from flagship.helpers.hits import Page, Screen
 
 
 def test_bucketing_wrong_config():
@@ -310,7 +310,7 @@ def test_bucketing_polling():
     visitor = fs.create_visitor("visitor1")
     visitor2 = fs.create_visitor("visitor2")
 
-    hit = Page("test_bucketing_polling_panic")
+    hit = Screen("test_bucketing_polling_panic")
     i = 0
     while i < 10:  # 10 + 5 polling
 
