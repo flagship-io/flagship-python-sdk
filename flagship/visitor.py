@@ -46,12 +46,17 @@ class FlagshipVisitor:
         :return: Tuple(Boolean if it has succeeded, log)
         """
         if self._is_panic_mode() is False:
-            if issubclass(type(hit), Hit):
-                return self._api_manager.send_hit_request(self._visitor_id, hit)
-            else:
+            if issubclass(type(hit), Hit) is False:
                 log = "[send_hit] : {} not a Hit subclass.".format(str(hit))
                 self._config.event_handler.on_log(logging.ERROR, log)
                 return False, log
+            elif hit._is_valid()[0] is False:
+                log = "[send_hit] : {} Hit is not valid : {}".format(str(hit), hit._is_valid()[1])
+                self._config.event_handler.on_log(logging.ERROR, log)
+                return False, log
+            else:
+                return self._api_manager.send_hit_request(self._visitor_id, hit)
+
         else:
             log = "[send_hit] '{}' not possible to send while panic mode is enabled.".format(str(hit))
             self._config.event_handler.on_log(logging.ERROR, log)

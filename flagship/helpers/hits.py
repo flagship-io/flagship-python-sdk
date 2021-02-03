@@ -6,7 +6,6 @@ from enum import Enum
 from flagship import decorators
 from flagship.decorators import types_validator, exception_handler
 
-
 class HitType(Enum):
     PAGE = 'PAGEVIEW'
     SCREENVIEW = 'SCREENVIEW'
@@ -110,20 +109,23 @@ class Hit(object):
         self._data[self._k_locale] = locale
         return self
 
-    @exception_handler()
-    @types_validator(True, {'types': str})
-    def with_page_title(self, title):
-        # type: (str) -> Hit
-        """
-               Set the page title from which this hit has been triggered.
-               :param title: page title.
-               :return: Hit
-               """
-        self._data[self._k_page] = title
-        return self
+    # @exception_handler()
+    # @types_validator(True, {'types': str})
+    # def with_page_title(self, title):
+    #     # type: (str) -> Hit
+    #     """
+    #            Set the page title from which this hit has been triggered.
+    #            :param title: page title.
+    #            :return: Hit
+    #            """
+    #     self._data[self._k_page] = title
+    #     return self
 
     def get_data(self):
         return self._data
+
+    def _is_valid(self):
+        return True, ''
 
     def __str__(self):
         return 'Hit : ' + json.dumps(self._data)
@@ -144,6 +146,13 @@ class Page(Hit):
             self._k_origin: origin
         }
         self._data.update(data)
+
+    def _is_valid(self):
+        origin = self._data[self._k_origin]
+        from flagship import utils
+        if not utils.is_url_valid(origin):
+            return False, "'{}' is not a valid url.".format(origin)
+        return True, ''
 
 
 class Screen(Hit):
