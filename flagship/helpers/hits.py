@@ -134,16 +134,16 @@ class Hit(object):
 class Page(Hit):
     @exception_handler()
     @types_validator(True, {'types': str, 'max_length': 2048})
-    def __init__(self, origin):
+    def __init__(self, url):
         # type: (str) -> None
         """
         Create a Page hit.
 
-        :param origin: current url of the page. Max length 2048 Bytes.
+        :param url: current url of the page. Max length 2048 Bytes (must be a valid url).
         """
         Hit.__init__(self, HitType.PAGE)
         data = {
-            self._k_origin: origin
+            self._k_origin: url
         }
         self._data.update(data)
 
