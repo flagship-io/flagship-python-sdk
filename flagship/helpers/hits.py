@@ -6,6 +6,7 @@ from enum import Enum
 from flagship import decorators
 from flagship.decorators import types_validator, exception_handler
 
+
 class HitType(Enum):
     PAGE = 'PAGEVIEW'
     SCREENVIEW = 'SCREENVIEW'
@@ -111,14 +112,15 @@ class Hit(object):
 
     # @exception_handler()
     # @types_validator(True, {'types': str})
-    # def with_page_title(self, title):
+    # def with_location(self, location):
     #     # type: (str) -> Hit
     #     """
-    #            Set the page title from which this hit has been triggered.
-    #            :param title: page title.
-    #            :return: Hit
-    #            """
-    #     self._data[self._k_page] = title
+    #         Set the page url or interface name in which this hit has been triggered.
+    #         If this hit is sent from a web environment you must provide a valid url.
+    #         :param origin: page url or interface name.
+    #         :return: Hit
+    #         """
+    #     self._data[self._k_origin] = location
     #     return self
 
     def get_data(self):
@@ -134,16 +136,16 @@ class Hit(object):
 class Page(Hit):
     @exception_handler()
     @types_validator(True, {'types': str, 'max_length': 2048})
-    def __init__(self, url):
+    def __init__(self, location):
         # type: (str) -> None
         """
         Create a Page hit.
 
-        :param url: current url of the page. Max length 2048 Bytes (must be a valid url).
+        :param location: current url of the page. Max length 2048 Bytes (must be a valid url).
         """
         Hit.__init__(self, HitType.PAGE)
         data = {
-            self._k_origin: url
+            self._k_origin: location
         }
         self._data.update(data)
 
@@ -158,16 +160,16 @@ class Page(Hit):
 class Screen(Hit):
     @exception_handler()
     @types_validator(True, {'types': str, 'max_length': 2048})
-    def __init__(self, screen_name):
+    def __init__(self, location):
         # type: (str) -> None
         """
         Create a Screen hit.
 
-        :param screen name: current app interface name.
+        :param location: current app interface name.
         """
         Hit.__init__(self, HitType.SCREENVIEW)
         data = {
-            self._k_origin: screen_name
+            self._k_origin: location
         }
         self._data.update(data)
 
