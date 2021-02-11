@@ -352,7 +352,7 @@ def test_bucketing_panic():
 
     visitor = fs.create_visitor("visitor1")
     visitor2 = fs.create_visitor("visitor2")
-    hit = Page("test_bucketing_polling_panic")
+    hit = Screen("test_bucketing_polling_panic")
 
     i = 0
     while i < 10:  # 6 polling
