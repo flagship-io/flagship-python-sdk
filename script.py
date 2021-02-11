@@ -1,8 +1,9 @@
 # coding: utf8
+import json
 import sys
-import time
 
 from flagship.app import Flagship
+from flagship.cache.cache_visitor import VisitorCacheManager
 from flagship.config import Config
 from flagship.handler import FlagshipEventHandler
 from flagship.helpers.hits import Page, Screen
@@ -21,17 +22,25 @@ class CustomEventHandler(FlagshipEventHandler):
         pass
 
 
+class CustomVisitorCacheManager(VisitorCacheManager):
+
+    def save(self, visitor_id, visitor_data):
+        print("VisitorCacheManager look up " + json.dumps(visitor_data))
+
+    def lookup(self, visitor_id):
+        print("VisitorCacheManager look up " + visitor_id)
+        return None
+
 def init():
     print(sys.version)
     t = CustomEventHandler()
 
     Flagship.instance().start("bkk4s7gcmjcg07fke9dg", "Q6FDmj6F188nh75lhEato2MwoyXDS7y34VrAL4Aa",
-                              Config(event_handler=t, mode=Config.Mode.API, timeout=2))
-    v = Flagship.instance().create_visitor("visitor_uuid", {'isVIPUser': True})
+                              Config(event_handler=t, mode=Config.Mode.BUCKETING, polling_interval=5, timeout=0.1,
+                                     visitor_cache_manager=CustomVisitorCacheManager()))
+    v = Flagship.instance().create_visitor("visitorId_1", {'isVIPUser': True, 'daysSinceLastLaunch': 3})
     v.synchronize_modifications()
     value = v.get_modification("target", "default", True)
     v.send_hit(Screen("python screen view"))
     print(value)
-
-
 init()

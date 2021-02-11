@@ -1,3 +1,4 @@
+import json
 import logging
 from datetime import datetime
 
@@ -81,19 +82,23 @@ class FlagshipVisitor:
                 self._modifications.clear()
                 bucketing_data = self._bucketing_manager.get_bucketing_data()
                 if bucketing_data is not None and 'content' in bucketing_data:
-                    self.campaigns = Campaign.parse_campaigns(bucketing_data['content'], self._visitor_id)
+                    cached_visitor = self._config.visitor_cache_manager._lookup_visitor_data(
+                        self._visitor_id) if self._config.visitor_cache_manager is not None else None
+                    self.campaigns = Campaign.parse_campaigns(bucketing_data['content'], self._visitor_id,
+                                                              cached_visitor)
         if self._is_panic_mode() is False:
             self._api_manager.send_context_request(self._visitor_id, self._context)
             for campaign in self.campaigns:
                 self._modifications.update(campaign.get_modifications(self._config.mode is Config.Mode.BUCKETING,
                                                                       self._context))
             self.__log_modifications()
+            if self._config.visitor_cache_manager is not None:
+                self._config.visitor_cache_manager._save_visitor_data(self._visitor_id, self.get_selected_variations())
             return True, ''
         else:
             log = '[synchronize_modifications] not possible while panic mode is enabled.'
             self._config.event_handler.on_log(logging.ERROR, log)
             return False, log
-
 
         #     if self._config.mode is Config.Mode.API:
         #         self.campaigns = self._api_manager.synchronize_modifications(self._visitor_id, self._context)
@@ -281,11 +286,18 @@ class FlagshipVisitor:
 
             self._config.event_handler.on_log(logging.DEBUG, "[update_context] : Visitor '{}' Context = {}."
                                               .format(self._visitor_id, self._context))
-            # if self._cache:
-            #     self._cache.save(self._visitor_id, context)
-
             return result, self.synchronize_modifications() if synchronize else None
         else:
             log = "[update_context] for key/value '{}' not possible while panic mode is enabled.".format(str(context))
             self._config.event_handler.on_log(logging.ERROR, log)
             return tuple(), None
+
+    def get_selected_variations(self):
+        selected_variation_ids = list()
+        if self._visitor_id is not None and self.campaigns is not None:
+            for k, v in self._modifications.items():
+                if v.variation_id not in selected_variation_ids:
+                    selected_variation_ids.append(v.variation_id)
+                # for variation_group in campaign.variation_groups:
+                #     selected_variation_ids.append(variation_group.selected_variation_id)
+        return selected_variation_ids
