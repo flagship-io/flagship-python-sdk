@@ -1,3 +1,6 @@
+import json
+
+
 class TargetingComparator:
 
     def __init__(self):
@@ -23,25 +26,49 @@ class TargetingComparator:
 
     def equals(self, value0, value1):
         try:
-            return value0 == value1
+            if type(value1) is list:
+                for v in value1:
+                    if value0 == v:
+                        return True
+                return False
+            else:
+                return value0 == value1
         except Exception as e:
             return False
 
     def not_equals(self, value0, value1):
         try:
-            return value0 != value1
+            if type(value1) is list:
+                for v in value1:
+                    if value0 == v:
+                        return False
+                return True
+            else:
+                return value0 != value1
         except Exception as e:
             return False
 
     def contains(self, value0, value1):
         try:
-            return str(value1) in str(value0)
+            if type(value1) is list:
+                for v in value1:
+                    if str(v) in str(value0):
+                        return True
+                return False
+            else:
+                return str(value1) in str(value0)
         except Exception as e:
             return False
 
     def not_contains(self, value0, value1):
         try:
-            return str(value1) not in str(value0)
+            if type(value1) is list:
+                for v in value1:
+                    if str(v) in str(value0):
+                        return False
+                return True
+            else:
+                return str(value1) not in str(value0)
         except Exception as e:
             return False
 
@@ -78,5 +105,12 @@ class TargetingComparator:
     def ends_with(self, value0, value1):
         try:
             return str(value0).endswith(str(value1))
+        except Exception as e:
+            return False
+
+    def is_json_value(self, value):
+        try:
+            json.loads(value)
+            return True
         except Exception as e:
             return False

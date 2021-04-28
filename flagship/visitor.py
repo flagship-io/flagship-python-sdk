@@ -1,3 +1,4 @@
+import json
 import logging
 import random
 from datetime import datetime
@@ -118,17 +119,21 @@ class FlagshipVisitor:
         # type: (Hit) -> tuple
         """
         Send a Hit to our server for reporting.
-
         :param hit:
         :return: Tuple(Boolean if it has succeeded, log)
         """
         if self._is_panic_mode() is False:
-            if issubclass(type(hit), Hit):
-                return self._api_manager.send_hit_request(self._visitor_id, self._anonymous_id, hit)
-            else:
+            if issubclass(type(hit), Hit) is False:
                 log = "[send_hit] : {} not a Hit subclass.".format(str(hit))
                 self._config.event_handler.on_log(logging.ERROR, log)
                 return False, log
+            elif hit._is_valid()[0] is False:
+                log = "[send_hit] : {} Hit is not valid : {}".format(str(hit), hit._is_valid()[1])
+                self._config.event_handler.on_log(logging.ERROR, log)
+                return False, log
+            else:
+                self._api_manager.send_hit_request(self._visitor_id, self._anonymous_id, hit)
+
         else:
             log = "[send_hit] '{}' not possible to send while panic mode is enabled.".format(str(hit))
             self._config.event_handler.on_log(logging.ERROR, log)
@@ -154,13 +159,18 @@ class FlagshipVisitor:
                 self._modifications.clear()
                 bucketing_data = self._bucketing_manager.get_bucketing_data()
                 if bucketing_data is not None and 'content' in bucketing_data:
-                    self.campaigns = Campaign.parse_campaigns(bucketing_data['content'], self._visitor_id)
+                    cached_visitor = self._config.visitor_cache_manager._lookup_visitor_data(
+                        self._visitor_id) if self._config.visitor_cache_manager is not None else None
+                    self.campaigns = Campaign.parse_campaigns(bucketing_data['content'], self._visitor_id,
+                                                              cached_visitor)
         if self._is_panic_mode() is False:
             self._api_manager.send_context_request(self._visitor_id, self._context)
             for campaign in self.campaigns:
                 self._modifications.update(campaign.get_modifications(self._config.mode is Config.Mode.BUCKETING,
                                                                       self._context))
             self.__log_modifications()
+            if self._config.visitor_cache_manager is not None:
+                self._config.visitor_cache_manager._save_visitor_data(self._visitor_id, self.get_selected_variations())
             return True, ''
         else:
             log = '[synchronize_modifications] not possible while panic mode is enabled.'
@@ -257,7 +267,8 @@ class FlagshipVisitor:
                 return {
                     "campaignId": self._modifications[key].campaign_id,
                     "variationGroupId": self._modifications[key].variation_group_id,
-                    "variationId": self._modifications[key].variation_id
+                    "variationId": self._modifications[key].variation_id,
+                    "isReference": self._modifications[key].reference
                 }
             else:
                 self._config.event_handler.on_log(logging.ERROR,
@@ -353,11 +364,18 @@ class FlagshipVisitor:
 
             self._config.event_handler.on_log(logging.DEBUG, "[update_context] : Visitor '{}' Context = {}."
                                               .format(self._visitor_id, self._context))
-            # if self._cache:
-            #     self._cache.save(self._visitor_id, context)
-
             return result, self.synchronize_modifications() if synchronize else None
         else:
             log = "[update_context] for key/value '{}' not possible while panic mode is enabled.".format(str(context))
             self._config.event_handler.on_log(logging.ERROR, log)
             return tuple(), None
+
+    def get_selected_variations(self):
+        selected_variation_ids = list()
+        if self._visitor_id is not None and self.campaigns is not None:
+            for k, v in self._modifications.items():
+                if v.variation_id not in selected_variation_ids:
+                    selected_variation_ids.append(v.variation_id)
+                # for variation_group in campaign.variation_groups:
+                #     selected_variation_ids.append(variation_group.selected_variation_id)
+        return selected_variation_ids

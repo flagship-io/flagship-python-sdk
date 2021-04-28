@@ -83,7 +83,7 @@ class ApiManager:
 
     def activate_modification(self, visitor_id, anonymous_id, variation_group_id, variation_id):
         header = {
-            "x-api-key": self.api_key
+            # "x-api-key": self.api_key
         }
         body = {
             "cid": self._env_id,
@@ -105,7 +105,7 @@ class ApiManager:
     def send_context_request(self, visitor_id, context):
         context_to_send = self.__clean_context(context)
         header = {
-            "x-api-key": self.api_key
+            # "x-api-key": self.api_key
         }
         body = {
             "type": 'CONTEXT',

@@ -31,6 +31,7 @@ jobs:
         python -m pip install --upgrade pip
         pip install pytest
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+        mkdir cache
     - name: Test with pytest
       run: |
         pytest
@@ -39,8 +40,8 @@ jobs:
       run: |
         pip install coverage
         coverage run --source=flagship -m pytest ./tests/
-        echo ::set-env name=coverage::$(echo $(coverage report -m) | grep -Po '([^ ]*(?=%$))')
-        echo ::set-env name=old_coverage::$(grep -Po -m 1 '(?<=coverage-)(.*?)(?=%25-green)' ./README.md)
+        echo ::exportVariable name=coverage::$(echo $(coverage report -m) | grep -Po '([^ ]*(?=%$))')
+        echo ::exportVariable name=old_coverage::$(grep -Po -m 1 '(?<=coverage-)(.*?)(?=%25-green)' ./README.md)
     - name: Git update coverage
       if: ${{ env.old_coverage != env.coverage && matrix.python-version == 3.8}}
       run: |

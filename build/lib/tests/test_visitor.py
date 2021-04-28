@@ -89,7 +89,7 @@ def test_visitor_synchronize():
 
     fs = Flagship.instance()
     fs.start("my_env_id", "my_api_key", Config(event_handler=None, mode=Config.Mode.API))
-    visitor = fs.create_visitor("visitor_1")
+    visitor = fs.create_visitor("visitor_1", True)
     responses.reset()
     responses.add(responses.POST,
                   'https://decision.flagship.io/v2/my_env_id/campaigns/?exposeAllKeys=true&sendContextEvent=false',

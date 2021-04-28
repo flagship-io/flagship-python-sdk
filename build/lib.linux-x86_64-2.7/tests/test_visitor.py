@@ -13,7 +13,7 @@ def test_create_visitor_wrong_param():
     fs = Flagship.instance()
     fs.start("my_env_id", "my_api_key", Config(event_handler=None))
     try:
-        visitor = fs.create_visitor(1, None)
+        visitor = fs.create_visitor(1, False, None)
         assert False
     except Exception as e:
         assert True
@@ -24,7 +24,7 @@ def test_create_visitor():
     fs.start("my_env_id", "my_api_key", Config(event_handler=None))
 
     try:
-        visitor = fs.create_visitor("Pam", {'isVIP': True})
+        visitor = fs.create_visitor("Pam", True, {'isVIP': True})
         assert visitor._visitor_id == 'Pam'
         assert visitor._context['isVIP'] is True
         assert visitor._env_id == "my_env_id"
@@ -47,7 +47,7 @@ def test_visitor_update_context():
         def __init__(self):
             pass
 
-    visitor = fs.create_visitor("Pam", {'isVIP': True})
+    visitor = fs.create_visitor("Pam", True, {'isVIP': True})
     visitor.update_context(('one', 1), False)
     visitor.update_context(('two', 2, 2))
     visitor.update_context({

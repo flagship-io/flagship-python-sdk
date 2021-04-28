@@ -68,7 +68,7 @@ def test_bucketing_init():
 
         fs = Flagship.instance()
         fs.start("my_env_id", "my_api_key", Config(mode=Config.Mode.BUCKETING, polling_interval=-1))
-        visitor = Flagship.instance().create_visitor("ä",
+        visitor = Flagship.instance().create_visitor("ä", True,
                                                      {'isVIPUser': True, 'bin_a': 1,
                                                       'bin_b': 1})  # type: FlagshipVisitor
         visitor.update_context(('access', 'password'), True)
@@ -161,7 +161,7 @@ def test_bucketing_alloc():
 
         x = 50000
         for i in range(0, x):
-            v = Flagship.instance().create_visitor(get_random_string(10) + "_" + str(i))
+            v = Flagship.instance().create_visitor(get_random_string(10) + "_" + str(i), True)
             v.synchronize_modifications()
             variation = v.get_modification("variation", 0)
             variation50 = v.get_modification("variation50", 0)

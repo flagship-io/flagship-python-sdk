@@ -51,7 +51,7 @@ def b_test_bucketing_304():
 
     fs = Flagship.instance()
     fs.start("my_env_id", "my_api_key", Config(mode=Config.Mode.BUCKETING, polling_interval=-1))
-    visitor = Flagship.instance().create_visitor("ä",
+    visitor = Flagship.instance().create_visitor("ä", True,
                                                  {'isVIPUser': True, 'bin_a': 1,
                                                   'bin_b': 1})  # type: FlagshipVisitor
     visitor.update_context(('access', 'password'), True)
@@ -257,7 +257,7 @@ def test_bucketing_alloc2():
     variation25 = [4, 1, 2, 4, 2, 4, 1, 3, 2, 1, 4, 4, 1, 1, 2, 3, 4, 1, 3, 4]
 
     for i in range(0, len(ids)):
-        v = Flagship.instance().create_visitor(ids[i])
+        v = Flagship.instance().create_visitor(ids[i], True)
         v.synchronize_modifications()
         v25 = v.get_modification("variation", 0)
         v50 = v.get_modification("variation50", 0)
@@ -299,8 +299,8 @@ def test_bucketing_polling():
     # # print "#=> " + str(fs._bucketing_manager.is_bucketing_thread_running())
     fs.start("my_env_id", "my_api_key", Config(mode=Config.Mode.BUCKETING, polling_interval=2))  # 1
 
-    visitor = fs.create_visitor("visitor1")
-    visitor2 = fs.create_visitor("visitor2")
+    visitor = fs.create_visitor("visitor1", True)
+    visitor2 = fs.create_visitor("visitor2", True)
 
     hit = Page("test_bucketing_polling_panic")
     i = 0
