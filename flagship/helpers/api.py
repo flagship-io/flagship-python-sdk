@@ -3,12 +3,10 @@ from __future__ import absolute_import
 import json
 import logging
 import traceback
-
 import requests
-from requests import ConnectTimeout
-
 from flagship.errors import FlagshipParsingError
 from flagship.model.campaign import Campaign
+from flagship import __version__
 
 
 class ApiManager:
@@ -36,7 +34,9 @@ class ApiManager:
     def __send_campaign_request(self, visitor_id, anoymousId, context):
         context_to_send = self.__clean_context(context)
         header = {
-            "x-api-key": self.api_key
+            "x-api-key": self.api_key,
+            "x-sdk-client": "python",
+            "x-sdk-version": __version__
         }
         body = {
             "visitorId": visitor_id,
@@ -84,6 +84,8 @@ class ApiManager:
     def activate_modification(self, visitor_id, anonymous_id, variation_group_id, variation_id):
         header = {
             # "x-api-key": self.api_key
+            "x-sdk-client": "python",
+            "x-sdk-version": __version__
         }
         body = {
             "cid": self._env_id,
@@ -106,6 +108,8 @@ class ApiManager:
         context_to_send = self.__clean_context(context)
         header = {
             # "x-api-key": self.api_key
+            "x-sdk-client": "python",
+            "x-sdk-version": __version__
         }
         body = {
             "type": 'CONTEXT',
