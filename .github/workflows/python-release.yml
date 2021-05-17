@@ -68,7 +68,7 @@ jobs:
     - name: Update verion setup.py
       if: matrix.python-version == 3.8
       run: |
-        sed -i "s/__version__ = '.*',/version='${{env.FLAGSHIP_VERSION_NAME}}',/g" ./flagship/__init__.py
+        sed -i "s/__version__ = '.*'/__version__ = '${{env.FLAGSHIP_VERSION_NAME}}',/g" ./flagship/__init__.py
         cat setup.py
         git remote add github "https://$GITHUB_ACTOR:$GITHUB_TOKEN@github.com/$GITHUB_REPOSITORY.git"
         git config --local user.email "ci@abtasty.com"
