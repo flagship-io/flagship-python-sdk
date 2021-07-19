@@ -1,3 +1,4 @@
+LICENSE
 README.md
 setup.py
 flagship/__init__.py
@@ -6,12 +7,15 @@ flagship/config.py
 flagship/decorators.py
 flagship/errors.py
 flagship/handler.py
+flagship/utils.py
 flagship/visitor.py
 flagship.egg-info/PKG-INFO
 flagship.egg-info/SOURCES.txt
 flagship.egg-info/dependency_links.txt
 flagship.egg-info/requires.txt
 flagship.egg-info/top_level.txt
+flagship/cache/__init__.py
+flagship/cache/cache_visitor.py
 flagship/helpers/__init__.py
 flagship/helpers/api.py
 flagship/helpers/bucketing.py

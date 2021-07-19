@@ -1,4 +1,5 @@
 {
+    "last_modified": "Fri,  05 Jun 2020 12:20:40 GMT",
     "content": {
         "campaigns": [
             {
@@ -6,222 +7,221 @@
                     {
                         "variations": [
                             {
-                                "allocation": 100, 
+                                "allocation": 100,
                                 "modifications": {
-                                    "type": "FLAG", 
+                                    "type": "FLAG",
                                     "value": {
                                         "featureEnabled": true
                                     }
-                                }, 
+                                },
                                 "id": "xxxx"
                             }
-                        ], 
+                        ],
                         "targeting": {
                             "targetingGroups": [
                                 {
                                     "targetings": [
                                         {
-                                            "operator": "EQUALS", 
-                                            "value": true, 
+                                            "operator": "EQUALS",
+                                            "value": true,
                                             "key": "isVIPUser"
                                         }
                                     ]
                                 }
                             ]
-                        }, 
+                        },
                         "id": "yyyy"
-                    }, 
+                    },
                     {
                         "variations": [
                             {
-                                "allocation": 100, 
+                                "allocation": 100,
                                 "modifications": {
-                                    "type": "FLAG", 
+                                    "type": "FLAG",
                                     "value": {
                                         "featureEnabled": false
                                     }
-                                }, 
+                                },
                                 "id": "cccc"
                             }
-                        ], 
+                        ],
                         "targeting": {
                             "targetingGroups": [
                                 {
                                     "targetings": [
                                         {
-                                            "operator": "EQUALS", 
-                                            "value": false, 
+                                            "operator": "EQUALS",
+                                            "value": false,
                                             "key": "isVIPUser"
                                         }
                                     ]
                                 }
                             ]
-                        }, 
+                        },
                         "id": "vvvv"
                     }
-                ], 
-                "type": "toggle", 
+                ],
+                "type": "toggle",
                 "id": "aaaa"
-            }, 
+            },
             {
+                "id": "bu6lgeu3bdt014iawwww",
+                "type": "perso",
                 "variationGroups": [
                     {
+                        "id": "bu6lgeu3bdt014iaxxxx",
                         "targeting": {
                             "targetingGroups": [
                                 {
                                     "targetings": [
                                         {
-                                            "operator": "CONTAINS", 
-                                            "key": "sdk_deviceModel", 
+                                            "operator": "CONTAINS",
+                                            "key": "sdk_deviceModel",
                                             "value": [
-                                                "Google Pixel 3", 
-                                                "Google Pixel X", 
+                                                "Google Pixel 3",
+                                                "Google Pixel X",
                                                 "Google Pixel 0"
                                             ]
                                         }
                                     ]
                                 }
                             ]
-                        }, 
+                        },
                         "variations": [
                             {
+                                "id": "bu6lgeu3bdt014iacccc",
                                 "modifications": {
-                                    "type": "JSON", 
+                                    "type": "JSON",
                                     "value": {
                                         "target": null
                                     }
-                                }, 
-                                "id": "bu6lgeu3bdt014iacccc", 
+                                },
                                 "reference": true
-                            }, 
+                            },
                             {
-                                "allocation": 100, 
+                                "id": "bu6lgeu3bdt014iavvvv",
                                 "modifications": {
-                                    "type": "JSON", 
+                                    "type": "JSON",
                                     "value": {
                                         "target": "is"
                                     }
-                                }, 
-                                "id": "bu6lgeu3bdt014iavvvv"
+                                },
+                                "allocation": 100
                             }
-                        ], 
-                        "id": "bu6lgeu3bdt014iaxxxx"
-                    }, 
+                        ]
+                    },
                     {
+                        "id": "bu6lttip17b01emhbbbb",
                         "targeting": {
                             "targetingGroups": [
                                 {
                                     "targetings": [
                                         {
-                                            "operator": "NOT_CONTAINS", 
-                                            "key": "sdk_deviceModel", 
+                                            "operator": "NOT_CONTAINS",
+                                            "key": "sdk_deviceModel",
                                             "value": [
-                                                "Google Pixel 9", 
+                                                "Google Pixel 9",
                                                 "Google Pixel 9000"
                                             ]
                                         }
                                     ]
                                 }
                             ]
-                        }, 
+                        },
                         "variations": [
                             {
+                                "id": "bu6lttip17b01emhnnnn",
                                 "modifications": {
-                                    "type": "JSON", 
+                                    "type": "JSON",
                                     "value": {
                                         "target": null
                                     }
-                                }, 
-                                "id": "bu6lttip17b01emhnnnn", 
+                                },
                                 "reference": true
-                            }, 
+                            },
                             {
-                                "allocation": 100, 
+                                "id": "bu6lttip17b01emhqqqq",
                                 "modifications": {
-                                    "type": "JSON", 
+                                    "type": "JSON",
                                     "value": {
                                         "target": "is not"
                                     }
-                                }, 
-                                "id": "bu6lttip17b01emhqqqq"
+                                },
+                                "allocation": 100
                             }
-                        ], 
-                        "id": "bu6lttip17b01emhbbbb"
+                        ]
                     }
-                ], 
-                "type": "perso", 
-                "id": "bu6lgeu3bdt014iawwww"
-            }, 
+                ]
+            },
             {
                 "variationGroups": [
                     {
                         "variations": [
                             {
-                                "allocation": 25, 
+                                "allocation": 25,
                                 "modifications": {
-                                    "type": "JSON", 
+                                    "type": "JSON",
                                     "value": {
-                                        "rank_plus": null, 
+                                        "rank_plus": null,
                                         "rank": null
                                     }
-                                }, 
-                                "id": "zzzz", 
+                                },
+                                "id": "zzzz",
                                 "reference": true
-                            }, 
+                            },
                             {
-                                "allocation": 25, 
+                                "allocation": 25,
                                 "modifications": {
-                                    "type": "JSON", 
+                                    "type": "JSON",
                                     "value": {
-                                        "rank_plus": null, 
+                                        "rank_plus": null,
                                         "rank": 1111
                                     }
-                                }, 
+                                },
                                 "id": "eeee"
-                            }, 
+                            },
                             {
-                                "allocation": 25, 
+                                "allocation": 25,
                                 "modifications": {
-                                    "type": "JSON", 
+                                    "type": "JSON",
                                     "value": {
-                                        "rank_plus": null, 
+                                        "rank_plus": null,
                                         "rank": 3333
                                     }
-                                }, 
+                                },
                                 "id": "rrrr"
-                            }, 
+                            },
                             {
-                                "allocation": 25, 
+                                "allocation": 25,
                                 "modifications": {
-                                    "type": "JSON", 
+                                    "type": "JSON",
                                     "value": {
-                                        "rank_plus": 22.22, 
+                                        "rank_plus": 22.22,
                                         "rank": 2222
                                     }
-                                }, 
+                                },
                                 "id": "tttt"
                             }
-                        ], 
+                        ],
                         "targeting": {
                             "targetingGroups": [
                                 {
                                     "targetings": [
                                         {
-                                            "operator": "EQUALS", 
-                                            "value": "password", 
+                                            "operator": "EQUALS",
+                                            "value": "password",
                                             "key": "access"
                                         }
                                     ]
                                 }
                             ]
-                        }, 
+                        },
                         "id": "yyyy"
                     }
-                ], 
-                "type": "ab", 
+                ],
+                "type": "ab",
                 "id": "iiii"
             }
         ]
-    }, 
-    "last_modified": "Fri,  05 Jun 2020 12:20:40 GMT"
+    }
 }
