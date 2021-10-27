@@ -78,7 +78,7 @@ class ApiManager:
 
     def check_for_panic(self, json_response):
         if json_response is not None and 'panic' in json_response:
-            return True
+            return json_response.get("panic", False)
         return False
 
     def activate_modification(self, visitor_id, anonymous_id, variation_group_id, variation_id):
