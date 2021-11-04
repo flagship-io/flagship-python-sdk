@@ -16,6 +16,7 @@ jobs:
         run: |
           # coverage run -m unittest
           # coverage xml
+          pip install coverage
           coverage run --source=flagship -m pytest ./tests/
           coverage report -m
       - name: Upload coverage to Codecov
