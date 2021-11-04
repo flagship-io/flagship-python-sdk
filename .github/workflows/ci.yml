@@ -16,5 +16,6 @@ jobs:
         run: |
           coverage run -m unittest
           coverage xml
+        continue-on-error: true
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v2
