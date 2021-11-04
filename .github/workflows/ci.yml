@@ -19,5 +19,6 @@ jobs:
           pip install coverage
           coverage run --source=flagship -m pytest ./tests/
           coverage report -m
+        continue-on-error: true
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v1
