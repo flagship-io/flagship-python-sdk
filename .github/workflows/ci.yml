@@ -18,4 +18,4 @@ jobs:
           coverage xml
         continue-on-error: true
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v2
+        uses: codecov/codecov-action@v1
