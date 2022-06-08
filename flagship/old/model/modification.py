@@ -1,9 +1,8 @@
-import json
 import logging
 
 from six import string_types
 
-from flagship import decorators
+from flagship.old import decorators
 
 
 class Modification:

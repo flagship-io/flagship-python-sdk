@@ -6,8 +6,7 @@
 
 <h3 align="center">Bring your features to life</h3>
 
-![Python package](https://github.com/raf-abtasty/flagship-python-sdk/workflows/Python%20package/badge.svg?branch=master)
-[![python](https://img.shields.io/badge/python-2.7.18%20%7C%203.5%20%7C%203.6%20%7C%203.7%20%7C%203.8-blue.svg)]()
+[![python](https://img.shields.io/badge/python-2.7.18%20%7C%203.5%20%7C%203.8-blue.svg)]()
 [![coverage](https://img.shields.io/badge/coverage-88%25-green)]()
 [![Apache2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](http://www.apache.org/licenses/LICENSE-2.0)
 
@@ -16,13 +15,13 @@
 
 ## Docs
 
-- [Installation](http://developers.flagship.io/python/v1.0.0/#install-the-library)
-- [Get Started](https://developers.flagship.io/python/v1.0.0/#getting-started)
-- [Initialize and start](https://developers.flagship.io/python/v1.0.0/#import-and-initialize-the-library)
-- [Create a visitor](https://developers.flagship.io/python/v1.0.0/#create-a-visitor)
-- [Campaign integration](https://developers.flagship.io/python/v1.0.0/#campaign-integration)
-- [Hit tracking](https://developers.flagship.io/python/v1.0.0/#hit-tracking)
-- [Release Notes](https://developers.flagship.io/python/v1.0.0/#releases)
+- [Installation](https://developers.flagship.io/docs/sdk/python/v2.0#installation)
+- [Get Started](https://developers.flagship.io/docs/sdk/python/v2.0#getting-started)
+- [Initialize and start](https://developers.flagship.io/docs/sdk/python/v2.0#initialization)
+- [Create a visitor](https://developers.flagship.io/docs/sdk/python/v2.0#updating-the-user-context)
+- [Campaign integration](https://developers.flagship.io/docs/sdk/python/v2.0#campaign-synchronization)
+- [Hit tracking](https://developers.flagship.io/docs/sdk/python/v2.0#hit-tracking)
+- [Release Notes](https://developers.flagship.io/docs/sdk/python/v2.0#release-notes)
 
 ## Examples
 
@@ -35,3 +34,27 @@
 ## Licence
 
 [Apache License.](https://github.com/abtasty/flagship-python-sdk/blob/master/LICENSE)
+
+## About Flagship
+​
+<img src="https://www.flagship.io/wp-content/uploads/Flagship-horizontal-black-wake-AB.png" alt="drawing" width="150"/>
+​
+[Flagship by AB Tasty](https://www.flagship.io/) is a feature flagging platform for modern engineering and product teams. It eliminates the risks of future releases by separating code deployments from these releases :bulb: With Flagship, you have full control over the release process. You can:
+​
+- Switch features on or off through remote config.
+- Automatically roll-out your features gradually to monitor performance and gather feedback from your most relevant users.
+- Roll back any feature should any issues arise while testing in production.
+- Segment users by granting access to a feature based on certain user attributes.
+- Carry out A/B tests by easily assigning feature variations to groups of users.
+​
+<img src="https://www.flagship.io/wp-content/uploads/demo-setup.png" alt="drawing" width="600"/>
+​
+Flagship also allows you to choose whatever implementation method works for you from our many available SDKs or directly through a REST API. Additionally, our architecture is based on multi-cloud providers that offer high performance and highly-scalable managed services.
+​
+**To learn more:**
+​
+- [Solution overview](https://www.flagship.io/#showvideo) - A 5mn video demo :movie_camera:
+- [Documentation](https://docs.developers.flagship.io/) - Our dev portal with guides, how tos, API and SDK references
+- [Sign up for a free trial](https://www.flagship.io/sign-up/) - Create your free account
+- [Guide to feature flagging](https://www.flagship.io/feature-flags/) - Everyhting you need to know about feature flag related use cases
+- [Blog](https://www.flagship.io/blog/) - Additional resources about release management

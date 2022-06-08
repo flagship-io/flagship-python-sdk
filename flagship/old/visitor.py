@@ -1,109 +1,31 @@
-import json
 import logging
-import random
 from datetime import datetime
 
-from flagship.config import Config
-from flagship.decorators import exception_handler, types_validator
-from flagship.helpers.api import ApiManager
-from flagship.helpers.bucketing import BucketingManager
-from flagship.helpers.hits import Hit
-from flagship.helpers.preset_context import PresetContext
-from flagship.model.campaign import Campaign
-from flagship.model.modification import Modification
-from datetime import datetime
+from flagship.old.config import Config
+from flagship.old.decorators import exception_handler, types_validator
+from flagship.old.helpers.api import ApiManager
+from flagship.old.helpers.bucketing import BucketingManager
+from flagship.old.helpers.hits import Hit
+from flagship.old.helpers.preset_context import PresetContext
+from flagship.old.model.campaign import Campaign
+from flagship.old.model.modification import Modification
 
 
 class FlagshipVisitor:
 
-    def __init__(self, bucketing_manager, config, visitor_id, authenticated, context):
-        # type: (BucketingManager, Config, str, bool, dict) -> None
+    def __init__(self, bucketing_manager, config, visitor_id, context):
+        # type: (BucketingManager, Config, str, dict) -> None
         self._bucketing_manager = bucketing_manager
         self._config = config
         self._api_manager = ApiManager(config)
         self._env_id = config.env_id
         self._api_key = config.api_key
-        self._visitor_id = None
-        self._anonymous_id = None
+        self._visitor_id = visitor_id
         self._context = dict()
         self.update_context(context)
         self._last_call = datetime.now()
         self.campaigns = list()
         self._modifications = dict()
-
-        self.__init_visitor(visitor_id, authenticated)
-
-    def __init_visitor(self, visitor_id, authenticated):
-        if visitor_id is None or len(visitor_id) <= 0:
-            self._visitor_id = self.__gen_visitor_id()
-        else:
-            self._visitor_id = visitor_id
-        if self._config.mode is Config.Mode.API:
-            if authenticated:
-                self._anonymous_id = self.__gen_visitor_id()
-            else:
-                self._anonymous_id = None
-
-    def authenticate(self, visitor_id, context=None, synchronize=False):
-        """
-         Define the given visitor id as authenticated. This will insure to keep the same experience.
-
-         :param visitorId: id of the current visitor
-         :param visitorContext: (optional : null by default) Replace the current visitor context. Passing null wont replace context and will insure consistency with the previous visitor context.
-         :param synchronize: (optional : null by default) If a lambda is passed as parameter : it will automatically update the campaigns modifications.
-         Then this lambda will be invoked when finished.
-         You also have the possibility to update it manually by calling synchronizeModifications()
-
-        """
-        if self._config.mode is Config.Mode.BUCKETING:
-            log = "authenticateVisitor() is ignored in BUCKETING mode."
-            self._config.event_handler.on_log(logging.WARNING, log)
-        elif visitor_id is not None and len(visitor_id) > 0:
-            if self._visitor_id is not None and self._anonymous_id is not None:
-                self._visitor_id = visitor_id
-            else:
-                self._anonymous_id = self._visitor_id
-                self._visitor_id = visitor_id
-            if context is not None:
-                self._context.clear()
-                self.update_context(context)
-            if synchronize:
-                self.synchronize_modifications()
-
-    def unauthenticate(self, context=None, synchronize=False):
-        """
-            Define the previous authenticated visitor as unauthenticated. This will insure to get back to the initial experience.
-
-            :param visitorId: id of the current visitor
-            :param context: (optional : null by default) Replace the current visitor context. Passing null wont replace context and will insure consistency with the previous visitor context.
-            :param synchronize: (optional : null by default) If a lambda is passed as parameter : it will automatically update the campaigns modifications.
-            Then this lambda will be invoked when finished.
-            You also have the possibility to update it manually by calling synchronizeModifications()
-
-        """
-
-        if self._config.mode is Config.Mode.API:
-            if self._anonymous_id is not None:
-                self._visitor_id = self._anonymous_id
-                self._anonymous_id = None
-                if context is not None:
-                    self._context.clear()
-                    self.update_context(context)
-                if synchronize:
-                    self.synchronize_modifications()
-            else:
-                log = "unauthenticateVisitor() is ignored as there is no current authenticated visitor."
-                self._config.event_handler.on_log(logging.WARNING, log)
-        else:
-            log = "unauthenticateVisitor() is ignored in BUCKETING mode."
-            self._config.event_handler.on_log(logging.WARNING, log)
-
-    def get_context(self):
-        return self._context
-
-    @staticmethod
-    def __gen_visitor_id():
-        return datetime.now().strftime('%Y%m%d%H%M%S') + str(random.randint(10000, 99999))
 
     def _is_panic_mode(self):
         if self._api_manager is not None and self._api_manager.panic_mode is True:
@@ -119,21 +41,17 @@ class FlagshipVisitor:
         # type: (Hit) -> tuple
         """
         Send a Hit to our server for reporting.
+
         :param hit:
         :return: Tuple(Boolean if it has succeeded, log)
         """
         if self._is_panic_mode() is False:
-            if issubclass(type(hit), Hit) is False:
+            if issubclass(type(hit), Hit):
+                return self._api_manager.send_hit_request(self._visitor_id, hit)
+            else:
                 log = "[send_hit] : {} not a Hit subclass.".format(str(hit))
                 self._config.event_handler.on_log(logging.ERROR, log)
                 return False, log
-            elif hit._is_valid()[0] is False:
-                log = "[send_hit] : {} Hit is not valid : {}".format(str(hit), hit._is_valid()[1])
-                self._config.event_handler.on_log(logging.ERROR, log)
-                return False, log
-            else:
-                self._api_manager.send_hit_request(self._visitor_id, self._anonymous_id, hit)
-
         else:
             log = "[send_hit] '{}' not possible to send while panic mode is enabled.".format(str(hit))
             self._config.event_handler.on_log(logging.ERROR, log)
@@ -152,30 +70,25 @@ class FlagshipVisitor:
         """
 
         if self._config.mode is Config.Mode.API:
-            self.campaigns = self._api_manager.synchronize_modifications(self._visitor_id, self._anonymous_id,
-                                                                         self._context)
+            self.campaigns = self._api_manager.synchronize_modifications(self._visitor_id, self._context)
         else:
             if self._is_panic_mode() is False:
                 self._modifications.clear()
                 bucketing_data = self._bucketing_manager.get_bucketing_data()
                 if bucketing_data is not None and 'content' in bucketing_data:
-                    cached_visitor = self._config.visitor_cache_manager._lookup_visitor_data(
-                        self._visitor_id) if self._config.visitor_cache_manager is not None else None
-                    self.campaigns = Campaign.parse_campaigns(bucketing_data['content'], self._visitor_id,
-                                                              cached_visitor)
+                    self.campaigns = Campaign.parse_campaigns(bucketing_data['content'], self._visitor_id)
         if self._is_panic_mode() is False:
             self._api_manager.send_context_request(self._visitor_id, self._context)
             for campaign in self.campaigns:
                 self._modifications.update(campaign.get_modifications(self._config.mode is Config.Mode.BUCKETING,
                                                                       self._context))
             self.__log_modifications()
-            if self._config.visitor_cache_manager is not None:
-                self._config.visitor_cache_manager._save_visitor_data(self._visitor_id, self.get_selected_variations())
             return True, ''
         else:
             log = '[synchronize_modifications] not possible while panic mode is enabled.'
             self._config.event_handler.on_log(logging.ERROR, log)
             return False, log
+
 
         #     if self._config.mode is Config.Mode.API:
         #         self.campaigns = self._api_manager.synchronize_modifications(self._visitor_id, self._context)
@@ -221,8 +134,7 @@ class FlagshipVisitor:
         if self._is_panic_mode() is False:
             if key in self._modifications:
                 modification = self._modifications[key]
-                return self._api_manager.activate_modification(self._visitor_id, self._anonymous_id,
-                                                               modification.variation_group_id,
+                return self._api_manager.activate_modification(self._visitor_id, modification.variation_group_id,
                                                                modification.variation_id)
             else:
                 log = "[activate_modification] : no modification for the key '{}'.".format(key)
@@ -267,8 +179,7 @@ class FlagshipVisitor:
                 return {
                     "campaignId": self._modifications[key].campaign_id,
                     "variationGroupId": self._modifications[key].variation_group_id,
-                    "variationId": self._modifications[key].variation_id,
-                    "isReference": self._modifications[key].reference
+                    "variationId": self._modifications[key].variation_id
                 }
             else:
                 self._config.event_handler.on_log(logging.ERROR,
@@ -364,18 +275,11 @@ class FlagshipVisitor:
 
             self._config.event_handler.on_log(logging.DEBUG, "[update_context] : Visitor '{}' Context = {}."
                                               .format(self._visitor_id, self._context))
+            # if self._cache:
+            #     self._cache.save(self._visitor_id, context)
+
             return result, self.synchronize_modifications() if synchronize else None
         else:
             log = "[update_context] for key/value '{}' not possible while panic mode is enabled.".format(str(context))
             self._config.event_handler.on_log(logging.ERROR, log)
             return tuple(), None
-
-    def get_selected_variations(self):
-        selected_variation_ids = list()
-        if self._visitor_id is not None and self.campaigns is not None:
-            for k, v in self._modifications.items():
-                if v.variation_id not in selected_variation_ids:
-                    selected_variation_ids.append(v.variation_id)
-                # for variation_group in campaign.variation_groups:
-                #     selected_variation_ids.append(variation_group.selected_variation_id)
-        return selected_variation_ids

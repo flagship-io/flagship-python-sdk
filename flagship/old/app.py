@@ -1,13 +1,13 @@
 import logging
 
-from flagship import decorators
-from flagship.config import Config
-from flagship.decorators import exception_handler
-from flagship.decorators import types_validator
-from flagship.errors import InitializationError
-from flagship.helpers.bucketing import BucketingManager
-from flagship.helpers.preset_context import PresetContext
-from flagship.visitor import FlagshipVisitor
+from flagship.old import decorators
+from flagship.old.config import Config
+from flagship.old.decorators import exception_handler
+from flagship.old.decorators import types_validator
+from flagship.old.errors import InitializationError
+from flagship.old.helpers.bucketing import BucketingManager
+from flagship.old.helpers.preset_context import PresetContext
+from flagship.old.visitor import FlagshipVisitor
 
 
 class Flagship:
@@ -27,7 +27,6 @@ class Flagship:
             :param api_key: Flagship secure api key.
             :param config: Configuration to initialize.
             """
-            self._bucketing_manager = None
             self._config = config
             if self._config.env_id != env_id:
                 self._config.env_id = env_id
@@ -53,26 +52,22 @@ class Flagship:
                 return False
 
         @exception_handler()
-        @types_validator(True, str, bool, dict)
-        def create_visitor(self, visitor_id=None, authenticated=False, context={}):
-            # type: (str, bool, dict) -> FlagshipVisitor(BucketingManager, Config, str, bool, dict)
+        @types_validator(True, str, dict)
+        def create_visitor(self, visitor_id, context={}):  # type: (str, dict) -> FlagshipVisitor(object, str, dict)
             """
             Create a visitor instance. Raise a InitializationError if the SDK has not been successfully initialized.
 
             :param visitor_id: Unique visitor identifier.
-            :param authenticated: Specify if the current visitor is authenticated or anonymous
             :param context: Visitor context.
             :return: FlagshipVisitor or None if the
             """
             if self.is_flagship_started() is False:
                 raise InitializationError("Flagship SDK has not been initialized or started successfully.")
             else:
-                visitor_context = {}
-                visitor_context.update(PresetContext.load())
-                visitor_context.update(context)
-                visitor = FlagshipVisitor(self._bucketing_manager, self._config, visitor_id, authenticated, visitor_context)
+                context.update(PresetContext.load())
+                visitor = FlagshipVisitor(self._bucketing_manager, self._config, visitor_id, context)
                 self._config.event_handler.on_log(logging.DEBUG, "Visitor '{}' created. Context : {}".
-                                                  format(visitor_id, str(visitor_context)))
+                                                  format(visitor_id, str(context)))
                 return visitor
 
         def close(self):

@@ -1,8 +1,6 @@
-import unittest
-
-from flagship.app import Flagship
-from flagship.config import Config
-from flagship.handler import FlagshipEventHandler
+from flagship import Flagship
+from flagship.old.config import Config
+from flagship.old.handler import FlagshipEventHandler
 
 
 def test_init():

@@ -1,9 +1,7 @@
-import json
 import logging
-import traceback
 
-from flagship import decorators
-from flagship.model.modification import Modifications
+from flagship.old import decorators
+from flagship.old.model.modification import Modifications
 
 
 class Variation:
@@ -29,7 +27,7 @@ class Variation:
     def parse(campaign_id, variation_group_id, variation_obj, use_bucketing):
         try:
             variation_id = variation_obj['id']
-            reference = variation_obj['reference'] if 'reference' in variation_obj else False
+            reference = variation_obj['reference'] if 'reference' in variation_obj else True
             modifications = Modifications.parse(campaign_id, variation_group_id, variation_id, reference,
                                                 variation_obj['modifications'])
             if not use_bucketing:

@@ -1,8 +1,6 @@
 import json
 
-from enum import Enum
-
-from flagship.model.targeting_comparator import TargetingComparator
+from flagship.old.model.targeting_comparator import TargetingComparator
 
 
 class Targeting:
@@ -27,16 +25,29 @@ class Targeting:
         if self.key not in context:
             return False
 
-        value0 = context[str(self.key)]
+        value0 = context[self.key]
         value1 = self.value
 
         try:
             if value0 is None:
                 return False
+            elif self.is_json_value() is True:
+                for e in json.loads(str(self.value)):
+                    if TargetingComparator().compare(self.operator, value0, value1[e]):
+                        return True
+                return False
             else:
                 return TargetingComparator().compare(self.operator, value0, value1)
         except Exception as e:
             return False
+
+    def is_json_value(self):
+        try:
+            json.loads(self.value)
+            return True
+        except Exception as e:
+            return False
+
 
 class TargetingList:
 

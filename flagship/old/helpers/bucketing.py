@@ -3,7 +3,7 @@ import logging
 import os
 import time
 from threading import Thread
-from flagship.helpers.api import ApiManager
+from flagship.old.helpers.api import ApiManager
 
 
 class BucketingObserver:
@@ -53,7 +53,7 @@ class BucketingManager(BucketingObserver):
     def check_for_panic(bucketing_data):
         if bucketing_data is not None and 'content' in bucketing_data:
             content = bucketing_data['content']
-            return content.get('panic', False)
+            return 'panic' in content
         return False
 
     def get_bucketing_data(self):

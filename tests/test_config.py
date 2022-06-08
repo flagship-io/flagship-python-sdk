@@ -1,5 +1,5 @@
-from flagship.app import Flagship
-from flagship.config import Config
+from flagship import Flagship
+from flagship.old.config import Config
 
 def test_flagship_start_wrong_param():
     try:
