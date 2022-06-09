@@ -3,10 +3,10 @@ import random
 import sys
 import traceback
 
-from flagship.old import decorators
-from flagship.old.helpers.murmur32x86 import murmurHash
-from flagship.old.model.targeting import TargetingGroup
-from flagship.old.model.variation import Variation
+from flagship import decorators
+from flagship import murmurHash
+from flagship import TargetingGroup
+from flagship import Variation
 
 
 class VariationGroup:

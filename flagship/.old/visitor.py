@@ -1,14 +1,14 @@
 import logging
 from datetime import datetime
 
-from flagship.old.config import Config
-from flagship.old.decorators import exception_handler, types_validator
-from flagship.old.helpers.api import ApiManager
-from flagship.old.helpers.bucketing import BucketingManager
-from flagship.old.helpers.hits import Hit
-from flagship.old.helpers.preset_context import PresetContext
-from flagship.old.model.campaign import Campaign
-from flagship.old.model.modification import Modification
+from flagship import Config
+from flagship import exception_handler, types_validator
+from flagship import ApiManager
+from flagship import BucketingManager
+from flagship import Hit
+from flagship import PresetContext
+from flagship import Campaign
+from flagship import Modification
 
 
 class FlagshipVisitor:

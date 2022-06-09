@@ -6,8 +6,8 @@ import traceback
 
 import requests
 
-from flagship.old.errors import FlagshipParsingError
-from flagship.old.model.campaign import Campaign
+from flagship import FlagshipParsingError
+from flagship import Campaign
 
 
 class ApiManager:

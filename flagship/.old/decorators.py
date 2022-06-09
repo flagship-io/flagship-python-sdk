@@ -1,8 +1,8 @@
 import inspect
 import traceback
 
-from flagship.old.errors import TypingError, ParamError
-from flagship.old.handler import FlagshipEventHandler
+from flagship import TypingError, ParamError
+from flagship import FlagshipEventHandler
 
 customer_event_handler = FlagshipEventHandler()  # type: FlagshipEventHandler
 # customer_event_handler = None  # type: FlagshipEventHandler

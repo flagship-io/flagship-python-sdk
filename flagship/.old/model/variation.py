@@ -1,7 +1,7 @@
 import logging
 
-from flagship.old import decorators
-from flagship.old.model.modification import Modifications
+from flagship import decorators
+from flagship import Modifications
 
 
 class Variation:

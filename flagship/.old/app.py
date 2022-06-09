@@ -1,13 +1,13 @@
 import logging
 
-from flagship.old import decorators
-from flagship.old.config import Config
-from flagship.old.decorators import exception_handler
-from flagship.old.decorators import types_validator
-from flagship.old.errors import InitializationError
-from flagship.old.helpers.bucketing import BucketingManager
-from flagship.old.helpers.preset_context import PresetContext
-from flagship.old.visitor import FlagshipVisitor
+from flagship import decorators
+from flagship import Config
+from flagship import exception_handler
+from flagship import types_validator
+from flagship import InitializationError
+from flagship import BucketingManager
+from flagship import PresetContext
+from flagship import FlagshipVisitor
 
 
 class Flagship:

@@ -2,10 +2,10 @@ import json
 import traceback
 
 from flagship import Flagship
-from flagship.old.config import Config
+from flagship import Config
 import responses
 
-from flagship.old.helpers import Page, Event, EventCategory, Transaction, Item
+from flagship import Page, Event, EventCategory, Transaction, Item
 
 
 def test_create_visitor_wrong_param():

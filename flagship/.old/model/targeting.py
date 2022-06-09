@@ -1,6 +1,6 @@
 import json
 
-from flagship.old.model.targeting_comparator import TargetingComparator
+from flagship import TargetingComparator
 
 
 class Targeting:

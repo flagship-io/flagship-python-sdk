@@ -9,8 +9,8 @@ import time
 import responses
 
 from flagship import Flagship
-from flagship.old.config import Config
-from flagship.old.helpers import Page
+from flagship import Config
+from flagship import Page
 
 
 def test_bucketing_wrong_config():

@@ -1,7 +1,7 @@
 import json
 from enum import Enum
 
-from flagship.old.decorators import types_validator, exception_handler
+from flagship import types_validator, exception_handler
 
 
 class HitType(Enum):

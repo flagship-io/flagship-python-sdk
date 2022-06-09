@@ -1,7 +1,7 @@
 import logging
 
-from flagship.old import decorators
-from flagship.old.model.variation_group import VariationGroup
+from flagship import decorators
+from flagship import VariationGroup
 
 
 class Campaign:

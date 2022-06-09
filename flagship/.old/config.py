@@ -1,7 +1,7 @@
 from enum import Enum
 
-from flagship.old.decorators import exception_handler
-from flagship.old.handler import FlagshipEventHandler
+from flagship import exception_handler
+from flagship import FlagshipEventHandler
 
 
 class Config:

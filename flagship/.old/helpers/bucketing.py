@@ -3,7 +3,7 @@ import logging
 import os
 import time
 from threading import Thread
-from flagship.old.helpers.api import ApiManager
+from flagship import ApiManager
 
 
 class BucketingObserver:

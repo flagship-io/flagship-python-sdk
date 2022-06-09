@@ -4,9 +4,9 @@
 #
 # from flagship import Flagship
 # from flagship import VisitorCacheManager
-# from flagship.old.config import Config
-# from flagship.old.handler import FlagshipEventHandler
-# from flagship.old.helpers import Screen
+# from flagship..old.config import Config
+# from flagship..old.handler import FlagshipEventHandler
+# from flagship..old.helpers import Screen
 #
 #
 # class CustomEventHandler(FlagshipEventHandler):
@@ -44,13 +44,14 @@
 #     v.send_hit(Screen("python screen view"))
 #     print(value)
 # init()
-
 import sys
 
 from flagship import *
+from flagship.main.config import DecisionApi, Bucketing
+
 
 def init():
     print(sys.version)
-    start("zfzkefmefmekfj", "zlfdn", FlagshipConfig())
+    Flagship.start("zfzkefmefmekfj", "zlfdn", DecisionApi(timeout=3000))
 
 init()

@@ -1,6 +1,6 @@
 from flagship import Flagship
-from flagship.old.config import Config
-from flagship.old.handler import FlagshipEventHandler
+from flagship import Config
+from flagship import FlagshipEventHandler
 
 
 def test_init():

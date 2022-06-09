@@ -1,4 +1,4 @@
-from flagship.old.decorators import types_validator
+from flagship import types_validator
 
 
 def test_decorator_type_value():

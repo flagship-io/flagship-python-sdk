@@ -1,5 +1,5 @@
 from flagship import Flagship
-from flagship.old.config import Config
+from flagship import Config
 
 
 def test_flagship_singleton():

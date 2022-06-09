@@ -2,7 +2,7 @@ import logging
 
 from six import string_types
 
-from flagship.old import decorators
+from flagship import decorators
 
 
 class Modification:

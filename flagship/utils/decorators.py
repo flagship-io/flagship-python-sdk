@@ -30,10 +30,10 @@ def param_types_validator(self=False, *types):
     """
     def decorator_typing(func):
         def wrapper(*args, **kwargs):
-            p = 0 if self is False else 1
-            for i in range(p, len(args)):
+            for i in range(0 if self is False else 1, len(args) - 1):
+                j = i if self is False else i - 1
                 raise_error = True
-                ctype = types[i]
+                ctype = types[j]
                 if isinstance(ctype, list):
                     for t in ctype:
                         if isinstance(args[i], t):
@@ -41,9 +41,9 @@ def param_types_validator(self=False, *types):
                 elif isinstance(args[i], ctype):
                     raise_error = False
                 if raise_error:
-                    inspection_args = inspect.getfullargspec(func).args
+                    inspection_args = inspect.getargspec(func).args
                     method_name = func.__name__ if func.__name__ != '__init__' else args[0].__class__.__name__
-                    e = ParamTypeError(PARAM_TYPE_ERROR.format(inspection_args[i], method_name, types[i]))
+                    e = ParamTypeError(PARAM_TYPE_ERROR.format(inspection_args[i], method_name, types[j]))
                     raise e
             return func(*args, **kwargs)
 
