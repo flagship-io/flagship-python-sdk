@@ -1,24 +1,23 @@
 import inspect
 import traceback
 
-from flagship import flagship
 from flagship.utils.constants import PARAM_TYPE_ERROR
 from flagship.utils.errors import ParamTypeError
 
 
-def exception_handler(**params):
-    default = params['default'] if 'default' in params else None
-
-    def decorator_error(func):
-        def wrapper(*args, **kwargs):
-            try:
-                return func(*args, **kwargs)
-            except Exception as e:
-                tb = traceback.format_exc()
-                flagship.new_exception(e, tb)
-        return wrapper
-
-    return decorator_error
+# def exception_handler(**params):
+#     default = params['default'] if 'default' in params else None
+#
+#     def decorator_error(func):
+#         def wrapper(*args, **kwargs):
+#             try:
+#                 return func(*args, **kwargs)
+#             except Exception as e:
+#                 tb = traceback.format_exc()
+#                 flagship.new_exception(e, tb)
+#         return wrapper
+#
+#     return decorator_error
 
 
 def param_types_validator(self=False, *types):
@@ -30,7 +29,8 @@ def param_types_validator(self=False, *types):
     """
     def decorator_typing(func):
         def wrapper(*args, **kwargs):
-            for i in range(0 if self is False else 1, len(args) - 1):
+            for i in range(0 if self is False else 1, len(args)):
+            # for i in range(0 if self is False else 1, len(args) - 1):
                 j = i if self is False else i - 1
                 raise_error = True
                 ctype = types[j]

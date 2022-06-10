@@ -1,8 +1,12 @@
 from __future__ import absolute_import
 
-from flagship.main.decision_mode import DecisionMode
-from flagship.utils.log_manager import FlagshipLogManager, LogLevel
 import json
+
+import flagship
+from flagship.main.decision_mode import DecisionMode
+from flagship.main.status import Status
+from flagship.main.status_listener import StatusListener
+from flagship.utils.log_manager import FlagshipLogManager, LogLevel, LogManager
 
 __metaclass__ = type
 
@@ -13,17 +17,25 @@ class _FlagshipConfig:
 
     def __init__(self, mode, **kwargs):
         self.decision_mode = mode if mode is not None else DecisionMode.DECISION_API
-        self.env_id = self.__get_arg('env_id', self.__env_id, kwargs)
-        self.api_key = self.__get_arg('env_id', self.__api_key, kwargs)
-        self.log_level = self.__get_arg('log_level', LogLevel.ALL, kwargs)
-        self.log_manager = self.__get_arg('log_manager', FlagshipLogManager(LogLevel.ALL), kwargs)
-        self.polling_interval = self.__get_arg('polling_interval', 60000, kwargs)
-        self.timeout = self.__get_arg('timeout', 2000, kwargs)
-        self.status_listener = self.__get_arg('status_listener', None, kwargs)
-        self.cache_manager = self.__get_arg('cache_manager', None, kwargs)
+        self.env_id = self.__get_arg('env_id', str, self.__env_id, kwargs)
+        self.api_key = self.__get_arg('api_key', str, self.__api_key, kwargs)
+        self.log_level = self.__get_arg('log_level', LogLevel, LogLevel.ALL, kwargs)
+        self.log_manager = self.__get_arg('log_manager', LogManager, FlagshipLogManager(LogLevel.ALL), kwargs)
+        self.polling_interval = self.__get_arg('polling_interval', type(1), 60000, kwargs)
+        self.timeout = self.__get_arg('timeout', type(1), 2000, kwargs)
+        self.status_listener = self.__get_arg('status_listener', StatusListener, None, kwargs)
+        # self.cache_manager = self.__get_arg('cache_manager', CacheManager , None, kwargs)
+        self.__update_flagship_status()
 
-    def __get_arg(self, name, default, kwargs):
-        return kwargs[name] if name in kwargs and isinstance(kwargs[name], type(default)) else default
+    def __get_arg(self, name, c_type, default, kwargs):
+        return kwargs[name] if name in kwargs and isinstance(kwargs[name], c_type) else default
+
+    def __update_flagship_status(self):
+        if self.status_listener is not None:
+            self.status_listener.status(Status.READY)
+
+    def is_set(self):
+        return self.api_key is not None and self.api_key
 
     def __str__(self):
         config = {
@@ -35,7 +47,7 @@ class _FlagshipConfig:
             'polling_interval': self.polling_interval,
             'timeout': self.timeout,
             'status_listener': None if self.status_listener is None else str(self.status_listener.__class__.__name__),
-            'cache_manager': None if self.cache_manager is None else str(self.cache_manager.__class__.__name__)
+            # 'cache_manager': None if self.cache_manager is None else str(self.cache_manager.__class__.__name__)
         }
         return json.dumps(config, indent=4)
 

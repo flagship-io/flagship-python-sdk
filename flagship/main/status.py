@@ -7,3 +7,4 @@ class Status(Enum):
     POLLING = 20
     PANIC = 30
     READY = 100
+

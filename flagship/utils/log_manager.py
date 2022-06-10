@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 
+from abc import ABCMeta, abstractmethod
 from datetime import datetime
 from enum import Enum
 import logging
@@ -14,6 +15,20 @@ class LogLevel(Enum):
     INFO = 20
     DEBUG = 10
     NONE = 0
+
+
+class LogManager:
+    __metaclass__ = ABCMeta
+
+    @abstractmethod
+    @param_types_validator(True, str, LogLevel, str)
+    def log(self, tag, level, message):
+        pass
+
+    @abstractmethod
+    @param_types_validator(True, Exception, str)
+    def exception(self, exception, traceback):
+        pass
 
 
 class FlagshipLogManager:
@@ -38,13 +53,14 @@ class FlagshipLogManager:
             if len(self.logger.handlers) == 0:
                 self.logger.addHandler(ch)
 
+    @abstractmethod
     @param_types_validator(True, str, LogLevel, str)
-    def on_log(self, tag, level, message):
+    def log(self, tag, level, message):
         if self.logger is not None and 0 < level.value < self.log_level.value:
             now = datetime.now().strftime("%d-%m-%Y %H:%M:%S")
             color = self.start_color.format(self.colors[level.value])
             template = '{}[{}][{}][{}]: {}{}'.format(color, now, self.MAIN_TAG, tag, message, self.end_color)
             self.logger.log(self.log_level.value, template)
 
-    def on_exception(self, exception, traceback):
-        self.on_log(LogLevel.CRITICAL, str(exception) + '\n' + traceback)
+    def exception(self, exception, traceback):
+        self.log(LogLevel.CRITICAL, str(exception) + '\n' + traceback)

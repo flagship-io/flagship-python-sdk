@@ -2,6 +2,8 @@
 from __future__ import absolute_import
 
 from flagship.main.config import _FlagshipConfig
+from flagship.main.decision_manager import DecisionManager
+from flagship.main.status import Status
 from flagship.utils.decorators import param_types_validator
 from flagship.utils.log_manager import FlagshipLogManager, LogLevel
 
@@ -25,6 +27,10 @@ class Flagship:
         return Flagship.__get_instance().config
 
     @staticmethod
+    def status():
+        return Flagship.__get_instance().status
+
+    @staticmethod
     def __get_instance():
         """
         Get the flagship singleton instance.
@@ -35,17 +41,26 @@ class Flagship:
             Flagship.__instance = Flagship.__Flagship()
         return Flagship.__instance
 
+    @staticmethod
+    def _log(tag, level, message):
+        config = Flagship.config()
+        log_manager = config.log_manager if config is not None else None
+        if log_manager is not None:
+            log_manager.log(tag, level, message)
+
+
     class __Flagship:
 
         def __init__(self):
             self.config = None
+            self.status = Status.NOT_INITIALIZED
 
         @param_types_validator(True, str, str, _FlagshipConfig)
         def start(self, env_id, api_key, flagship_config):
             self.config = flagship_config
             self.config.env_id = env_id
             self.config.api_key = api_key
-            self.config.log_manager.on_log("custom tag", LogLevel.INFO,
+            self.config.log_manager.log("custom tag", LogLevel.INFO,
                         "Start : " + env_id + " " + str(api_key) + " \n\nConfig:" + str(self.config))
 
 

@@ -48,10 +48,19 @@ import sys
 
 from flagship import *
 from flagship.main.config import DecisionApi, Bucketing
+from flagship.main.status_listener import StatusListener
 
 
 def init():
     print(sys.version)
-    Flagship.start("zfzkefmefmekfj", "zlfdn", DecisionApi(timeout=3000))
+
+    class CustomStatusListener(StatusListener):
+
+        def on_status_changed(self, new_status):
+            print("New status = " + str(new_status))
+
+    Flagship.start("zfzkefmefmekfj", "zlfdn", DecisionApi(timeout=3000, status_listener=CustomStatusListener()))
+
+    Flagship._log("from here", LogLevel.CRITICAL, "aie aie aie")
 
 init()
