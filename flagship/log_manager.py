@@ -4,7 +4,7 @@ from abc import ABCMeta, abstractmethod
 from datetime import datetime
 from enum import Enum
 import logging
-from flagship.utils.decorators import param_types_validator
+from flagship.decorators import param_types_validator
 
 
 class LogLevel(Enum):
@@ -53,7 +53,6 @@ class FlagshipLogManager:
             if len(self.logger.handlers) == 0:
                 self.logger.addHandler(ch)
 
-    @abstractmethod
     @param_types_validator(True, str, LogLevel, str)
     def log(self, tag, level, message):
         if self.logger is not None and 0 < level.value < self.log_level.value:
@@ -62,5 +61,6 @@ class FlagshipLogManager:
             template = '{}[{}][{}][{}]: {}{}'.format(color, now, self.MAIN_TAG, tag, message, self.end_color)
             self.logger.log(self.log_level.value, template)
 
+    @param_types_validator(True, Exception, str)
     def exception(self, exception, traceback):
         self.log(LogLevel.CRITICAL, str(exception) + '\n' + traceback)

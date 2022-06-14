@@ -1,14 +1,16 @@
-# from flagship.utils.decorators import param_types_validator
 from __future__ import absolute_import
 
-from flagship.main.config import _FlagshipConfig
-from flagship.main.decision_manager import DecisionManager
-from flagship.main.status import Status
-from flagship.utils.decorators import param_types_validator
-from flagship.utils.log_manager import FlagshipLogManager, LogLevel
+from flagship.config import _FlagshipConfig
+from flagship.config_manager import ConfigManager
+from flagship.constants import _TAG_STATUS, _INFO_STATUS_CHANGED, _TAG_INITIALIZATION, _INFO_READY
+from flagship.decorators import param_types_validator
+from flagship.log_manager import LogLevel
+from flagship.status import Status
 
+__name__ = 'flagship'
+__version__ = '3.0.0'
 
-# from flagship.config import FlagshipConfig
+from flagship.visitor import Visitor
 
 
 class Flagship:
@@ -19,16 +21,28 @@ class Flagship:
 
     @staticmethod
     @param_types_validator(False, str, str, _FlagshipConfig)
-    def start(env_id, api_key, config):
-        Flagship.__get_instance().start(env_id, api_key, config)
+    def start(env_id, api_key, configuration):
+        Flagship.__get_instance().start(env_id, api_key, configuration)
 
     @staticmethod
     def config():
-        return Flagship.__get_instance().config
+        return Flagship.__get_instance().configuration_manager.flagship_config
+
+    @staticmethod
+    def new_visitor(visitor_id, **kwargs):
+        return Flagship.__get_instance().new_visitor(visitor_id, **kwargs)
+
+    @staticmethod
+    def get_visitor():
+        return Flagship.__get_instance().get_visitor()
 
     @staticmethod
     def status():
         return Flagship.__get_instance().status
+
+    @staticmethod
+    def stop():
+        return Flagship.__get_instance().stop()
 
     @staticmethod
     def __get_instance():
@@ -43,46 +57,48 @@ class Flagship:
 
     @staticmethod
     def _log(tag, level, message):
-        config = Flagship.config()
-        log_manager = config.log_manager if config is not None else None
-        if log_manager is not None:
-            log_manager.log(tag, level, message)
+        configuration = Flagship.config()
+        configured_log_manager = configuration.log_manager if config is not None else None
+        if configured_log_manager is not None:
+            configured_log_manager.log(tag, level, message)
 
+    @staticmethod
+    def _update_status(new_status):
+        Flagship.__get_instance().update_status(new_status)
 
     class __Flagship:
 
         def __init__(self):
-            self.config = None
+            self.current_visitor = None
             self.status = Status.NOT_INITIALIZED
+            self.configuration_manager = ConfigManager()
 
         @param_types_validator(True, str, str, _FlagshipConfig)
         def start(self, env_id, api_key, flagship_config):
-            self.config = flagship_config
-            self.config.env_id = env_id
-            self.config.api_key = api_key
-            self.config.log_manager.log("custom tag", LogLevel.INFO,
-                        "Start : " + env_id + " " + str(api_key) + " \n\nConfig:" + str(self.config))
+            self.update_status(Status.STARTING)
+            self.configuration_manager.init(env_id, api_key, flagship_config, self.update_status)
+            if self.configuration_manager.is_set() is False:
+                self.update_status(Status.NOT_INITIALIZED)
 
+        def update_status(self, new_status):
+            if new_status is not None and new_status != self.status:
+                self.status = new_status
+                if self.configuration_manager.flagship_config.status_listener is not None:
+                    self.configuration_manager.flagship_config.status_listener.on_status_changed(new_status)
+                    Flagship._log(_TAG_STATUS, LogLevel.DEBUG, _INFO_STATUS_CHANGED.format(str(new_status)))
+                if new_status is Status.READY:
+                    Flagship._log(_TAG_INITIALIZATION, LogLevel.INFO,
+                                  _INFO_READY.format(str(__version__), str(self.configuration_manager.flagship_config)))
 
-# from flagship import param_types_validator, LogLevel, Flagship
-#
-#
-# @staticmethod
-# @param_types_validator(False, str, LogLevel, str)
-# def __log(tag, level, message):
-#     log_manager = Flagship.config().log_manager
-#     if log_manager is not None:
-#         log_manager.on_log(tag, level, message)
+        def new_visitor(self, visitor_id, **kwargs):
+            new_visitor = Visitor(self.configuration_manager, visitor_id, **kwargs)
+            if 'instance_type' in kwargs and kwargs['instance_type'] is Visitor.Instance.SINGLE_INSTANCE:
+                self.current_visitor = new_visitor
+            return new_visitor
 
+        def get_visitor(self):
+            return self.current_visitor
 
-
-# @param_types_validator(False, str, FlagshipLogManager.LogLevel, str)
-# def new_log(tag, level, message):
-#     if flagship_config.log_manager is not None:
-#         flagship_config.log_manager.on_log(tag, level, message)
-#
-#
-# @param_types_validator(False, Exception, str)
-# def new_exception(exception, traceback):
-#     if flagship_config.log_manager is not None:
-#         flagship_config.log_manager.on_exception(exception, traceback)
+        def stop(self):
+            self.status = Status.NOT_INITIALIZED
+            self.configuration_manager.reset()

@@ -1,8 +1,7 @@
 import inspect
-import traceback
 
-from flagship.utils.constants import PARAM_TYPE_ERROR
-from flagship.utils.errors import ParamTypeError
+from flagship.constants import _ERROR_PARAM_TYPE
+from flagship.errors import ParamTypeError
 
 
 # def exception_handler(**params):
@@ -43,7 +42,7 @@ def param_types_validator(self=False, *types):
                 if raise_error:
                     inspection_args = inspect.getargspec(func).args
                     method_name = func.__name__ if func.__name__ != '__init__' else args[0].__class__.__name__
-                    e = ParamTypeError(PARAM_TYPE_ERROR.format(inspection_args[i], method_name, types[j]))
+                    e = ParamTypeError(_ERROR_PARAM_TYPE.format(inspection_args[i], method_name, types[j]))
                     raise e
             return func(*args, **kwargs)
 

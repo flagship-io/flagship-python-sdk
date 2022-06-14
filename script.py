@@ -47,8 +47,9 @@
 import sys
 
 from flagship import *
-from flagship.main.config import DecisionApi, Bucketing
-from flagship.main.status_listener import StatusListener
+from flagship.config import DecisionApi
+from flagship.log_manager import LogManager
+from flagship.status_listener import StatusListener
 
 
 def init():
@@ -59,8 +60,19 @@ def init():
         def on_status_changed(self, new_status):
             print("New status = " + str(new_status))
 
-    Flagship.start("zfzkefmefmekfj", "zlfdn", DecisionApi(timeout=3000, status_listener=CustomStatusListener()))
+    class CustomLogManager(LogManager):
 
+        def log(self, tag, level, message):
+            print(">>> " + tag + str(level) + message)
+
+        def exception(self, exception, traceback):
+            pass
+
+    Flagship.start("custom_end_id", "custom_api_key", DecisionApi(timeout=3000, status_listener=CustomStatusListener()))
+    # Flagship.start("custom_end_id", "custom_api_key", DecisionApi(timeout=3000, status_listener=CustomStatusListener(), log_manager=CustomLogManager()))
+    visitor = Flagship.new_visitor("toto", instance_type=Visitor.Instance.SINGLE_INSTANCE)
+    print(visitor.visitor_id)
+    print(Flagship.get_visitor().visitor_id)
     Flagship._log("from here", LogLevel.CRITICAL, "aie aie aie")
 
 init()

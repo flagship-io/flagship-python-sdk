@@ -1,8 +1,8 @@
 from abc import ABCMeta, abstractmethod
 
 import flagship
-from flagship.utils.decorators import param_types_validator
-from flagship.main.status import Status
+from flagship.decorators import param_types_validator
+from flagship.status import Status
 
 
 class StatusListener:

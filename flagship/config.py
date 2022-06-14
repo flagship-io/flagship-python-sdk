@@ -2,11 +2,10 @@ from __future__ import absolute_import
 
 import json
 
-import flagship
-from flagship.main.decision_mode import DecisionMode
-from flagship.main.status import Status
-from flagship.main.status_listener import StatusListener
-from flagship.utils.log_manager import FlagshipLogManager, LogLevel, LogManager
+from flagship.decision_mode import DecisionMode
+from flagship.status import Status
+from flagship.status_listener import StatusListener
+from flagship.log_manager import FlagshipLogManager, LogLevel, LogManager
 
 __metaclass__ = type
 
@@ -56,7 +55,35 @@ class DecisionApi(_FlagshipConfig):
     def __init__(self, **kwargs):
         super(DecisionApi, self).__init__(DecisionMode.DECISION_API, **kwargs)
 
+    def __str__(self):
+        config = {
+            'env_id': str(self.env_id),
+            'api_key': str(self.api_key),
+            # 'decision_mode': str(self.decision_mode),
+            'log_level': str(self.log_level),
+            'log_manager': None if self.log_manager is None else str(self.log_manager.__class__.__name__),
+            # 'polling_interval': self.polling_interval,
+            'timeout': self.timeout,
+            'status_listener': None if self.status_listener is None else str(self.status_listener.__class__.__name__),
+            # 'cache_manager': None if self.cache_manager is None else str(self.cache_manager.__class__.__name__)
+        }
+        return json.dumps(config, indent=4)
+
 
 class Bucketing(_FlagshipConfig):
     def __init__(self, **kwargs):
         super(Bucketing, self).__init__(DecisionMode.BUCKETING, **kwargs)
+
+    def __str__(self):
+        config = {
+            'env_id': str(self.env_id),
+            'api_key': str(self.api_key),
+            # 'decision_mode': str(self.decision_mode),
+            'log_level': str(self.log_level),
+            'log_manager': None if self.log_manager is None else str(self.log_manager.__class__.__name__),
+            'polling_interval': self.polling_interval,
+            'timeout': self.timeout,
+            'status_listener': None if self.status_listener is None else str(self.status_listener.__class__.__name__),
+            # 'cache_manager': None if self.cache_manager is None else str(self.cache_manager.__class__.__name__)
+        }
+        return json.dumps(config, indent=4)
