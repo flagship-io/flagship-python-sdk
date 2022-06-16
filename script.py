@@ -73,6 +73,10 @@ def init():
     visitor = Flagship.new_visitor("toto", instance_type=Visitor.Instance.SINGLE_INSTANCE)
     print(visitor.visitor_id)
     print(Flagship.get_visitor().visitor_id)
-    Flagship._log("from here", LogLevel.CRITICAL, "aie aie aie")
+    visitor.update_context({
+        "coucou":3,
+        "coucou2":2
+    })
+    visitor.update_context(('coucou3', 1))
 
 init()

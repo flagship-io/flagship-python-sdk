@@ -10,6 +10,8 @@ from flagship.status import Status
 __name__ = 'flagship'
 __version__ = '3.0.0'
 
+from flagship.utils import log
+
 from flagship.visitor import Visitor
 
 
@@ -55,12 +57,12 @@ class Flagship:
             Flagship.__instance = Flagship.__Flagship()
         return Flagship.__instance
 
-    @staticmethod
-    def _log(tag, level, message):
-        configuration = Flagship.config()
-        configured_log_manager = configuration.log_manager if config is not None else None
-        if configured_log_manager is not None:
-            configured_log_manager.log(tag, level, message)
+    # @staticmethod
+    # def _log(tag, level, message):
+    #     configuration = Flagship.config()
+    #     configured_log_manager = configuration.log_manager if config is not None else None
+    #     if configured_log_manager is not None:
+    #         configured_log_manager.log(tag, level, message)
 
     @staticmethod
     def _update_status(new_status):
@@ -85,10 +87,10 @@ class Flagship:
                 self.status = new_status
                 if self.configuration_manager.flagship_config.status_listener is not None:
                     self.configuration_manager.flagship_config.status_listener.on_status_changed(new_status)
-                    Flagship._log(_TAG_STATUS, LogLevel.DEBUG, _INFO_STATUS_CHANGED.format(str(new_status)))
+                    log(_TAG_STATUS, LogLevel.DEBUG, _INFO_STATUS_CHANGED.format(str(new_status)))
                 if new_status is Status.READY:
-                    Flagship._log(_TAG_INITIALIZATION, LogLevel.INFO,
-                                  _INFO_READY.format(str(__version__), str(self.configuration_manager.flagship_config)))
+                    log(_TAG_INITIALIZATION, LogLevel.INFO,
+                        _INFO_READY.format(str(__version__), str(self.configuration_manager.flagship_config)))
 
         def new_visitor(self, visitor_id, **kwargs):
             new_visitor = Visitor(self.configuration_manager, visitor_id, **kwargs)
@@ -102,3 +104,11 @@ class Flagship:
         def stop(self):
             self.status = Status.NOT_INITIALIZED
             self.configuration_manager.reset()
+
+        def __log(self, tag, level, message):
+            try:
+                configured_log_manager = self.configuration_manager.flagship_config.log_manager
+                if configured_log_manager is not None:
+                    configured_log_manager.log(tag, level, message)
+            except Exception as e:
+                pass
