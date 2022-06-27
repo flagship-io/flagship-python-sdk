@@ -68,15 +68,19 @@ def init():
         def exception(self, exception, traceback):
             pass
 
-    Flagship.start("custom_end_id", "custom_api_key", DecisionApi(timeout=3000, status_listener=CustomStatusListener()))
+    # Flagship.start("custom_end_id", "custom_api_key", DecisionApi(timeout=3000, status_listener=CustomStatusListener()))
+    Flagship.start("bkk4s7gcmjcg07fke9dg", "Q6FDmj6F188nh75lhEato2MwoyXDS7y34VrAL4Aa", DecisionApi(timeout=3000, status_listener=CustomStatusListener()))
     # Flagship.start("custom_end_id", "custom_api_key", DecisionApi(timeout=3000, status_listener=CustomStatusListener(), log_manager=CustomLogManager()))
     visitor = Flagship.new_visitor("toto", instance_type=Visitor.Instance.SINGLE_INSTANCE)
     print(visitor.visitor_id)
     print(Flagship.get_visitor().visitor_id)
     visitor.update_context({
         "coucou":3,
-        "coucou2":2
+        "coucou2":2,
+        "haha": False,
+        "isVIPUser":True
     })
-    visitor.update_context(('coucou3', 1))
+    visitor.update_context(('coucou3', 2))
+    visitor.fetch_flags()
 
 init()

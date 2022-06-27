@@ -61,6 +61,6 @@ class FlagshipLogManager:
             template = '{}[{}][{}][{}]: {}{}'.format(color, now, self.MAIN_TAG, tag, message, self.end_color)
             self.logger.log(self.log_level.value, template)
 
-    @param_types_validator(True, Exception, str)
-    def exception(self, exception, traceback):
-        self.log(LogLevel.CRITICAL, str(exception) + '\n' + traceback)
+    @param_types_validator(True, str, Exception, str)
+    def exception(self, tag, exception, traceback):
+        self.log(tag, LogLevel.CRITICAL, str(exception) + '\n' + traceback)

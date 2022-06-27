@@ -1,11 +1,17 @@
+import traceback
 from abc import ABCMeta, abstractmethod
+
+from flagship import Status, LogLevel
+from flagship.utils import log, log_exception
+from flagship.constants import _TAG_PARSING, _WARNING_PANIC, _TAG_PANIC
+import json
 
 
 class IDecisionManager:
     __metaclass__ = ABCMeta
 
     @abstractmethod
-    def get_campaigns_modifications(visitor_delegate_dto):
+    def get_campaigns_modifications(self, visitor):
         pass
 
 
@@ -17,10 +23,22 @@ class DecisionManager(IDecisionManager):
         self.flagship_config = config
         self.panic = False
 
-        # flagship.Flagship._log("coucou", LogLevel.DEBUG, "=>>>>>>>>")
-
     def init(self):
         pass
+
+    def parse_campaign_response(self, content):
+        if content is not None:
+            try:
+                campaigns_json = json.loads(content.decode("utf-8"))
+                if 'panic' in campaigns_json and campaigns_json['json'] is True:
+                    self.panic = True
+                    self.update_status(Status.PANIC)
+                    log(_TAG_PANIC, LogLevel.WARNING, _WARNING_PANIC)
+                if not self.panic:
+                    return Campaign.parse(campaigns_json['campaigns'])
+            except Exception as e:
+                log_exception(_TAG_PARSING, e, traceback.format_exc())
+        return None
 
     @abstractmethod
     def stop(self):
