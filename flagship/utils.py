@@ -31,9 +31,12 @@ def pretty_dict(dictionary, indent=2, string="", first=True):
         elif isinstance(value, list):
             string += ": [\n"
             for i in range(0, len(value)):
-                string += (' ' * (0 if first else indent + 2)) + "{\n"
-                string += pretty_dict(value[i], indent if first else indent + 4, "", False) + "\n"
-                string += (' ' * (0 if first else indent + 2)) + "},\n"
+                # string += (' ' * (0 if first else indent + 2)) + "{\n"
+                string += (' ' * (indent + 2)) + "{\n"
+                # string += pretty_dict(value[i], indent if first else indent + 4, "", False) + "\n"
+                string += pretty_dict(value[i], indent + 4, "", False) + "\n"
+                # string += (' ' * (0 if first else indent + 2)) + "},\n"
+                string += (' ' * (indent + 2)) + "},\n"
             string = string[:-2] + "\n"
             string += (' ' * (0 if first else indent)) + "],\n"
         else:
