@@ -63,4 +63,5 @@ class FlagshipLogManager:
 
     @param_types_validator(True, str, Exception, str)
     def exception(self, tag, exception, traceback):
-        self.log(tag, LogLevel.CRITICAL, str(exception) + '\n' + traceback)
+        # self.log(tag, LogLevel.CRITICAL, str(exception) + '\n' + traceback)
+        self.log(tag, LogLevel.CRITICAL, str(exception))

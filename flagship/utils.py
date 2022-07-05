@@ -20,25 +20,21 @@ def log_exception(tag, exception, traceback):
 
 
 def pretty_dict(dictionary, indent=2, string="", first=True):
+    if first:
+        string += '{\n'
     for key, value in dictionary.items():
-        if first:
-            string += (("\"" + str(key)) + "\"")
-        else:
-            string += ((' ' * indent + "\"" + str(key)) + "\"")
+        string += ((' ' * indent + "\"" + str(key)) + "\"")
         if isinstance(value, dict):
-            string += ": {\n" + pretty_dict(value, indent if first else indent + 2, "", False) + "\n" + (
-                ' ' * (0 if first else indent)) + "},\n"
+            string += ": {\n" + pretty_dict(value,  indent + 2, "", False) + "\n" + (
+                ' ' * indent) + "},\n"
         elif isinstance(value, list):
             string += ": [\n"
             for i in range(0, len(value)):
-                # string += (' ' * (0 if first else indent + 2)) + "{\n"
                 string += (' ' * (indent + 2)) + "{\n"
-                # string += pretty_dict(value[i], indent if first else indent + 4, "", False) + "\n"
                 string += pretty_dict(value[i], indent + 4, "", False) + "\n"
-                # string += (' ' * (0 if first else indent + 2)) + "},\n"
                 string += (' ' * (indent + 2)) + "},\n"
             string = string[:-2] + "\n"
-            string += (' ' * (0 if first else indent)) + "],\n"
+            string += (' ' * indent) + "],\n"
         else:
             if value is None:
                 string += ": null"
@@ -50,5 +46,8 @@ def pretty_dict(dictionary, indent=2, string="", first=True):
                 string += (': {}'.format(value))
             string += ",\n"
 
-    return string[:-2]
+    if first:
+        return (string[:-2] if len(string) > 2 else string) + "\n}"
+    else:
+        return string[:-2]
     # return json.dumps(dictionary, indent=4)

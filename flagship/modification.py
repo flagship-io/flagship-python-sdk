@@ -1,26 +1,32 @@
 import traceback
 
 from six import string_types
-from flagship.constants import _TAG_PARSING_MODIFICATION, _ERROR_PARSING_MODIFICATION
+from flagship.constants import TAG_PARSING_MODIFICATION, ERROR_PARSING_MODIFICATION
 from flagship.errors import FlagshipParsingError
 from flagship.utils import log_exception
 
 
 class Modification:
 
-    def __init__(self, key, campaign_id, variation_group_id, variation_id, reference, value):
+    def __init__(self, key, campaign_id, campaign_type, campaign_slug, variation_group_id, variation_id, reference,
+                 value):
         self.key = key
         self.campaign_id = campaign_id
         self.variation_group_id = variation_group_id
         self.variation_id = variation_id
         self.reference = reference
         self.value = value
+        self.type = campaign_type
+        self.slug = campaign_slug
 
 
 class Modifications:
 
-    def __init__(self, campaign_id, variation_group_id, variation_id, reference, value_type, values):
+    def __init__(self, campaign_id, campaign_type, campaign_slug, variation_group_id, variation_id, reference,
+                 value_type, values):
         self.campaign_id = campaign_id
+        self.campaign_type = campaign_type
+        self.campaign_slug = campaign_slug
         self.variation_group_id = variation_group_id
         self.variation_id = variation_id
         self.reference = reference
@@ -37,7 +43,8 @@ class Modifications:
         return values_list
 
     @staticmethod
-    def parse(campaign_id, variation_group_id, variation_id, reference, modifications_obj):
+    def parse(campaign_id, campaign_type, campaign_slug, variation_group_id, variation_id, reference,
+              modifications_obj):
         values = dict()
         value_type = modifications_obj['type']
         values_obj = modifications_obj['value']
@@ -49,8 +56,9 @@ class Modifications:
             try:
                 if value is None or t is int or t is float or t is str or t is bool or \
                         isinstance(value, list) or isinstance(value, dict) or t is unicode:
-                    values[key] = Modification(key, campaign_id, variation_group_id, variation_id, reference, value)
+                    values[key] = Modification(key, campaign_id, campaign_type, campaign_slug, variation_group_id,
+                                               variation_id, reference, value)
             except Exception as e:
-                log_exception(_TAG_PARSING_MODIFICATION, FlagshipParsingError(_ERROR_PARSING_MODIFICATION),
+                log_exception(TAG_PARSING_MODIFICATION, FlagshipParsingError(ERROR_PARSING_MODIFICATION),
                               traceback.format_exc())
-        return Modifications(campaign_id, variation_group_id, variation_id, reference, value_type, values)
+        return Modifications(campaign_id, campaign_type, campaign_slug, variation_group_id, variation_id, reference, value_type, values)

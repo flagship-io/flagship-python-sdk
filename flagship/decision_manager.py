@@ -5,7 +5,7 @@ from flagship.status import Status
 from flagship.log_manager import LogLevel
 from flagship.campaign import Campaign
 from flagship.utils import log, log_exception
-from flagship.constants import _TAG_PARSING, _WARNING_PANIC, _TAG_PANIC
+from flagship.constants import TAG_PARSING, WARNING_PANIC, TAG_PANIC
 import json
 
 
@@ -36,13 +36,13 @@ class DecisionManager(IDecisionManager):
                 if 'panic' in campaigns_json and campaigns_json['json'] is True:
                     self.panic = True
                     self.update_status(Status.PANIC)
-                    log(_TAG_PANIC, LogLevel.WARNING, _WARNING_PANIC)
+                    log(TAG_PANIC, LogLevel.WARNING, WARNING_PANIC)
                 if not self.panic:
                     campaigns = Campaign.parse_campaigns(campaigns_json['campaigns'])
                 self.update_status(Status.READY)
                 return campaigns
             except Exception as e:
-                log_exception(_TAG_PARSING, e, traceback.format_exc())
+                log_exception(TAG_PARSING, e, traceback.format_exc())
         return None
 
     @abstractmethod

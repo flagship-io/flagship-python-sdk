@@ -1,6 +1,6 @@
 import traceback
 
-from flagship.constants import _TAG_PARSING_VARIATION_GROUP, _ERROR_PARSING_VARIATION_GROUP
+from flagship.constants import TAG_PARSING_VARIATION_GROUP, ERROR_PARSING_VARIATION_GROUP
 from flagship.errors import FlagshipParsingError
 # from flagship import murmurHash
 from flagship.targeting import TargetingGroup
@@ -31,18 +31,20 @@ class VariationGroup:
         return self.targeting_groups.is_targeting_valid(context)
 
     @staticmethod
-    def parse(campaign_id, variation_group_obj, bucketing):
+    def parse(campaign_id, campaign_type, campaign_slug, variation_group_obj, bucketing):
         try:
             variation_group_id = variation_group_obj['id'] if bucketing else variation_group_obj['variationGroupId']
             variations = dict()
             if not bucketing:
                 variation_obj = variation_group_obj['variation']
-                new_variation = Variation.parse(campaign_id, variation_group_id, variation_obj, bucketing)
+                new_variation = Variation.parse(campaign_id, campaign_type, campaign_slug, variation_group_id,
+                                                variation_obj, bucketing)
                 if new_variation is not None:
                     variations[new_variation.variation_id] = new_variation
             else:
                 for variation_obj in variation_group_obj['variations']:
-                    new_variation = Variation.parse(campaign_id, variation_group_id, variation_obj, bucketing)
+                    new_variation = Variation.parse(campaign_id, campaign_type, campaign_slug, variation_group_id,
+                                                    variation_obj, bucketing)
                     variations[new_variation.variation_id] = new_variation
             targeting_groups = None
             if 'targeting' in variation_group_obj:
@@ -51,6 +53,6 @@ class VariationGroup:
                 targeting_groups = TargetingGroup.parse(targeting_group_obj)
             return VariationGroup(campaign_id, variation_group_id, variations, targeting_groups)
         except Exception as e:
-            log_exception(_TAG_PARSING_VARIATION_GROUP, FlagshipParsingError(_ERROR_PARSING_VARIATION_GROUP),
+            log_exception(TAG_PARSING_VARIATION_GROUP, FlagshipParsingError(ERROR_PARSING_VARIATION_GROUP),
                           traceback.format_exc())
             return None

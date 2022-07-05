@@ -1,15 +1,14 @@
 import json
 from enum import Enum
 
-from flagship import types_validator, exception_handler
-
+from flagship.decorators import param_types_validator
 
 class HitType(Enum):
     PAGE = 'SCREENVIEW'
     EVENT = 'EVENT'
     TRANSACTION = 'TRANSACTION'
     ITEM = 'ITEM'
-
+    CAMPAIGN = "CAMPAIGN"
 
 class Hit(object):
     _k_origin = 'dl'  # origin
@@ -41,9 +40,10 @@ class Hit(object):
     _k_transaction_shipping_method = 'sm'
     _k_transaction_item_count = 'icn'
     _k_transaction_coupon = 'tcc'
+    _k_variation_group_id = 'vgid'
+    _k_variation_id = 'vaid'
 
-    @exception_handler()
-    @types_validator(True, HitType)
+    @param_types_validator(True, HitType)
     def __init__(self, hit_type):
         self.hit_type = hit_type
         self._data = {
@@ -51,10 +51,8 @@ class Hit(object):
             self._k_ds: 'APP',
             # self._k_timestamp: int(round(time.time() * 1000))
         }
-        self.timestamp = None
 
-    @exception_handler()
-    @types_validator(True, str)
+    @param_types_validator(True, str)
     def with_ip(self, ip):
         # type: (str) -> Hit
         """
@@ -67,9 +65,7 @@ class Hit(object):
         self._data[self._k_ip] = ip
         return self
 
-    @exception_handler()
-    @types_validator(True, {'types': int, 'max_length': 10, 'min_value': 0},
-                     {'types': int, 'max_length': 10, 'min_value': 0})
+    @param_types_validator(True, int, int)
     def with_resolution(self, width, height):
         # type: (int, int) -> Hit
         """
@@ -78,11 +74,11 @@ class Hit(object):
         :param height: height in pixels. Max length 10 Bytes. Min value 0.
         :return: Hit
         """
-        self._data[self._k_resolution] = '{}x{}'.format(width, height)
+        if width > 0 and height > 0:
+            self._data[self._k_resolution] = '{}x{}'.format(width, height)
         return self
 
-    @exception_handler()
-    @types_validator(True, int)
+    @param_types_validator(True, int)
     def with_session_number(self, number):
         # type: (int) -> Hit
         """
@@ -94,8 +90,7 @@ class Hit(object):
         self._data[self._k_session] = number
         return self
 
-    @exception_handler()
-    @types_validator(True, {'types': str, 'max_length': 20})
+    @param_types_validator(True, str)
     def with_locale(self, locale):
         # type: (str) -> Hit
         """
@@ -114,8 +109,7 @@ class Hit(object):
 
 
 class Page(Hit):
-    @exception_handler()
-    @types_validator(True, {'types': str, 'max_length': 2048})
+    @param_types_validator(True, str)
     def __init__(self, origin):
         # type: (str) -> None
         """
@@ -136,8 +130,7 @@ class EventCategory(Enum):
 
 
 class Event(Hit):
-    @exception_handler()
-    @types_validator(True, EventCategory, {'types': str, 'max_length': 500})
+    @param_types_validator(True, EventCategory, str)
     def __init__(self, category, action):
         # type: (EventCategory, action) -> None
 
@@ -157,8 +150,7 @@ class Event(Hit):
         else:
             pass
 
-    @exception_handler()
-    @types_validator(True, {'types': str, 'max_length': 500})
+    @param_types_validator(True, str)
     def with_event_label(self, label):
         # type: (str) -> Event
         """
@@ -170,8 +162,7 @@ class Event(Hit):
         self._data[self._k_event_label] = label
         return self
 
-    @exception_handler()
-    @types_validator(True, {'types': int, 'max_length': 500, 'min_value': 0})
+    @param_types_validator(True, int)
     def with_event_value(self, value):
         # type: (int) -> Event
         """
@@ -186,8 +177,7 @@ class Event(Hit):
 
 
 class Item(Hit):
-    @exception_handler()
-    @types_validator(True, {'types': str, 'max_length': 500}, {'types': str, 'max_length': 500})
+    @param_types_validator(True, str, str)
     def __init__(self, transaction_id, product_name, product_sku):
         # type: (str, str, str) -> None
         """
@@ -204,8 +194,7 @@ class Item(Hit):
         }
         self._data.update(data)
 
-    @exception_handler()
-    @types_validator(True, [int, float])
+    @param_types_validator(True, [int, float])
     def with_price(self, price):
         # type: (float) -> Item
         """
@@ -217,8 +206,7 @@ class Item(Hit):
         self._data[self._k_item_price] = price
         return self
 
-    @exception_handler()
-    @types_validator(True, int)
+    @param_types_validator(True, int)
     def with_item_quantity(self, item_quantity):
         # type: (int) -> Item
         """
@@ -243,8 +231,7 @@ class Item(Hit):
     #     self._data[self._k_item_code] = item_code
     #     return self
 
-    @exception_handler()
-    @types_validator(True, {'types': str, 'max_length': 500})
+    @param_types_validator(True, str)
     def with_item_category(self, category):
         # type: (str) -> Item
         """
@@ -258,8 +245,7 @@ class Item(Hit):
 
 
 class Transaction(Hit):
-    @exception_handler()
-    @types_validator(True, {'types': str, 'max_length': 500}, {'types': str, 'max_length': 500})
+    @param_types_validator(True, str, str)
     def __init__(self, transaction_id, affiliation):
         # type: (str, str) -> None
         """
@@ -275,8 +261,7 @@ class Transaction(Hit):
         }
         self._data.update(data)
 
-    @exception_handler()
-    @types_validator(True, [int, float])
+    @param_types_validator(True, [int, float])
     def with_total_revenue(self, revenue):
         # type: (float) -> Transaction
         """
@@ -289,8 +274,7 @@ class Transaction(Hit):
         self._data[self._k_transaction_revenue] = revenue
         return self
 
-    @exception_handler()
-    @types_validator(True, [int, float])
+    @param_types_validator(True, [int, float])
     def with_shipping_cost(self, shipping):
         # type: (float) -> Transaction
         """
@@ -302,8 +286,7 @@ class Transaction(Hit):
         self._data[self._k_transaction_shipping] = shipping
         return self
 
-    @exception_handler()
-    @types_validator(True, {'types': str, 'max_length': 10})
+    @param_types_validator(True, str)
     def with_shipping_method(self, shipping_method):
         # type: (str) -> Transaction
         """
@@ -315,8 +298,7 @@ class Transaction(Hit):
         self._data[self._k_transaction_shipping_method] = shipping_method
         return self
 
-    @exception_handler()
-    @types_validator(True, [int, float])
+    @param_types_validator(True, [int, float])
     def with_taxes(self, taxes):
         # type: (float) -> Transaction
         """
@@ -328,8 +310,7 @@ class Transaction(Hit):
         self._data[self._k_transaction_tax] = taxes
         return self
 
-    @exception_handler()
-    @types_validator(True, {'types': str, 'max_length': 10})
+    @param_types_validator(True, str)
     def with_currency(self, currency):
         # type: (str) -> Transaction
         """
@@ -341,8 +322,7 @@ class Transaction(Hit):
         self._data[self._k_transaction_currency] = currency
         return self
 
-    @exception_handler()
-    @types_validator(True, {'types': str, 'max_length': 10})
+    @param_types_validator(True, str)
     def with_payment_method(self, payment):
         # type: (str) -> Transaction
         """
@@ -354,8 +334,7 @@ class Transaction(Hit):
         self._data[self._k_transaction_payment_method] = payment
         return self
 
-    @exception_handler()
-    @types_validator(True, int)
+    @param_types_validator(True, int)
     def with_item_count(self, item_nb):
         # type: (int) -> Transaction
         """
@@ -366,8 +345,7 @@ class Transaction(Hit):
         self._data[self._k_transaction_item_count] = item_nb
         return self
 
-    @exception_handler()
-    @types_validator(True, str)
+    @param_types_validator(True, str)
     def with_coupon_code(self, coupon):
         # type: (str) -> Transaction
         """
@@ -378,3 +356,17 @@ class Transaction(Hit):
         """
         self._data[self._k_transaction_coupon] = coupon
         return self
+
+
+class _Activate(Hit):
+    @param_types_validator(True, str, str)
+    def __init__(self, variation_group_id, variation_id):
+        # type: (str, str) -> None
+        Hit.__init__(self, HitType.CAMPAIGN)
+        data = {
+            self._k_variation_group_id: variation_group_id,
+            self._k_variation_id: variation_id
+        }
+        self._data.update(data)
+
+

@@ -6,9 +6,9 @@ from flagship.decision_manager import DecisionManager
 from flagship.http_helper import HttpHelper
 from flagship.utils import log_exception, pretty_dict
 from flagship.status import Status
-from flagship.constants import _URL_DECISION_API, _URL_CAMPAIGNS
+from flagship.constants import URL_DECISION_API, URL_CAMPAIGNS
 from flagship.campaign import Campaign
-from flagship.constants import _TAG_FETCH_FLAGS
+from flagship.constants import TAG_FETCH_FLAGS
 
 
 class ApiManager(DecisionManager):
@@ -33,13 +33,13 @@ class ApiManager(DecisionManager):
                                 modification_values = v.get_modification_values()
                                 modifications.update(modification_values)
         except Exception as e:
-            log_exception(_TAG_FETCH_FLAGS, e, traceback.format_exc())
+            log_exception(TAG_FETCH_FLAGS, e, traceback.format_exc())
             return False, dict()
         return modifications
 
     def __send_campaign_request(self, visitor):
         config = visitor.configuration_manager.flagship_config
-        url = _URL_DECISION_API + config.env_id + _URL_CAMPAIGNS
+        url = URL_DECISION_API + config.env_id + URL_CAMPAIGNS
         headers = {
             "x-api-key": config.api_key,
             "x-sdk-client": "python",

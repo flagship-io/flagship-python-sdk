@@ -2,17 +2,15 @@ from __future__ import absolute_import
 
 from flagship.config import _FlagshipConfig
 from flagship.config_manager import ConfigManager
-from flagship.constants import _TAG_STATUS, _INFO_STATUS_CHANGED, _TAG_INITIALIZATION, _INFO_READY
+from flagship.constants import TAG_STATUS, INFO_STATUS_CHANGED, TAG_INITIALIZATION, INFO_READY
 from flagship.decorators import param_types_validator
 from flagship.log_manager import LogLevel
 from flagship.status import Status
+from flagship.utils import log
+from flagship.visitor import Visitor
 
 __name__ = 'flagship'
 __version__ = '3.0.0'
-
-from flagship.utils import log
-
-from flagship.visitor import Visitor
 
 
 class Flagship:
@@ -87,10 +85,10 @@ class Flagship:
                 self.status = new_status
                 if self.configuration_manager.flagship_config.status_listener is not None:
                     self.configuration_manager.flagship_config.status_listener.on_status_changed(new_status)
-                    log(_TAG_STATUS, LogLevel.DEBUG, _INFO_STATUS_CHANGED.format(str(new_status)))
+                    log(TAG_STATUS, LogLevel.DEBUG, INFO_STATUS_CHANGED.format(str(new_status)))
                 if new_status is Status.READY:
-                    log(_TAG_INITIALIZATION, LogLevel.INFO,
-                        _INFO_READY.format(str(__version__), str(self.configuration_manager.flagship_config)))
+                    log(TAG_INITIALIZATION, LogLevel.INFO,
+                        INFO_READY.format(str(__version__), str(self.configuration_manager.flagship_config)))
 
         def new_visitor(self, visitor_id, **kwargs):
             new_visitor = Visitor(self.configuration_manager, visitor_id, **kwargs)

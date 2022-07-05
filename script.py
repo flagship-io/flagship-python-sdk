@@ -82,5 +82,22 @@ def init():
     })
     visitor.update_context(('coucou3', 2))
     visitor.fetch_flags()
+    print("Json.metadata > " + visitor.get_flag("json", dict()).metadata().toJson())
+    print("Json.exists > " + str(visitor.get_flag("json", dict()).exists()))
+    print("Json.value > " + str(visitor.get_flag("json", dict()).value()))
+
+    print("string.metadata > " + str(visitor.get_flag("string", "default").metadata().toJson()))
+    print("string.exists > " + str(visitor.get_flag("string", "default").exists()))
+    print("string.value > " + str(visitor.get_flag("string", "default").value()))
+
+    print("featureEnabled.metadata > " + str(visitor.get_flag("featureEnabled", False).metadata().toJson()))
+    print("featureEnabled.exists > " + str(visitor.get_flag("featureEnabled", False).exists()))
+    print("featureEnabled.value > " + str(visitor.get_flag("featureEnabled", False).value()))
+
+    print("nope.metadata > " + str(visitor.get_flag("nope", 1).metadata().toJson()))
+    print("nope.exists > " + str(visitor.get_flag("nope", 1).exists()))
+    print("nope.value > " + str(visitor.get_flag("nope", 1).value()))
+
+
 
 init()
