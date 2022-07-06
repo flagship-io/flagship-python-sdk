@@ -22,7 +22,8 @@ class ApiManager(DecisionManager):
         try:
             success, results = self.__send_campaign_request(visitor)
             if success:
-                campaigns = Campaign.parse_campaigns(results)
+                # campaigns = Campaign.parse_campaigns(results)
+                campaigns = self.parse_campaign_response(results)
                 if campaigns is not None:
                     for campaign in campaigns:
                         variation_groups = campaign.variation_groups
@@ -35,10 +36,10 @@ class ApiManager(DecisionManager):
         except Exception as e:
             log_exception(TAG_FETCH_FLAGS, e, traceback.format_exc())
             return False, dict()
-        return modifications
+        return True, modifications
 
     def __send_campaign_request(self, visitor):
-        config = visitor.configuration_manager.flagship_config
+        config = visitor._configuration_manager.flagship_config
         url = URL_DECISION_API + config.env_id + URL_CAMPAIGNS
         headers = {
             "x-api-key": config.api_key,
@@ -46,16 +47,17 @@ class ApiManager(DecisionManager):
             "x-sdk-version": flagship.__version__
         }
         content = {
-            "visitorId": visitor.visitor_id,
-            "anonymousId": visitor.anonymous_id,
+            "visitorId": visitor._visitor_id,
+            "anonymousId": visitor._anonymous_id,
             "trigger_hit": False,
-            "context": visitor.context
+            "context": visitor._context
 
         }
         success, response = HttpHelper.send_http_request(HttpHelper.RequestType.POST, url, headers, content,
                                                          config.timeout)
         if success and len(response.content) > 0:
-            return True, json.loads(response.content.decode("utf-8"))
+            # return True, json.loads(response.content.decode("utf-8"))
+            return True, response.content
         else:
             return False, dict()
 

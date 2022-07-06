@@ -31,7 +31,7 @@ class HttpHelper:
 
     @staticmethod
     def send_hit(visitor, hit):
-        config = visitor.config
+        config = visitor._config
         import flagship
         headers = {
             "x-api-key": config.api_key,
@@ -41,11 +41,11 @@ class HttpHelper:
         body = {
             "eid": config.env_id,
         }
-        if visitor.anonymous_id is not None:
-            body['cuid'] = visitor.visitor_id
-            body['vid'] = visitor.anonymous_id
+        if visitor._anonymous_id is not None:
+            body['cuid'] = visitor._visitor_id
+            body['vid'] = visitor._anonymous_id
         else:
-            body['vid'] = visitor.visitor_id
+            body['vid'] = visitor._visitor_id
             body['cuid'] = None
         body.update(hit.get_data())
         response = requests.post(url=URL_ARIANE, headers=headers, data=body, timeout=config.timeout)

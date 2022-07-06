@@ -3,12 +3,16 @@ from enum import Enum
 
 from flagship.decorators import param_types_validator
 
+
 class HitType(Enum):
-    PAGE = 'SCREENVIEW'
+    SCREENVIEW = 'SCREENVIEW'
+    PAGEVIEW = 'PAGEVIEW'
     EVENT = 'EVENT'
     TRANSACTION = 'TRANSACTION'
     ITEM = 'ITEM'
     CAMPAIGN = "CAMPAIGN"
+    CONSENT = 'CONSENT'
+
 
 class Hit(object):
     _k_origin = 'dl'  # origin
@@ -42,6 +46,7 @@ class Hit(object):
     _k_transaction_coupon = 'tcc'
     _k_variation_group_id = 'vgid'
     _k_variation_id = 'vaid'
+    _k_consent = 'vc'
 
     @param_types_validator(True, HitType)
     def __init__(self, hit_type):
@@ -115,9 +120,25 @@ class Page(Hit):
         """
         Create a Page hit.
 
-        :param origin: current url of the page. Max length 2048 Bytes.
+        :param origin: current valid url of the page. Max length 2048 Bytes.
         """
-        Hit.__init__(self, HitType.PAGE)
+        Hit.__init__(self, HitType.PAGEVIEW)
+        data = {
+            self._k_origin: origin
+        }
+        self._data.update(data)
+
+
+class Screen(Hit):
+    @param_types_validator(True, str)
+    def __init__(self, origin):
+        # type: (str) -> None
+        """
+        Create a Screen hit.
+
+        :param origin: name of the current screen. Max length 2048 Bytes.
+        """
+        Hit.__init__(self, HitType.SCREENVIEW)
         data = {
             self._k_origin: origin
         }
@@ -370,3 +391,11 @@ class _Activate(Hit):
         self._data.update(data)
 
 
+class _Consent(Hit):
+    @param_types_validator(True, bool)
+    def __init__(self, consent):
+        Hit.__init__(self, HitType.CONSENT)
+        data = {
+            self._k_consent: consent,
+        }
+        self._data.update(data)

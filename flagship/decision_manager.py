@@ -33,13 +33,15 @@ class DecisionManager(IDecisionManager):
             campaigns = None
             try:
                 campaigns_json = json.loads(content)
-                if 'panic' in campaigns_json and campaigns_json['json'] is True:
+                if 'panic' in campaigns_json and campaigns_json['panic'] is True:
                     self.panic = True
                     self.update_status(Status.PANIC)
                     log(TAG_PANIC, LogLevel.WARNING, WARNING_PANIC)
-                if not self.panic:
-                    campaigns = Campaign.parse_campaigns(campaigns_json['campaigns'])
-                self.update_status(Status.READY)
+                else:
+                    self.panic = False
+                    # campaigns = Campaign.parse_campaigns(campaigns_json['campaigns'])
+                    campaigns = Campaign.parse_campaigns(campaigns_json)
+                    self.update_status(Status.READY)
                 return campaigns
             except Exception as e:
                 log_exception(TAG_PARSING, e, traceback.format_exc())

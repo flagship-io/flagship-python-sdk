@@ -55,13 +55,6 @@ class Flagship:
             Flagship.__instance = Flagship.__Flagship()
         return Flagship.__instance
 
-    # @staticmethod
-    # def _log(tag, level, message):
-    #     configuration = Flagship.config()
-    #     configured_log_manager = configuration.log_manager if config is not None else None
-    #     if configured_log_manager is not None:
-    #         configured_log_manager.log(tag, level, message)
-
     @staticmethod
     def _update_status(new_status):
         Flagship.__get_instance().update_status(new_status)
@@ -79,6 +72,7 @@ class Flagship:
             self.configuration_manager.init(env_id, api_key, flagship_config, self.update_status)
             if self.configuration_manager.is_set() is False:
                 self.update_status(Status.NOT_INITIALIZED)
+                self.__log(TAG_INITIALIZATION, )
 
         def update_status(self, new_status):
             if new_status is not None and new_status != self.status:
