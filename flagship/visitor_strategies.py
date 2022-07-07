@@ -2,7 +2,8 @@ from abc import ABCMeta, abstractmethod
 from enum import Enum
 from flagship import param_types_validator, log, LogLevel
 from flagship.constants import TAG_UPDATE_CONTEXT, TAG_VISITOR, DEBUG_CONTEXT, TAG_FETCH_FLAGS, DEBUG_FETCH_FLAGS, \
-    ERROR_METHOD_DEACTIVATED, ERROR_METHOD_DEACTIVATED_PANIC, TAG_TRACKING, ERROR_METHOD_DEACTIVATED_NO_CONSENT
+    ERROR_METHOD_DEACTIVATED, ERROR_METHOD_DEACTIVATED_PANIC, TAG_TRACKING, ERROR_METHOD_DEACTIVATED_NO_CONSENT, \
+    ERROR_METHOD_DEACTIVATED_NOT_READY
 from flagship.flag import Flag
 from flagship.hits import Hit, _Consent
 from flagship.http_helper import HttpHelper
@@ -12,6 +13,7 @@ class VisitorStrategies(Enum):
     DEFAULT_STRATEGY = 'DEFAULT_STRATEGY'
     PANIC_STRATEGY = 'PANIC_STRATEGY'
     NO_CONSENT_STRATEGY = 'NO_CONSENT_STRATEGY'
+    NOT_READY_STRATEGY = "NOT_READY_STRATEGY"
 
 
 class IVisitorStrategy:
@@ -112,9 +114,26 @@ class PanicStrategy(DefaultStrategy):
 class NoConsentStrategy(DefaultStrategy):
 
     def __init__(self, strategy=VisitorStrategies.NO_CONSENT_STRATEGY, visitor=None):
-        super(DefaultStrategy, self).__init__(strategy, visitor)
+        super(NoConsentStrategy, self).__init__(strategy, visitor)
 
     def send_hit(self, hit):
         log(TAG_TRACKING, LogLevel.ERROR,
             ERROR_METHOD_DEACTIVATED.format("send_hit()", ERROR_METHOD_DEACTIVATED_NO_CONSENT
+                                            .format(self.visitor._visitor_id)))
+
+
+class NotReadyStrategy(DefaultStrategy):
+
+    def __init__(self, strategy=VisitorStrategies.NOT_READY_STRATEGY, visitor=None):
+        super(NotReadyStrategy, self).__init__(strategy, visitor)
+
+    def get_flag(self, key, default):
+        log(TAG_TRACKING, LogLevel.ERROR,
+            ERROR_METHOD_DEACTIVATED.format("get_flag()", ERROR_METHOD_DEACTIVATED_NOT_READY
+                                            .format(self.visitor._visitor_id)))
+        return super(NotReadyStrategy, self).get_flag(key, default)
+
+    def send_hit(self, hit):
+        log(TAG_TRACKING, LogLevel.ERROR,
+            ERROR_METHOD_DEACTIVATED.format("send_hit()", ERROR_METHOD_DEACTIVATED_NOT_READY
                                             .format(self.visitor._visitor_id)))

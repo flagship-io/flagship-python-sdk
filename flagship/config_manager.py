@@ -14,10 +14,10 @@ class ConfigManager:
         self.flagship_config = config
         self.flagship_config.env_id = env_id
         self.flagship_config.api_key = api_key
-        self.decision_manager = ApiManager(
-            self.flagship_config,
-            update_status) if config.decision_mode is DecisionMode.DECISION_API else BucketingManager(
-            self.flagship_config, update_status)
+        if config.decision_mode is DecisionMode.DECISION_API:
+            self.decision_manager = ApiManager(self.flagship_config, update_status)
+        else:
+            self.decision_manager = BucketingManager(self.flagship_config, update_status)
         self.decision_manager.init()
 
     def is_set(self):

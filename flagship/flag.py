@@ -1,9 +1,10 @@
 from abc import ABCMeta, abstractmethod
 
 from flagship import log, LogLevel
-from flagship.constants import TAG_FLAG, ERROR_METHOD_DEACTIVATED, ERROR_METHOD_DEACTIVATED_PANIC, \
-    ERROR_FLAG_METHOD_DEACTIVATED, ERROR_METHOD_DEACTIVATED_NO_CONSENT
+from flagship.constants import TAG_FLAG, ERROR_METHOD_DEACTIVATED_PANIC, \
+    ERROR_FLAG_METHOD_DEACTIVATED, ERROR_METHOD_DEACTIVATED_NO_CONSENT, ERROR_METHOD_DEACTIVATED_NOT_READY
 from flagship.flag_metadata import FlagMetadata
+
 
 class IFlagStrategy:
     __metaclass__ = ABCMeta
@@ -47,8 +48,12 @@ class Flag(IFlagStrategy):
     def _get_flag_strategy(self):
         from flagship.visitor_strategies import VisitorStrategies
         visitor_strategy = self._visitor._get_strategy()
-        if visitor_strategy.strategy is VisitorStrategies.PANIC_STRATEGY:
+        if visitor_strategy.strategy is VisitorStrategies.NOT_READY_STRATEGY:
+            return _NotReadyStrategy(self)
+        elif visitor_strategy.strategy is VisitorStrategies.PANIC_STRATEGY:
             return _PanicFlagStrategy(self)
+        elif visitor_strategy.strategy is VisitorStrategies.NO_CONSENT_STRATEGY:
+            return _NoConsentStrategy(self)
         else:
             return _DefaultFlagStrategy(self)
 
@@ -115,4 +120,31 @@ class _NoConsentStrategy(_DefaultFlagStrategy):
         log(TAG_FLAG, LogLevel.ERROR,
             ERROR_FLAG_METHOD_DEACTIVATED.format(self.flag.key, "user_exposed()", ERROR_METHOD_DEACTIVATED_NO_CONSENT
                                                  .format(self.flag._visitor._visitor_id)))
+
+
+class _NotReadyStrategy(_DefaultFlagStrategy):
+
+    def __init__(self, flag):
+        super(_NotReadyStrategy, self).__init__(flag)
+        self.flag = flag
+
+    def value(self, user_exposed=True):
+        log(TAG_FLAG, LogLevel.ERROR,
+            ERROR_FLAG_METHOD_DEACTIVATED.format(self.flag.key, "value()", ERROR_METHOD_DEACTIVATED_NOT_READY))
+        return self.flag.default_value
+
+    def user_exposed(self):
+        log(TAG_FLAG, LogLevel.ERROR,
+            ERROR_FLAG_METHOD_DEACTIVATED.format(self.flag.key, "user_exposed()", ERROR_METHOD_DEACTIVATED_NOT_READY))
+
+    def exists(self):
+        log(TAG_FLAG, LogLevel.ERROR,
+            ERROR_FLAG_METHOD_DEACTIVATED.format(self.flag.key, "exists()", ERROR_METHOD_DEACTIVATED_NOT_READY))
+        return False
+
+    def metadata(self):
+        log(TAG_FLAG, LogLevel.ERROR,
+            ERROR_FLAG_METHOD_DEACTIVATED.format(self.flag.key, "metadata()", ERROR_METHOD_DEACTIVATED_NOT_READY))
+        return FlagMetadata(None)
+
 

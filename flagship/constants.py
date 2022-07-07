@@ -22,11 +22,13 @@ TAG_FETCH_FLAGS = "FetchFFlags"
 TAG_GET_FLAG = "GetFlag"
 TAG_FLAG_USER_EXPOSITION = "ExposeFlag"
 TAG_FLAG = "Flag"
+TAG_BUCKETING = "Bucketing"
 
 
 # INFO
 INFO_STATUS_CHANGED = "SDK status has changed ({})"
 INFO_READY = "Flagship version {} has started successfully.\nConfiguration: {}"
+INFO_BUCKETING_POLLING = "Polling event."
 
 #DEBUG
 DEBUG_CONTEXT = "Context have been updated with success.\n{}"
@@ -49,7 +51,9 @@ ERROR_FLAG_EXPOSITION_FLAG_NOT_FOUND = "Flag key '{}' has not been found for vis
 ERROR_METHOD_DEACTIVATED = "Method '{}' have been deactivated: {}"
 ERROR_FLAG_METHOD_DEACTIVATED = "Flag '{}' method '{}' have been deactivated: {}"
 ERROR_METHOD_DEACTIVATED_PANIC = "SDK is running in panic mode."
+ERROR_METHOD_DEACTIVATED_NOT_READY = "SDK is not started yet."
 ERROR_METHOD_DEACTIVATED_NO_CONSENT = "visitor '{}' has not given his consent."
+
 
 
 

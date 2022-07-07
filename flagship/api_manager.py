@@ -1,14 +1,11 @@
-import json
 import traceback
 
 import flagship
+from flagship.constants import TAG_FETCH_FLAGS
+from flagship.constants import URL_DECISION_API, URL_CAMPAIGNS
 from flagship.decision_manager import DecisionManager
 from flagship.http_helper import HttpHelper
-from flagship.utils import log_exception, pretty_dict
-from flagship.status import Status
-from flagship.constants import URL_DECISION_API, URL_CAMPAIGNS
-from flagship.campaign import Campaign
-from flagship.constants import TAG_FETCH_FLAGS
+from flagship.utils import log_exception
 
 
 class ApiManager(DecisionManager):

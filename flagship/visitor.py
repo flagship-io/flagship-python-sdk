@@ -7,7 +7,8 @@ from flagship.errors import FlagNotFoundException, FlagExpositionNotFoundExcepti
 from flagship.hits import _Activate
 from flagship.http_helper import HttpHelper
 from flagship.utils import pretty_dict, log_exception
-from flagship.visitor_strategies import IVisitorStrategy, PanicStrategy, DefaultStrategy, NoConsentStrategy
+from flagship.visitor_strategies import IVisitorStrategy, PanicStrategy, DefaultStrategy, NoConsentStrategy, \
+    NotReadyStrategy
 
 
 class Visitor(IVisitorStrategy):
@@ -59,7 +60,9 @@ class Visitor(IVisitorStrategy):
 
     def _get_strategy(self):
         import flagship
-        if flagship.Flagship.status() == Status.PANIC:
+        if flagship.Flagship.status().value < Status.PANIC.value:
+            return NotReadyStrategy(visitor=self)
+        elif flagship.Flagship.status() == Status.PANIC:
             return PanicStrategy(visitor=self)
         elif self._has_consented is False:
             return NoConsentStrategy(visitor=self)
@@ -102,29 +105,4 @@ class Visitor(IVisitorStrategy):
     def set_consent(self, consent):
         self._get_strategy().set_consent(consent)
 
-# @param_types_validator(True, [dict, tuple])
-#     def update_context(self, context):
-#         if isinstance(context, tuple) and len(context) == 2:
-#             self.__update_context(context[0], context[1])
-#         elif isinstance(context, dict):
-#             for k, v in context.items():
-#                 self.__update_context(k, v)
-#         log(TAG_UPDATE_CONTEXT, LogLevel.DEBUG, "[" + TAG_VISITOR.format(self._visitor_id) + "] " +
-#             DEBUG_CONTEXT.format(self.__str__()))
-#
-#     def fetch_flags(self):
-#         decision_manager = self._configuration_manager.decision_manager
-#         if decision_manager is not None:
-#             result, modifications = decision_manager.get_campaigns_modifications(self)
-#             if result is True:
-#                 self._modifications.update(modifications)
-#                 log(TAG_FETCH_FLAGS, LogLevel.DEBUG, "[" + TAG_VISITOR.format(self._visitor_id) + "] " +
-#                     DEBUG_FETCH_FLAGS.format(self.__str__()))
-#
-#     def get_flag(self, key, default):
-#         return Flag(self, key, default)
-#
-#     @param_types_validator(True, Hit)
-#     def send_hit(self, hit):
-#         if issubclass(type(hit), Hit):
-#             HttpHelper.send_hit(self, hit)
+
