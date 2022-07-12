@@ -1,52 +1,172 @@
+import json
+import os
 import time
+import traceback
 from threading import Thread
 
 import flagship
-from flagship.constants import TAG_BUCKETING, INFO_BUCKETING_POLLING
+from flagship.constants import TAG_BUCKETING, INFO_BUCKETING_POLLING, ERROR_BUCKETING_REQUEST
 from flagship.decision_manager import DecisionManager
-from flagship.utils import log
+from flagship.http_helper import HttpHelper
+from flagship.utils import log, pretty_dict, log_exception
 from flagship.log_manager import LogLevel
 from flagship.status import Status
 
 
-class BucketingManager(DecisionManager):
+class BucketingManager(DecisionManager, Thread):
+
+    local_decision_file_name = ".{}.decision"
 
     def __init__(self, config, update_status):
+        Thread.__init__(self)
         super(BucketingManager, self).__init__(config, update_status)
-        self._thread = None
+        self.flagship_config = config
+        self.daemon = True  # Attach the thread to main thread
+        self.campaigns = None
+        self.bucketing_file = None
+        self.last_modified = None
+        self.is_running = False
+        self.delay = config.polling_interval / 1000
         if flagship.Flagship.status().value < Status.READY.value:
             self.update_status(Status.POLLING)
+        self.load_local_decision_file()
 
     def init(self):
-        if self._thread is None:
-            self._thread = self.BucketingThread(self.flagship_config, None)
-        self._thread.start_running()
+        if self.is_running is False:
+            self.is_running = True
+            self.start()
+
+    def run(self):
+        while self.is_running:
+            log(TAG_BUCKETING, LogLevel.DEBUG, INFO_BUCKETING_POLLING)
+            try:
+                self.update_bucketing_file()
+            except:
+                pass
+            time.sleep(self.delay)
 
     def stop(self):
-        if self._thread is not None:
-            self._thread.stop()
+        self.is_running = False
+        self.stop()
+
+    def update_bucketing_file(self):
+        try:
+            last_modified, results = HttpHelper.send_bucketing_request(self.flagship_config, self.last_modified)
+            if last_modified is not None and results is not None:
+                self.last_modified = last_modified
+                # self.bucketing_file = json.loads(results)
+                self.bucketing_file = results
+                self.cache_local_decision_file()
+            if self.bucketing_file is not None:
+                campaigns = self.parse_campaign_response(self.bucketing_file)
+                if campaigns is not None:
+                    self.campaigns = campaigns
+
+
+        except:
+            log(TAG_BUCKETING, LogLevel.ERROR, ERROR_BUCKETING_REQUEST)
 
     def get_campaigns_modifications(self, visitor):
-        pass
+        campaign_modifications = dict()
+        try:
+            for campaign in self.campaigns:
+                for variation_group in campaign.variation_groups:
+                    if variation_group.is_targeting_valid(dict(visitor._context)):
+                        variation = variation_group.select_variation(visitor)
+                        if variation is not None:
+                            visitor.add_new_assignment_to_history(variation.variation_group_id, variation.variation_id)
+                            modification_values = variation.get_modification_values()
+                            if modification_values is not None:
+                                campaign_modifications.update(modification_values)
+                            break
+            # send context event
+            return True, campaign_modifications
+        except Exception as e:
+            log_exception(TAG_BUCKETING, e, traceback.format_exc())
+        return False, None
 
-    class BucketingThread(Thread):
+    def load_local_decision_file(self):
+        file_name = self.local_decision_file_name.format(self.flagship_config.env_id)
+        if os.path.isfile(file_name):
+            try:
+                with open(file_name, 'r') as f:
+                    json_data = json.loads(f.read())
+                    if 'data' in json_data and 'last_modified' in json_data:
+                        self.last_modified = json_data['last_modified']
+                        self.bucketing_file = json_data['data']
+            except Exception as e:
+                pass
 
-        def __init__(self, config, last_modified):
-            Thread.__init__(self)
-            self.flagship_config = config
-            self.daemon = True
-            self.is_running = False
-            self.delay = config.polling_interval / 1000
+    def cache_local_decision_file(self):
+        try:
+            file_name = self.local_decision_file_name.format(self.flagship_config.env_id)
+            json_object = {
+                "last_modified": self.last_modified,
+                "data": self.bucketing_file
+            }
+            with open(file_name, 'w') as f:
+                json.dump(json_object, f, indent=2)
+        except:
+            pass
 
-        def run(self):
-            while self.is_running:
-                log(TAG_BUCKETING, LogLevel.DEBUG, INFO_BUCKETING_POLLING)
-                time.sleep(self.delay)
 
-        def start_running(self):
-            if self.is_running is False:
-                self.is_running = True
-                self.start()
-
-        def stop_running(self):
-            self.is_running = False
+# class BucketingManager(DecisionManager):
+#
+#     def __init__(self, config, update_status):
+#         super(BucketingManager, self).__init__(config, update_status)
+#         self._thread = None
+#         if flagship.Flagship.status().value < Status.READY.value:
+#             self.update_status(Status.POLLING)
+#
+#     def init(self):
+#         if self._thread is None:
+#             self._thread = self.BucketingThread(self.flagship_config, None)
+#         self._thread.start_running()
+#
+#     def stop(self):
+#         if self._thread is not None:
+#             self._thread.stop()
+#
+#     def get_campaigns_modifications(self, visitor):
+#         pass
+#
+#     class BucketingThread(Thread):
+#
+#         def __init__(self, config, last_modified):
+#             Thread.__init__(self)
+#             self.flagship_config = config
+#             self.daemon = True
+#             self.is_running = False
+#             self.delay = config.polling_interval / 1000
+#             self.campaigns = None
+#             self.bucketing_file = None
+#             self.last_modified = None
+#
+#         def run(self):
+#             while self.is_running:
+#                 log(TAG_BUCKETING, LogLevel.DEBUG, INFO_BUCKETING_POLLING)
+#                 try:
+#                     new_bucketing_file = self.get_bucketing_file()
+#                     if new_bucketing_file is not None:
+#                         self.bucketing_file = new_bucketing_file
+#                 except:
+#                     pass
+#                 time.sleep(self.delay)
+#
+#         def start_running(self):
+#             if self.is_running is False:
+#                 self.is_running = True
+#                 self.start()
+#
+#         def stop_running(self):
+#             self.is_running = False
+#
+#         def get_bucketing_file(self):
+#             try:
+#                 last_modified, results = HttpHelper.send_bucketing_request(self.flagship_config, self.last_modified)
+#                 if last_modified is not None and results is not None:
+#                     self.last_modified = last_modified
+#                     self.bucketing_file = json.loads(results)
+#                     self.campaigns = self
+#             except:
+#                 log(TAG_BUCKETING, LogLevel.ERROR, ERROR_BUCKETING_REQUEST)

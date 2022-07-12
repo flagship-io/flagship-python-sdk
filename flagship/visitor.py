@@ -88,6 +88,10 @@ class Visitor(IVisitorStrategy):
             flags[k] = v.value
         return flags
 
+    def add_new_assignment_to_history(self, variation_group_id, variation_id):
+        pass
+
+
 #     Methods from Visitor Strategy
 
     def update_context(self, context):

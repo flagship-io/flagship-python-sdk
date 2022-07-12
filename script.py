@@ -44,9 +44,13 @@
 #     v.send_hit(Screen("python screen view"))
 #     print(value)
 # init()
+import json
 import sys
 import time
 
+import requests
+
+import flagship.utils
 from flagship import *
 from flagship.config import DecisionApi, Bucketing
 from flagship.hits import Hit, Screen
@@ -114,6 +118,18 @@ def init():
 
     Flagship.start("bkk4s7gcmjcg07fke9dg", "Q6FDmj6F188nh75lhEato2MwoyXDS7y34VrAL4Aa",
                    Bucketing(timeout=3000, status_listener=CustomStatusListener(), polling_interval=10000))
-    time.sleep(50)
+    time.sleep(5)
+    visitor = Flagship.new_visitor("toto3000", instance_type=Visitor.Instance.SINGLE_INSTANCE)
+    visitor.update_context({
+        "coucou": 3,
+        "coucou2": 2,
+        "haha": False,
+        "isVIPUser": True,
+        "slug": True
+    })
+    visitor.fetch_flags()
+    time.sleep(5)
+    print(visitor.get_flag("slug_variation", 0).value())
+    time.sleep(5000)
 
 init()

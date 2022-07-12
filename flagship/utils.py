@@ -19,35 +19,43 @@ def log_exception(tag, exception, traceback):
         configured_log_manager.exception(tag, exception, traceback)
 
 
-def pretty_dict(dictionary, indent=2, string="", first=True):
-    if first:
-        string += '{\n'
-    for key, value in dictionary.items():
-        string += ((' ' * indent + "\"" + str(key)) + "\"")
-        if isinstance(value, dict):
-            string += ": {\n" + pretty_dict(value,  indent + 2, "", False) + "\n" + (
-                ' ' * indent) + "},\n"
-        elif isinstance(value, list):
-            string += ": [\n"
-            for i in range(0, len(value)):
-                string += (' ' * (indent + 2)) + "{\n"
-                string += pretty_dict(value[i], indent + 4, "", False) + "\n"
-                string += (' ' * (indent + 2)) + "},\n"
-            string = string[:-2] + "\n"
-            string += (' ' * indent) + "],\n"
-        else:
-            if value is None:
-                string += ": null"
-            elif isinstance(value, str):
-                string += (': \"{}\"'.format(value))
-            elif isinstance(value, bool):
-                string += (': {}'.format("true" if value is True else "false"))
-            else:
-                string += (': {}'.format(value))
-            string += ",\n"
+def pretty_dict(node, indent=2, string="", first=True):
 
-    if first:
-        return (string[:-2] if len(string) > 2 else string) + "\n}"
-    else:
-        return string[:-2]
-    # return json.dumps(dictionary, indent=4)
+    # if isinstance(node, dict):
+    #     if first:
+    #         string += '{\n'
+    #     for key, value in node.items():
+    #         string += ((' ' * indent + "\"" + str(key)) + "\"")
+    #         if isinstance(value, dict):
+    #             string += ": {\n" + pretty_dict(value, indent + 2, "", False) + "\n" + (' ' * indent) + "},\n"
+    #         elif isinstance(value, list):
+    #             string += ": [\n" + pretty_dict(value, indent + 2, "", False) + "\n" + (' ' * indent) + "],\n"
+    #         else:
+    #             string += ": " + pretty_dict(value, indent + 2, "", False) + ",\n"
+    # elif isinstance(node, list):
+    #     if first:
+    #         string += '[\n'
+    #     for i in range(0, len(node)):
+    #         if isinstance(node[i], dict):
+    #             string += (' ' * indent) + "{\n" + pretty_dict(node[i], indent + 2, "", False) + "\n" + (' ' * indent) + "},\n"
+    #         elif isinstance(node[i], list):
+    #             string += (' ' * indent) + "[\n" + pretty_dict(node[i], indent + 2, "", False) + "\n" + (' ' * indent) + "],\n"
+    #         else:
+    #             string += (' ' * indent) + pretty_dict(node[i], indent + 2, "", False) + ",\n"
+    # else:
+    #     if node is None:
+    #         string += "null"
+    #     elif isinstance(node, str):
+    #         string += ('\"{}\"'.format(node))
+    #     elif isinstance(node, bool):
+    #         string += ('{}'.format("true" if node is True else "false"))
+    #     else:
+    #         string += ('{}'.format(node))
+    #     string += ",\n"
+    #
+    # if first and isinstance(node, dict):
+    #     return (string[:-2] if len(string) > 2 else string) + "\n}"
+    # elif first and isinstance(node, list):
+    #     return (string[:-2] if len(string) > 2 else string) + "\n]"
+    # return string[:-2]
+    return json.dumps(node, indent=2)

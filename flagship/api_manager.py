@@ -1,3 +1,4 @@
+import json
 import traceback
 
 import flagship
@@ -20,7 +21,8 @@ class ApiManager(DecisionManager):
             success, results = self.__send_campaign_request(visitor)
             if success:
                 # campaigns = Campaign.parse_campaigns(results)
-                campaigns = self.parse_campaign_response(results)
+                campaign_json = json.loads(results)
+                campaigns = self.parse_campaign_response(campaign_json)
                 if campaigns is not None:
                     for campaign in campaigns:
                         variation_groups = campaign.variation_groups

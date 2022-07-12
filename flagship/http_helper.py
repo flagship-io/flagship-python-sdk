@@ -1,9 +1,12 @@
 from __future__ import absolute_import
 
 import json
+import traceback
+
 import requests
 from enum import Enum
-from flagship.constants import TAG_HTTP_REQUEST, DEBUG_REQUEST, URL_ARIANE
+from flagship.constants import TAG_HTTP_REQUEST, DEBUG_REQUEST, URL_ARIANE, URL_BUCKETING, TAG_BUCKETING, \
+    ERROR_BUCKETING_REQUEST
 from flagship.decorators import param_types_validator
 from flagship.log_manager import LogLevel
 from flagship.utils import pretty_dict, log
@@ -23,10 +26,10 @@ class HttpHelper:
     def send_http_request(method, url, headers, content, timeout=2000):
         try:
             response = requests.request(method=method.name, url=url, headers=headers, json=content, timeout=timeout)
-            HttpHelper.__log_request(method, url, headers, content, response)
+            HttpHelper.log_request(method, url, headers, content, response)
             return True, response
         except Exception as e:
-            print(e)
+            print(traceback.format_exc())
             return False, None
 
     @staticmethod
@@ -49,11 +52,30 @@ class HttpHelper:
             body['cuid'] = None
         body.update(hit.get_data())
         response = requests.post(url=URL_ARIANE, headers=headers, data=body, timeout=config.timeout)
-        HttpHelper.__log_request(HttpHelper.RequestType.POST, URL_ARIANE, headers, body, response)
-
+        HttpHelper.log_request(HttpHelper.RequestType.POST, URL_ARIANE, headers, body, response)
 
     @staticmethod
-    def __log_request(method, url, headers, content, response):
+    def send_bucketing_request(config, last_modified=""):
+        try:
+            url = URL_BUCKETING.format(config.env_id)
+            headers = {
+                "Content-Type": "application/json",
+                "If-Modified-Since": last_modified
+            }
+            response = requests.get(url=url, headers=headers, timeout=config.timeout)
+            HttpHelper.log_request(HttpHelper.RequestType.GET, url, headers, {}, response)
+            code = response.status_code
+            if 'Last-Modified' in response.headers:
+                last_modified = response.headers['Last-Modified']
+            content = response.content.decode("utf-8")
+            if code < 300:
+                return last_modified, content
+        except Exception as e:
+            log(TAG_BUCKETING, LogLevel.ERROR, ERROR_BUCKETING_REQUEST)
+        return None, None
+
+    @staticmethod
+    def log_request(method, url, headers, content, response):
         message = DEBUG_REQUEST.format(method.name, url, response.status_code,
                                        int(response.elapsed.total_seconds() * 1000))
         try:
@@ -65,9 +87,7 @@ class HttpHelper:
         string = "Request body =>\n" \
                  "{}\n" \
                  "Response body =>\n" \
-                 "{}\n"\
+                 "{}\n" \
             .format(pretty_request, pretty_response)
         message += string
         log(TAG_HTTP_REQUEST, LogLevel.DEBUG if response.status_code in range(200, 305) else LogLevel.ERROR, message)
-
-

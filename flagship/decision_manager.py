@@ -28,11 +28,10 @@ class DecisionManager(IDecisionManager):
     def init(self):
         pass
 
-    def parse_campaign_response(self, content):
-        if content is not None:
+    def parse_campaign_response(self, campaigns_json):
+        if campaigns_json is not None:
             campaigns = None
             try:
-                campaigns_json = json.loads(content)
                 if 'panic' in campaigns_json and campaigns_json['panic'] is True:
                     self.panic = True
                     self.update_status(Status.PANIC)

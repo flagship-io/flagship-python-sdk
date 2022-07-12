@@ -1,10 +1,11 @@
+import random
 import traceback
 
 from flagship.constants import TAG_PARSING_VARIATION_GROUP, ERROR_PARSING_VARIATION_GROUP
 from flagship.errors import FlagshipParsingError
-# from flagship import murmurHash
+from flagship.murmur32x86 import murmurHash
 from flagship.targeting import TargetingGroup
-from flagship.utils import log_exception, pretty_dict
+from flagship.utils import log_exception
 from flagship.variation import Variation
 
 
@@ -29,6 +30,30 @@ class VariationGroup:
 
     def is_targeting_valid(self, context):
         return self.targeting_groups.is_targeting_valid(context)
+
+    def select_variation(self, visitor):
+        if self.variations is not None:
+            murmur_allocation = self._get_murmur_allocation(self.variation_group_id, visitor._visitor_id)
+            p = 0
+            for (variation_id, variation) in self.variations.items():
+                if variation.allocation > 0:
+                    p += variation.allocation
+                    if murmur_allocation < p:
+                        return variation
+        return None
+
+
+
+
+    def _get_murmur_allocation(self, variation_group_id, visitor_id):
+        try:
+            # decoded_visitor_id = visitor_id.decode('utf-8')
+            decoded_visitor_id = visitor_id
+            return murmurHash(variation_group_id + decoded_visitor_id) % 100
+        except Exception as e:
+            print(traceback.print_exc())
+            return random.randint(0, 99)
+
 
     @staticmethod
     def parse(campaign_id, campaign_type, campaign_slug, variation_group_obj, bucketing):

@@ -2,6 +2,7 @@
 URL_DECISION_API = "https://decision.flagship.io/v2/"
 URL_CAMPAIGNS = "/campaigns/?exposeAllKeys=true"
 URL_ARIANE = "https://ariane.abtasty.com/"
+URL_BUCKETING = "https://cdn.flagship.io/{}/bucketing.json"
 
 
 #TAGS
@@ -18,7 +19,7 @@ TAG_PARSING_VARIATION_GROUP = "Variation group parsing"
 TAG_PARSING_VARIATION = "Variation parsing"
 TAG_PARSING_MODIFICATION = "Modification parsing"
 TAG_PANIC = "Panic Status"
-TAG_FETCH_FLAGS = "FetchFFlags"
+TAG_FETCH_FLAGS = "FetchFlags"
 TAG_GET_FLAG = "GetFlag"
 TAG_FLAG_USER_EXPOSITION = "ExposeFlag"
 TAG_FLAG = "Flag"
@@ -53,6 +54,8 @@ ERROR_FLAG_METHOD_DEACTIVATED = "Flag '{}' method '{}' have been deactivated: {}
 ERROR_METHOD_DEACTIVATED_PANIC = "SDK is running in panic mode."
 ERROR_METHOD_DEACTIVATED_NOT_READY = "SDK is not started yet."
 ERROR_METHOD_DEACTIVATED_NO_CONSENT = "visitor '{}' has not given his consent."
+
+ERROR_BUCKETING_REQUEST = "An error occurred happened during decision file request."
 
 
 
