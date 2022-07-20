@@ -219,12 +219,13 @@ class Event(Hit):
     def with_event_value(self, value):
         # type: (int) -> Event
         """
-        Set a number value to your event.
-        :param value: Max length 500 Bytes. Min value 0.
+         Specifies the monetary value associated with an event
+         (e.g. you earn 10 to 100 euros depending on the quality of lead generated).
+        :param value: must be non-negative integer > 0.
         :return: Event
         """
         t = type(value)
-        if t == int or t == str or t == float or t == bool:
+        if t == int and value > 0:
             self._data[self._k_event_value] = value
         return self
 
