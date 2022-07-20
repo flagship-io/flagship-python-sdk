@@ -80,6 +80,7 @@ class BucketingManager(DecisionManager, Thread):
                                 campaign_modifications.update(modification_values)
                             break
             # send context event
+            visitor._send_context_request()
             return True, campaign_modifications
         except Exception as e:
             log_exception(TAG_BUCKETING, e, traceback.format_exc())

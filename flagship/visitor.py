@@ -4,7 +4,7 @@ from enum import Enum
 from flagship import param_types_validator, Status
 from flagship.constants import TAG_GET_FLAG, TAG_FLAG_USER_EXPOSITION
 from flagship.errors import FlagNotFoundException, FlagExpositionNotFoundException
-from flagship.hits import _Activate
+from flagship.hits import _Activate, _Segment
 from flagship.http_helper import HttpHelper
 from flagship.utils import pretty_dict, log_exception
 from flagship.visitor_strategies import IVisitorStrategy, PanicStrategy, DefaultStrategy, NoConsentStrategy, \
@@ -68,6 +68,12 @@ class Visitor(IVisitorStrategy):
             return NoConsentStrategy(visitor=self)
         else:
             return DefaultStrategy(visitor=self)
+
+
+    def _send_context_request(self):
+        self._get_strategy().send_hit(_Segment(self._context))
+
+
 
     def __str__(self):
         return pretty_dict({

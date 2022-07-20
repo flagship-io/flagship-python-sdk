@@ -12,6 +12,7 @@ class HitType(Enum):
     ITEM = 'ITEM'
     CAMPAIGN = "CAMPAIGN"
     CONSENT = 'CONSENT'
+    SEGMENT = 'SEGMENT'
 
 
 class Hit(object):
@@ -47,6 +48,7 @@ class Hit(object):
     _k_variation_group_id = 'vgid'
     _k_variation_id = 'vaid'
     _k_consent = 'vc'
+    _k_segment_list = 'sl'
 
     @param_types_validator(True, HitType)
     def __init__(self, hit_type):
@@ -397,5 +399,14 @@ class _Consent(Hit):
         Hit.__init__(self, HitType.CONSENT)
         data = {
             self._k_consent: consent,
+        }
+        self._data.update(data)
+
+class _Segment(Hit):
+    @param_types_validator(True, dict)
+    def __init__(self, context):
+        Hit.__init__(self, HitType.SEGMENT)
+        data = {
+            self._k_segment_list: context,
         }
         self._data.update(data)
