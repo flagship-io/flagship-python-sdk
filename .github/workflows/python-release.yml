@@ -1,0 +1,93 @@
+# This workflow will install Python dependencies, run tests and lint with a variety of Python versions
+# For more information see: https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
+
+name: CI Python release
+
+on:
+  push:
+    tags:
+      - '*.*.*'
+
+jobs:
+  build:
+    env:
+      FLAGSHIP_VERSION_NAME: ${GITHUB_REF/refs\/tags\//}
+      PYPI_USER: ${{ secrets.PYPI_USER }}
+      PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}
+      coverage: 0
+      old_coverage: 0
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [2.7, 3.8, 3.9]
+    if: contains(github.event.head_commit.message, '#ci-auto') == false && contains(github.event.head_commit.message, '#release-${GITHUB_REF/refs\/tags\//}') == false
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Env
+      run: |
+          echo ::exportVariable name=FLAGSHIP_VERSION_NAME::${GITHUB_REF/refs\/tags\//}
+          echo ::exportVariable name=PYPI_USER::${{ secrets.PYPI_USER }}
+          echo ::exportVariable name=PYPI_TOKEN::${{ secrets.PYPI_TOKEN }}
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pytest
+        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+        mkdir -p cache
+    - name: Test with pytest
+      run: |
+        pytest
+        
+    - name: Coverage
+      if: matrix.python-version == 3.8
+      run: |
+        pip install coverage
+        coverage run --source=flagship -m pytest ./tests/
+        echo ::exportVariable name=coverage::$(echo $(coverage report -m) | grep -Po '([^ ]*(?=%$))')
+        echo ::exportVariable name=old_coverage::$(grep -Po -m 1 '(?<=coverage-)(.*?)(?=%25-green)' ./README.md)
+        
+    - name: Git update coverage
+      if: ${{ env.old_coverage != env.coverage && matrix.python-version == 3.8}}
+      run: |
+        echo $old_coverage
+        echo $coverage
+        sed -i -e 's/coverage-${{ env.old_coverage }}%25/coverage-${{ env.coverage }}%25/g' ./README.md
+        cat ./README.md
+        git remote add github "https://$GITHUB_ACTOR:$GITHUB_TOKEN@github.com/$GITHUB_REPOSITORY.git"
+        git config --local user.email "ci@abtasty.com"
+        git config --local user.name "CI action"
+        git pull github ${GITHUB_REF} --ff-only
+        git add .
+        git commit -am "Update coverage #ci-auto"
+        git push github HEAD:${GITHUB_REF}
+        
+    - name: Update verion setup.py
+      if: matrix.python-version == 3.8
+      run: |
+        sed -i "s/__version__ = \".*\"/__version__ = \"${{env.FLAGSHIP_VERSION_NAME}}\"/g" ./flagship/__init__.py
+        cat setup.py
+        git remote add github "https://$GITHUB_ACTOR:$GITHUB_TOKEN@github.com/$GITHUB_REPOSITORY.git"
+        git config --local user.email "ci@abtasty.com"
+        git config --local user.name "CI action"
+        git pull github ${GITHUB_REF}
+        git add .
+        git commit -am "Update version setup.py #ci-auto #release-${{env.FLAGSHIP_VERSION_NAME}}"
+        git push --delete github ${{env.FLAGSHIP_VERSION_NAME}}
+        git push github HEAD:${GITHUB_REF}
+        git push github HEAD:master --force
+        
+    - name: Pypi publish
+      if: matrix.python-version == 3.8
+      run: |
+        python3 -m pip install --user --upgrade setuptools wheel
+        python3 -m pip install --user --upgrade twine        
+        rm -rf dist/
+        python3 setup.py sdist bdist_wheel
+        printf '${{env.PYPI_USER}}\n${{env.PYPI_TOKEN}}' | python3 -m twine upload dist/*
+
+      
+    
