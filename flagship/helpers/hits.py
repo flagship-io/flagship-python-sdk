@@ -8,7 +8,8 @@ from flagship.decorators import types_validator, exception_handler
 
 
 class HitType(Enum):
-    PAGE = 'SCREENVIEW'
+    PAGE = 'PAGEVIEW'
+    SCREENVIEW = 'SCREENVIEW'
     EVENT = 'EVENT'
     TRANSACTION = 'TRANSACTION'
     ITEM = 'ITEM'
@@ -16,6 +17,7 @@ class HitType(Enum):
 
 class Hit(object):
     _k_origin = 'dl'  # origin
+    _k_page = 'pt'
     _k_env_id = 'cid'  # env_id
     _k_visitor_id = 'vid'  # visitor id
     _k_type = 't'
@@ -108,8 +110,24 @@ class Hit(object):
         self._data[self._k_locale] = locale
         return self
 
+    # @exception_handler()
+    # @types_validator(True, {'types': str})
+    # def with_location(self, location):
+    #     # type: (str) -> Hit
+    #     """
+    #         Set the page url or interface name in which this hit has been triggered.
+    #         If this hit is sent from a web environment you must provide a valid url.
+    #         :param origin: page url or interface name.
+    #         :return: Hit
+    #         """
+    #     self._data[self._k_origin] = location
+    #     return self
+
     def get_data(self):
         return self._data
+
+    def _is_valid(self):
+        return True, ''
 
     def __str__(self):
         return 'Hit : ' + json.dumps(self._data)
@@ -118,16 +136,40 @@ class Hit(object):
 class Page(Hit):
     @exception_handler()
     @types_validator(True, {'types': str, 'max_length': 2048})
-    def __init__(self, origin):
+    def __init__(self, location):
         # type: (str) -> None
         """
         Create a Page hit.
 
-        :param origin: current url of the page. Max length 2048 Bytes.
+        :param location: current url of the page. Max length 2048 Bytes (must be a valid url).
         """
         Hit.__init__(self, HitType.PAGE)
         data = {
-            self._k_origin: origin
+            self._k_origin: location
+        }
+        self._data.update(data)
+
+    def _is_valid(self):
+        origin = self._data[self._k_origin]
+        from flagship import utils
+        if not utils.is_url_valid(origin):
+            return False, "'{}' is not a valid url.".format(origin)
+        return True, ''
+
+
+class Screen(Hit):
+    @exception_handler()
+    @types_validator(True, {'types': str, 'max_length': 2048})
+    def __init__(self, location):
+        # type: (str) -> None
+        """
+        Create a Screen hit.
+
+        :param location: current app interface name.
+        """
+        Hit.__init__(self, HitType.SCREENVIEW)
+        data = {
+            self._k_origin: location
         }
         self._data.update(data)
 
@@ -179,7 +221,7 @@ class Event(Hit):
         """
          Specifies the monetary value associated with an event
          (e.g. you earn 10 to 100 euros depending on the quality of lead generated).
-        :param value: Max length 500 Bytes. Must be non-negative integer > 0.
+        :param value: must be non-negative integer > 0.
         :return: Event
         """
         t = type(value)

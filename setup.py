@@ -1,11 +1,12 @@
 import setuptools
+from flagship import __version__
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setuptools.setup(
     name='flagship',
-    version='2.1.4',
+    version=__version__,
     author="Flagship Team",
     author_email="support@flagship.io",
     description="Flagship Python SDK",

@@ -1,7 +1,8 @@
 from enum import Enum
 
-from flagship.decorators import types_validator, exception_handler
+from flagship.decorators import exception_handler
 from flagship.handler import FlagshipEventHandler
+from flagship.cache.cache_visitor import VisitorCacheManager
 
 
 class Config:
@@ -33,6 +34,7 @@ class Config:
         self.mode = Config.Mode.API
         self.bucketing_refresh_interval = 60
         self.timeout = float(2.0)
+        self.visitor_cache_manager = None
 
         if 'debug' in kwargs:
             debug = kwargs['debug']
@@ -63,3 +65,8 @@ class Config:
             timeout = kwargs['timeout']
             if (isinstance(timeout, int) or isinstance(timeout, float)) and timeout > 0:
                 self.timeout = float(timeout)
+
+        if 'visitor_cache_manager' in kwargs:
+            cache_manager = kwargs['visitor_cache_manager']
+            if isinstance(cache_manager, VisitorCacheManager):
+                self.visitor_cache_manager = cache_manager
