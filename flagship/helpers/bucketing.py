@@ -53,7 +53,7 @@ class BucketingManager(BucketingObserver):
     def check_for_panic(bucketing_data):
         if bucketing_data is not None and 'content' in bucketing_data:
             content = bucketing_data['content']
-            return 'panic' in content
+            return content.get('panic', False)
         return False
 
     def get_bucketing_data(self):

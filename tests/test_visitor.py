@@ -1,19 +1,18 @@
 import json
 import time
 import traceback
-
 from flagship.app import Flagship
 from flagship.config import Config
 import responses
-
-from flagship.helpers.hits import Page, Event, EventCategory, Transaction, Item
+from flagship.handler import FlagshipEventHandler
+from flagship.helpers.hits import Page, Event, EventCategory, Transaction, Item, Screen
 
 
 def test_create_visitor_wrong_param():
     fs = Flagship.instance()
     fs.start("my_env_id", "my_api_key", Config(event_handler=None))
     try:
-        visitor = fs.create_visitor(1, None)
+        visitor = fs.create_visitor(1, False, None)
         assert False
     except Exception as e:
         assert True
@@ -24,7 +23,7 @@ def test_create_visitor():
     fs.start("my_env_id", "my_api_key", Config(event_handler=None))
 
     try:
-        visitor = fs.create_visitor("Pam", {'isVIP': True})
+        visitor = fs.create_visitor("Pam", False, {'isVIP': True})
         assert visitor._visitor_id == 'Pam'
         assert visitor._context['isVIP'] is True
         assert visitor._env_id == "my_env_id"
@@ -47,7 +46,7 @@ def test_visitor_update_context():
         def __init__(self):
             pass
 
-    visitor = fs.create_visitor("Pam", {'isVIP': True})
+    visitor = fs.create_visitor("Pam", False, {'isVIP': True})
     visitor.update_context(('one', 1), False)
     visitor.update_context(('two', 2, 2))
     visitor.update_context({
@@ -89,7 +88,7 @@ def test_visitor_synchronize():
 
     fs = Flagship.instance()
     fs.start("my_env_id", "my_api_key", Config(event_handler=None, mode=Config.Mode.API))
-    visitor = fs.create_visitor("visitor_1")
+    visitor = fs.create_visitor("visitor_1", True)
     responses.reset()
     responses.add(responses.POST,
                   'https://decision.flagship.io/v2/my_env_id/campaigns/?exposeAllKeys=true&sendContextEvent=false',
@@ -146,7 +145,7 @@ def test_visitor_get_modification():
 
     fs = Flagship.instance()
     fs.start("my_env_id", "my_api_key", Config(event_handler=None, mode=Config.Mode.API))
-    visitor = fs.create_visitor("visitor_1")
+    visitor = fs.create_visitor("visitor_1", True)
 
     responses.reset()
     responses.add(responses.POST,
@@ -167,18 +166,19 @@ def test_visitor_get_modification2():
                      '"variationGroupId":"xxxxesjojh803lh57qp0","variation":{"id":"xxxxesjojh803lh57qpg",' \
                      '"modifications":{"type":"FLAG","value":{"my_flag_nb":100}}}},{"id":"xxxxsp9j5mf4g0fdhkv2g",' \
                      '"variationGroupId":"xxxxp9j5mf4g0fdhkv3g","variation":{"id":"xxxxp9j5mf4g0fdhkv4g",' \
-                     '"modifications":{"type":"JSON","value":{"btn-color":"red"}}}},{"id":"xxxxrfe4jaeg0gi1bhog",' \
-                     '"variationGroupId":"xxxxrfe4jaeg0gi1bhpg","variation":{"id":"xxxxrfe4jaeg0gi1bhq0",' \
-                     '"modifications":{"type":"FLAG","value":{"featureEnabled":true}}}},{"id":"xxxx9b1q4vl00quhh0rg",' \
-                     '"variationGroupId":"xxxx9b1q4vl00quhh0sg","variation":{"id":"xxxx9b1q4vl00quhh0tg",' \
-                     '"modifications":{"type":"JSON","value":{"k1":"v1","k2":null,"k3":null,"k6":"v6","k7":null}}}},' \
-                     '{"id":"bsbgq4rjhsqg11tntt1g","variationGroupId":"bsbgq4rjhsqg11tntt2g","variation":{' \
-                     '"id":"bsbgq4rjhsqg11tntt3g","modifications":{"type":"JSON","value":{"array":[1,2,3],"complex":{' \
-                     '"carray":[{"cobject":0}]},"object":{"value":123456}}},"reference":false}}]} '
+                     '"modifications":{"type":"JSON","value":{"btn-color":"red"}},"reference":true}},' \
+                     '{"id":"xxxxrfe4jaeg0gi1bhog","variationGroupId":"xxxxrfe4jaeg0gi1bhpg","variation":{' \
+                     '"id":"xxxxrfe4jaeg0gi1bhq0","modifications":{"type":"FLAG","value":{"featureEnabled":true}}}},' \
+                     '{"id":"xxxx9b1q4vl00quhh0rg","variationGroupId":"xxxx9b1q4vl00quhh0sg","variation":{' \
+                     '"id":"xxxx9b1q4vl00quhh0tg","modifications":{"type":"JSON","value":{"k1":"v1","k2":null,' \
+                     '"k3":null,"k6":"v6","k7":null}}}},{"id":"bsbgq4rjhsqg11tntt1g",' \
+                     '"variationGroupId":"bsbgq4rjhsqg11tntt2g","variation":{"id":"bsbgq4rjhsqg11tntt3g",' \
+                     '"modifications":{"type":"JSON","value":{"array":[1,2,3],"complex":{"carray":[{"cobject":0}]},' \
+                     '"object":{"value":123456}}},"reference":false}}]} '
 
     fs = Flagship.instance()
     fs.start("my_env_id", "my_api_key", Config(event_handler=None, mode=Config.Mode.API))
-    visitor = fs.create_visitor("visitor_1")
+    visitor = fs.create_visitor("visitor_1", True)
 
     responses.reset()
     responses.add(responses.POST,
@@ -195,6 +195,10 @@ def test_visitor_get_modification2():
     assert visitor.get_modification("btn-color", 'blue', True) == 'red'
     assert visitor.get_modification("k2", 'yellow', True) == 'yellow'
 
+    assert visitor.get_modification_info("btn-color")["isReference"] is True
+    assert visitor.get_modification_info("k2")["isReference"] is False
+
+
     assert visitor.get_modification("btn-color", "yellow") == 'red'
     assert visitor.get_modification("do_not_exists", 'None') is "None"
 
@@ -206,7 +210,7 @@ def test_visitor_get_modification2():
 def test_visitor_get_activate():
     fs = Flagship.instance()
     fs.start("my_env_id", "my_api_key", Config(event_handler=None))
-    visitor = fs.create_visitor("visitor_1")
+    visitor = fs.create_visitor("visitor_1", True)
 
     json_response = '{"visitorId":"visitor_1","campaigns":[{"id":"xxxxd0qhl5801abv9ib0",' \
                     '"variationGroupId":"xxxxd0qhl5801abv9ic0","variation":{"id":"xxxxd0qhl5801abv9icg",' \
@@ -232,7 +236,7 @@ hit_nb = 0
 def test_visitor_send_hits():
     fs = Flagship.instance()
     fs.start("my_env_id", "my_api_key", Config(event_handler=None, mode=Config.Mode.API))
-    visitor = fs.create_visitor("visitor_1")
+    visitor = fs.create_visitor("visitor_1", True)
 
     json_response = '{"visitorId":"visitor_1","campaigns":[{"id":"xxxxd0qhl5801abv9ib0",' \
                     '"variationGroupId":"xxxxd0qhl5801abv9ic0","variation":{"id":"xxxxd0qhl5801abv9icg",' \
@@ -248,11 +252,14 @@ def test_visitor_send_hits():
 
     responses.add(responses.POST, 'https://ariane.abtasty.com/', status=200)
 
-    visitor.send_hit(Page("script.py")
+    visitor.send_hit(Screen("script.py")
                      .with_ip("133.3.223.1")
                      .with_locale("fr-fr")
                      .with_resolution(640, 480)
                      .with_session_number(3))
+
+    visitor.send_hit(Page("not working"))
+    visitor.send_hit(Page("http://working.com"))
 
     visitor.send_hit(Event(EventCategory.USER_ENGAGEMENT, "this is action")
                      .with_ip('6.6.6.6')
@@ -283,7 +290,8 @@ def test_visitor_send_hits():
             pass
 
     visitor.send_hit(FakeHit())
-    assert len(responses.calls) == 6
+    assert len(responses.calls) == 7
+
 
 @responses.activate
 def test_visitor_panic():
@@ -291,7 +299,7 @@ def test_visitor_panic():
 
     fs = Flagship.instance()
     fs.start("my_env_id", "my_api_key", Config(event_handler=None, mode=Config.Mode.API))
-    visitor = fs.create_visitor("visitor_1")
+    visitor = fs.create_visitor("visitor_1", True)
 
     json_response = '{"visitorId":"visitor_1","campaigns":[{"id":"xxxxd0qhl5801abv9ib0",' \
                     '"variationGroupId":"xxxxd0qhl5801abv9ic0","variation":{"id":"xxxxd0qhl5801abv9icg",' \
@@ -307,7 +315,7 @@ def test_visitor_panic():
 
     visitor.synchronize_modifications()
 
-    visitor.send_hit(Page("script.py")
+    visitor.send_hit(Screen("script.py")
                      .with_ip("133.3.223.1")
                      .with_locale("fr-fr")
                      .with_resolution(640, 480)
@@ -319,13 +327,11 @@ def test_visitor_panic():
     assert visitor.get_modification("featureEnabled", False) is True
     assert len(responses.calls) == 4
 
-
     responses.reset()
     json_response_panic = '{"visitorId":"Toto3000","campaigns":[],"panic":true}'
     responses.add(responses.POST,
                   'https://decision.flagship.io/v2/my_env_id/campaigns/?exposeAllKeys=true&sendContextEvent=false',
                   json=json.loads(json_response_panic), status=200)
-
 
     responses.add(responses.POST,
                   'https://decision.flagship.io/v2/my_env_id/events', status=200)
@@ -349,3 +355,118 @@ def test_visitor_panic():
     assert visitor.get_modification("featureEnabled", False) is False
     assert len(responses.calls) == 2
 
+
+@responses.activate
+def test_visitor_authentication():
+    responses.reset()
+
+    json_response = '{"visitorId":"visitor_1","campaigns":[{"id":"xxxxd0qhl5801abv9ib0",' \
+                    '"variationGroupId":"xxxxd0qhl5801abv9ic0","variation":{"id":"xxxxd0qhl5801abv9icg",' \
+                    '"modifications":{"type":"FLAG","value":{"featureEnabled":true}}}}]} '
+
+    responses.add(responses.POST,
+                  'https://decision.flagship.io/v2/my_env_id/campaigns/?exposeAllKeys=true&sendContextEvent'
+                  '=false', json=json.loads(json_response), status=200)
+
+    responses.add(responses.POST,
+                  'https://decision.flagship.io/v2/my_env_id/events', status=200)
+
+    responses.add(responses.POST, 'https://ariane.abtasty.com/', status=200)
+
+    responses.add(responses.POST, 'https://decision.flagship.io/v2/activate', status=200)
+
+    fs = Flagship.instance()
+    fs.start("my_env_id", "my_api_key", Config(mode=Config.Mode.API, timeout=3000))
+    visitor = fs.create_visitor()
+    visitor.synchronize_modifications()
+
+    assert len(json.loads(responses.calls[0].request.body)["visitorId"]) == 19
+    assert 'anonymousId' not in json.loads(responses.calls[0].request.body)
+    assert len(visitor._visitor_id) == 19
+
+    responses.calls.reset()
+    visitor.send_hit(Page("https://www.page.com"))
+    assert len(json.loads(responses.calls[0].request.body)["vid"]) == 19
+    assert 'cuid' not in json.loads(responses.calls[0].request.body)
+
+    responses.calls.reset()
+    visitor.activate_modification("featureEnabled")
+    assert len(json.loads(responses.calls[0].request.body)["vid"]) == 19
+    assert 'aid' not in json.loads(responses.calls[0].request.body)
+
+    #############
+    responses.calls.reset()
+    visitor.authenticate("log_1", {"age": 31}, True)
+    assert len(json.loads(responses.calls[0].request.body)["anonymousId"]) == 19
+    assert json.loads(responses.calls[0].request.body)["visitorId"] == "log_1"
+    assert visitor._visitor_id == "log_1"
+    assert len(visitor._anonymous_id) == 19
+    assert visitor.get_context()['age'] == 31
+
+    responses.calls.reset()
+    visitor.send_hit(Page("https://www.page.com"))
+    assert len(json.loads(responses.calls[0].request.body)["vid"]) == 19
+    assert json.loads(responses.calls[0].request.body)["cuid"] == "log_1"
+
+    responses.calls.reset()
+    visitor.activate_modification("featureEnabled")
+    assert json.loads(responses.calls[0].request.body)["vid"] == "log_1"
+    assert len(json.loads(responses.calls[0].request.body)["aid"]) == 19
+
+    #############
+    responses.calls.reset()
+    visitor.unauthenticate(dict(), True)
+    assert len(json.loads(responses.calls[0].request.body)["visitorId"]) == 19
+    assert "anonymousId" not in json.loads(responses.calls[0].request.body)
+    assert len(visitor._visitor_id) == 19
+    assert visitor._anonymous_id is None
+    assert len(visitor.get_context()) == 0
+
+    responses.calls.reset()
+    visitor.send_hit(Page("https://www.page.com"))
+    assert len(json.loads(responses.calls[0].request.body)["vid"]) == 19
+    assert "cuid" not in json.loads(responses.calls[0].request.body)
+
+    responses.calls.reset()
+    visitor.activate_modification("featureEnabled")
+    assert 'aid' not in json.loads(responses.calls[0].request.body)
+    assert len(json.loads(responses.calls[0].request.body)["vid"]) == 19
+
+    #############
+    responses.calls.reset()
+    visitor.authenticate("log_2", {"age": 31}, True)
+    assert len(json.loads(responses.calls[0].request.body)["anonymousId"]) == 19
+    assert json.loads(responses.calls[0].request.body)["visitorId"] == "log_2"
+    assert visitor._visitor_id == "log_2"
+    assert len(visitor._anonymous_id) == 19
+    assert visitor.get_context()['age'] == 31
+
+    responses.calls.reset()
+    visitor.send_hit(Page("https://www.page.com"))
+    assert json.loads(responses.calls[0].request.body)["cuid"] == "log_2"
+    assert len(json.loads(responses.calls[0].request.body)["vid"]) == 19
+
+    responses.calls.reset()
+    visitor.activate_modification("featureEnabled")
+    assert json.loads(responses.calls[0].request.body)["vid"] == "log_2"
+    assert len(json.loads(responses.calls[0].request.body)["aid"]) == 19
+
+    #############
+    responses.calls.reset()
+    visitor2 = fs.create_visitor("visitor_2", True)
+    visitor2.synchronize_modifications()
+
+    assert json.loads(responses.calls[0].request.body)["visitorId"] == "visitor_2"
+    assert len(json.loads(responses.calls[0].request.body)["anonymousId"]) == 19
+    assert visitor2._visitor_id == "visitor_2"
+    assert len(visitor2._anonymous_id) == 19
+
+    responses.calls.reset()
+    visitor2.send_hit(Screen("Here"))
+    assert len(json.loads(responses.calls[0].request.body)["vid"]) == 19
+    assert json.loads(responses.calls[0].request.body)["cuid"] == "visitor_2"
+
+    responses.calls.reset()
+    visitor2.activate_modification("featureEnabled")
+    assert len(json.loads(responses.calls[0].request.body)["aid"]) == 19
+    assert json.loads(responses.calls[0].request.body)["vid"] == "visitor_2"

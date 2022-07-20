@@ -33,7 +33,7 @@ class VariationGroup:
         return self.targeting_groups.is_targeting_valid(context)
 
     @staticmethod
-    def parse(campaign_id, variation_group_obj, bucketing, visitor_id=None):
+    def parse(campaign_id, variation_group_obj, bucketing, visitor_id=None, cached_visitor=None):
         try:
             variation_group_id = variation_group_obj['id'] if bucketing else variation_group_obj['variationGroupId']
             variations = dict()
@@ -44,24 +44,36 @@ class VariationGroup:
                 if new_variation is not None:
                     # variations.append(new_variation)
                     variations[new_variation.variation_id] = new_variation
-                selected_variation_id = new_variation.variation_id
+                    selected_variation_id = new_variation.variation_id
             else:
                 if sys.version_info[0] < 3:
                     visitor_id = visitor_id.decode('utf-8')
-                r = (murmurHash(variation_group_id + visitor_id) % 100) if visitor_id is not None else random.randint(0, 99)
-                p = 0
-                selected_variation_id = None  # todo find in cache for bucketing
+                new_variations = list()
                 for variation_obj in variation_group_obj['variations']:
-                    if 'allocation' in variation_obj:
-                        new_variation = Variation.parse(campaign_id, variation_group_id, variation_obj, bucketing)
+                    # if 'allocation' in variation_obj:
+                        new_variations.append(
+                            Variation.parse(campaign_id, variation_group_id, variation_obj, bucketing))
+                selected_variation = None
+                for new_variation in new_variations:
+                    if cached_visitor is not None and new_variation.variation_id in cached_visitor['data']['vaIds']:
+                        selected_variation = new_variation
+                        break
+                if selected_variation is None:
+                    r = (murmurHash(
+                        variation_group_id + visitor_id) % 100) if visitor_id is not None else random.randint(0, 99)
+                    p = 0
+                    for new_variation in new_variations:
                         p += new_variation.allocation
                         if r < p:
-                            if selected_variation_id is None:
-                                selected_variation_id = new_variation.variation_id
-                                new_variation.selected = True
-                                # todo save alloc
-                        # variations.append(new_variation)
-                        variations[new_variation.variation_id] = new_variation
+                            selected_variation = new_variation
+                            break
+
+                if selected_variation is not None:
+                    selected_variation_id = selected_variation.variation_id
+                    variations[selected_variation_id] = selected_variation
+                else:
+                    print("No selected variation : " + variation_group_id)
+
             targeting_groups = None
             if 'targeting' in variation_group_obj:
                 targeting_obj = variation_group_obj['targeting']
@@ -69,9 +81,10 @@ class VariationGroup:
                 targeting_groups = TargetingGroup.parse(targeting_group_obj)
             return VariationGroup(campaign_id, variation_group_id, variations, targeting_groups, selected_variation_id)
 
+
         except Exception as e:
             if decorators.customer_event_handler is not None:
                 decorators.customer_event_handler.on_log(logging.ERROR,
                                                          "An error occurred while parsing variation group json object : ".format(
-                                                             str(traceback.format_exc())))
+                                                             str(traceback.format_exc() + str(e))))
             return None

@@ -21,7 +21,7 @@ class Campaign:
                     modifications.update(modification)
             else:
                 variation_id = variation_group.selected_variation_id
-                if variation_group.is_targeting_valid(context):
+                if variation_group.is_targeting_valid(context) and variation_id is not None:
                     variation = variation_group.variations[variation_id]
                     modification = variation.modifications.values
                     modifications.update(modification)
@@ -32,7 +32,7 @@ class Campaign:
         return '{{"campaign_id" : "{}", "variation group" : {} }}'.format(self.campaign_id, *self.variation_groups)
 
     @staticmethod
-    def parse(json, visitor_id=None):
+    def parse(json, visitor_id=None, cached_visitor=None):
         try:
             campaign_id = json['id']
             variation_groups = list()
@@ -40,7 +40,7 @@ class Campaign:
             bucketing = type(variation_groups_obj) == list
             if bucketing:
                 for variation_group_obj in variation_groups_obj:
-                    variation_groups.append(VariationGroup.parse(campaign_id, variation_group_obj, True, visitor_id))
+                    variation_groups.append(VariationGroup.parse(campaign_id, variation_group_obj, True, visitor_id, cached_visitor))
             else:
                 new_variation_group = VariationGroup.parse(campaign_id, json, bucketing)
                 if new_variation_group is not None:
@@ -53,12 +53,12 @@ class Campaign:
             return None
 
     @staticmethod
-    def parse_campaigns(json, visitor_id=None):
+    def parse_campaigns(json, visitor_id=None, cached_visitor=None):
         campaigns = list()
         if 'campaigns' in json:
             campaigns_objs = json["campaigns"]
             for campaign_obj in campaigns_objs:
-                new_campaign = Campaign.parse(campaign_obj, visitor_id)
+                new_campaign = Campaign.parse(campaign_obj, visitor_id, cached_visitor)
                 if new_campaign is not None:
                     campaigns.append(new_campaign)
         return campaigns
