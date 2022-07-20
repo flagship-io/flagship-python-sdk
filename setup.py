@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name='flagship',
-    version='2.0.0',
+    version='2.1.4',
     author="Flagship Team",
     author_email="support@flagship.io",
     description="Flagship Python SDK",
@@ -14,7 +14,7 @@ setuptools.setup(
     url="https://github.com/abtasty/flagship-python-sdk",
     packages=setuptools.find_packages(),
     project_urls={
-        'Documentation': 'http://developers.flagship.io/python/v2.x.x/',
+        'Documentation': 'https://docs.developers.flagship.io/docs/python-v2-1',
         'Source': 'https://github.com/abtasty/flagship-python-sdk'
     },
     install_requires=[
