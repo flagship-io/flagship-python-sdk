@@ -56,5 +56,5 @@ Flagship also allows you to choose whatever implementation method works for you 
 - [Solution overview](https://www.flagship.io/#showvideo) - A 5mn video demo :movie_camera:
 - [Documentation](https://docs.developers.flagship.io/) - Our dev portal with guides, how tos, API and SDK references
 - [Sign up for a free trial](https://www.flagship.io/sign-up/) - Create your free account
-- [Guide to feature flagging](https://www.flagship.io/feature-flags/) - Everyhting you need to know about feature flag related use cases
+- [Guide to feature flagging](https://www.flagship.io/feature-flags/) - Everything you need to know about feature flag related use cases
 - [Blog](https://www.flagship.io/blog/) - Additional resources about release management

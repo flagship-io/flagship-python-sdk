@@ -43,7 +43,7 @@ class VariationGroup:
                 if new_variation is not None:
                     # variations.append(new_variation)
                     variations[new_variation.variation_id] = new_variation
-                selected_variation_id = new_variation.variation_id
+                    selected_variation_id = new_variation.variation_id
             else:
                 if sys.version_info[0] < 3:
                     visitor_id = visitor_id.decode('utf-8')

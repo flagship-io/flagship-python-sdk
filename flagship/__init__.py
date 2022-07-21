@@ -12,7 +12,6 @@ from flagship.visitor import Visitor
 __name__ = 'flagship'
 __version__ = '3.0.0'
 
-
 class Flagship:
     __instance = None
 

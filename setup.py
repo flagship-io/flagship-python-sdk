@@ -15,7 +15,7 @@ setuptools.setup(
     url="https://github.com/abtasty/flagship-python-sdk",
     packages=setuptools.find_packages(),
     project_urls={
-        'Documentation': 'http://developers.flagship.io/python/v2.x.x/',
+        'Documentation': 'https://docs.developers.flagship.io/docs/python-v2-1',
         'Source': 'https://github.com/abtasty/flagship-python-sdk'
     },
     install_requires=[

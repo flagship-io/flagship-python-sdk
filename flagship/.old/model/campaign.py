@@ -20,7 +20,7 @@ class Campaign:
                     modifications.update(modification)
             else:
                 variation_id = variation_group.selected_variation_id
-                if variation_group.is_targeting_valid(context):
+                if variation_group.is_targeting_valid(context) and variation_id is not None:
                     variation = variation_group.variations[variation_id]
                     modification = variation.modifications.values
                     modifications.update(modification)
