@@ -56,6 +56,7 @@ jobs:
           python3 -m build --sdist --wheel --outdir dist/
         
     - name: Pypi publish
+      if: matrix.python-version == 3.8
       uses: pypa/gh-action-pypi-publish@release/v1
       with:
         user: ${{ secrets.PYPI_USER }}
