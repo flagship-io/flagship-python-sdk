@@ -12,10 +12,6 @@ jobs:
   build:
     env:
       FLAGSHIP_VERSION_NAME: ${GITHUB_REF/refs\/tags\//}
-      PYPI_USER: ${{ secrets.PYPI_USER }}
-      PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}
-      coverage: 0
-      old_coverage: 0
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -30,8 +26,6 @@ jobs:
     - name: Env
       run: |
           echo ::exportVariable name=FLAGSHIP_VERSION_NAME::${GITHUB_REF/refs\/tags\//}
-          echo ::exportVariable name=PYPI_USER::${{ secrets.PYPI_USER }}
-          echo ::exportVariable name=PYPI_TOKEN::${{ secrets.PYPI_TOKEN }}
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
@@ -52,15 +46,24 @@ jobs:
     - name: Upload coverage to Codecov
       if: matrix.python-version == 3.8
       uses: codecov/codecov-action@v2
+
+    - name: Generate library
+      if: matrix.python-version == 3.8
+      run: |
+          python3 -m pip install --user --upgrade setuptools wheel     
+          python3 -m pip install --user --upgrade build
+          rm -rf dist/
+          python3 -m build --sdist --wheel --outdir dist/
         
     - name: Pypi publish
       if: matrix.python-version == 3.8
-      run: |
-        python3 -m pip install --user --upgrade setuptools wheel
-        python3 -m pip install --user --upgrade twine        
-        rm -rf dist/
-        python3 setup.py sdist bdist_wheel
-        printf '${{env.PYPI_USER}}\n${{env.PYPI_TOKEN}}' | python3 -m twine upload dist/*
+      uses: pypa/gh-action-pypi-publish@release/v1
+      with:
+        user: __token__
+        password: ${{ secrets.PYPI_API_TOKEN }}
+        packages_dir: dist/
+
+
 
       
     

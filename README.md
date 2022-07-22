@@ -7,7 +7,7 @@
 <h3 align="center">Bring your features to life</h3>
 
 [![python](https://img.shields.io/badge/python-2.7.18%20%7C%203.5%20%7C%203.8-blue.svg)]()
-[![coverage](https://img.shields.io/badge/coverage-88%25-green)]()
+[![codecov](https://codecov.io/gh/flagship-io/flagship-python-sdk/branch/feature/FS2-SettingCodeCov/graph/badge.svg?token=gc96ToiX8G)](https://codecov.io/gh/flagship-io/flagship-python-sdk)
 [![Apache2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](http://www.apache.org/licenses/LICENSE-2.0)
 
 
