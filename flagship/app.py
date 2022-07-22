@@ -1,6 +1,6 @@
 import logging
 
-from flagship import decorators
+from flagship import decorators, __version__
 from flagship.config import Config
 from flagship.decorators import exception_handler
 from flagship.decorators import types_validator
@@ -27,6 +27,7 @@ class Flagship:
             :param api_key: Flagship secure api key.
             :param config: Configuration to initialize.
             """
+            print(__version__)
             self._bucketing_manager = None
             self._config = config
             if self._config.env_id != env_id:
