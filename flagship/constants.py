@@ -46,6 +46,12 @@ ERROR_PARSING_CAMPAIGN = "An error occurred while parsing campaign json object."
 ERROR_PARSING_VARIATION_GROUP = "An error occurred while parsing variation group json object."
 ERROR_PARSING_VARIATION = "An error occurred while parsing variation json object."
 ERROR_PARSING_MODIFICATION = "An error occurred while parsing modification json object."
+ERROR_UPDATE_CONTEXT_RESERVED = "Context key '{}' is reserved by flagship and can't be overridden."
+ERROR_UPDATE_CONTEXT_TYPE = "Context key '{}' value must be of type: '{}'."
+ERROR_UPDATE_CONTEXT_EMPTY = "Context key '{}' will be ignored as its value is empty'."
+ERROR_UPDATE_CONTEXT_EMPTY_KEY = "Context key must be a non null or empty 'str'."
+
+
 ERROR_FLAG_NOT_FOUND = "Flag key '{}' has not been found for visitor '{}'. Default value have been returned."
 ERROR_FLAG_EXPOSITION_FLAG_NOT_FOUND = "Flag key '{}' has not been found for visitor '{}'. No flag exposition will be "\
                                        "sent. "

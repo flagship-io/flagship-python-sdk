@@ -1,12 +1,13 @@
 import traceback
 
 from enum import Enum
-from flagship import param_types_validator, Status
-from flagship.constants import TAG_GET_FLAG, TAG_FLAG_USER_EXPOSITION
+from flagship import param_types_validator, Status, LogLevel
+from flagship.constants import TAG_GET_FLAG, TAG_FLAG_USER_EXPOSITION, TAG_UPDATE_CONTEXT, TAG_VISITOR, \
+    ERROR_UPDATE_CONTEXT_TYPE, ERROR_UPDATE_CONTEXT_EMPTY_KEY
 from flagship.errors import FlagNotFoundException, FlagExpositionNotFoundException
 from flagship.hits import _Activate, _Segment
 from flagship.http_helper import HttpHelper
-from flagship.utils import pretty_dict, log_exception
+from flagship.utils import pretty_dict, log_exception, log
 from flagship.visitor_strategies import IVisitorStrategy, PanicStrategy, DefaultStrategy, NoConsentStrategy, \
     NotReadyStrategy
 
@@ -23,15 +24,48 @@ class Visitor(IVisitorStrategy):
         self._config = configuration_manager.flagship_config
         self._visitor_id = visitor_id
         self._anonymous_id = None
-        self._is_authenticated = self.__get_arg(kwargs, 'authenticated', bool, False)
-        self._context = self.__get_arg(kwargs, 'context', dict, {})
+        self._is_authenticated = self._get_arg(kwargs, 'authenticated', bool, False)
+        from flagship.flagship_context import FlagshipContext
+        self._context = FlagshipContext.load()
+        self._context.update(self._get_arg(kwargs, 'context', dict, {}))
         self._modifications = dict()
-        self._has_consented = self.__get_arg(kwargs, 'consent', bool, True)
+        self._has_consented = self._get_arg(kwargs, 'consent', bool, True)
         self._get_strategy().set_consent(self._has_consented)
 
-    @param_types_validator(True, str, [int, float, str])
+    # @param_types_validator(True, str, [int, float, str])
     def _update_context(self, key, value):
-        self._context[key] = value
+        from flagship.flagship_context import FlagshipContext
+        existing_context = FlagshipContext.exists(key)
+        if existing_context:
+            if FlagshipContext.is_valid(self, existing_context, value, True):
+                self._context[existing_context.value[0]] = value
+        else:
+            if key is None or len(str(key)) <= 0 or (not isinstance(key, str) and not isinstance(key, FlagshipContext)):
+                log(TAG_UPDATE_CONTEXT, LogLevel.ERROR, "[" + TAG_VISITOR.format(self._visitor_id) + "] " +
+                    ERROR_UPDATE_CONTEXT_EMPTY_KEY)
+            elif not isinstance(value, str) and not isinstance(value, int) and not isinstance(value, float)\
+                    and not isinstance(value, bool):
+                log(TAG_UPDATE_CONTEXT, LogLevel.ERROR, "[" + TAG_VISITOR.format(self._visitor_id) + "] " +
+                    ERROR_UPDATE_CONTEXT_TYPE.format(key, "str, int, float, bool"))
+            else:
+                self._context[key] = value
+
+
+        # if key is None or len(str(key)) <= 0 or (not isinstance(key, str) and not isinstance(key, FlagshipContext)):
+        #     log(TAG_UPDATE_CONTEXT, LogLevel.ERROR, "[" + TAG_VISITOR.format(self._visitor_id) + "] " +
+        #         ERROR_UPDATE_CONTEXT_EMPTY_KEY)
+        # elif not isinstance(value, str) and not isinstance(value, int) and not isinstance(value, float) and not isinstance(
+        #         value, bool):
+        #     log(TAG_UPDATE_CONTEXT, LogLevel.ERROR, "[" + TAG_VISITOR.format(self._visitor_id) + "] " +
+        #         ERROR_UPDATE_CONTEXT_TYPE.format(key, "str, int, float, bool"))
+        # else:
+        #     existing_context = FlagshipContext.exists(key)
+        #     if isinstance(key, FlagshipContext) and FlagshipContext.is_valid(self, key, value, True):
+        #         self._context[key.value[0]] = value
+        #     elif existing_context is not None and FlagshipContext.is_valid(self, existing_context, value, True):
+        #         self._context[key.value[0]] = value
+        #     elif not isinstance(key, FlagshipContext) and not existing_context:
+        #         self._context[key] = value
 
     def _expose_flag(self, key):
         try:
@@ -82,13 +116,13 @@ class Visitor(IVisitorStrategy):
             "has_consented": self._has_consented,
             "is_authenticated": self._is_authenticated,
             "context": self._context,
-            "flags": self.__flags_to_dict()
+            "flags": self._flags_to_dict()
         })
 
-    def __get_arg(self, kwargs, name, c_type, default, ):
+    def _get_arg(self, kwargs, name, c_type, default, ):
         return kwargs[name] if name in kwargs and isinstance(kwargs[name], c_type) else default
 
-    def __flags_to_dict(self):
+    def _flags_to_dict(self):
         flags = dict()
         for k, v in self._modifications.items():
             flags[k] = v.value

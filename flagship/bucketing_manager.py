@@ -58,7 +58,8 @@ class BucketingManager(DecisionManager, Thread):
                 self.bucketing_file = results
                 self.cache_local_decision_file()
             if self.bucketing_file is not None:
-                campaigns = self.parse_campaign_response(self.bucketing_file)
+                bucketing_file_json = json.loads(self.bucketing_file)
+                campaigns = self.parse_campaign_response(bucketing_file_json)
                 if campaigns is not None:
                     self.campaigns = campaigns
 

@@ -12,6 +12,7 @@ from flagship.visitor import Visitor
 __name__ = 'flagship'
 __version__ = '3.0.0'
 
+
 class Flagship:
     __instance = None
 
@@ -64,6 +65,7 @@ class Flagship:
             self.current_visitor = None
             self.status = Status.NOT_INITIALIZED
             self.configuration_manager = ConfigManager()
+            self.device_context = {}
 
         @param_types_validator(True, str, str, _FlagshipConfig)
         def start(self, env_id, api_key, flagship_config):

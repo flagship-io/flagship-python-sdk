@@ -53,6 +53,7 @@ import requests
 import flagship.utils
 from flagship import *
 from flagship.config import DecisionApi, Bucketing
+from flagship.flagship_context import FlagshipContext
 from flagship.hits import Hit, Screen
 from flagship.log_manager import LogManager
 from flagship.status_listener import StatusListener

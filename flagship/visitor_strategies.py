@@ -53,7 +53,6 @@ class DefaultStrategy(IVisitorStrategy):
     def __init__(self, strategy=VisitorStrategies.DEFAULT_STRATEGY, visitor=None):
         super(DefaultStrategy, self).__init__(strategy, visitor)
 
-    @param_types_validator(True, [dict, tuple])
     def update_context(self, context):
         if isinstance(context, tuple) and len(context) == 2:
             self.visitor._update_context(context[0], context[1])
