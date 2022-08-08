@@ -32,3 +32,4 @@ flagship.egg-info/PKG-INFO
 flagship.egg-info/requires.txt
 flagship.egg-info/SOURCES.txt
 flagship.egg-info/top_level.txt
+*.decision
