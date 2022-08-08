@@ -61,4 +61,17 @@ class ApiManager(DecisionManager):
             return False, dict()
 
     def stop(self):
+        #todo stop loop
         pass
+
+    def authenticate(self, visitor, authenticated_id):
+        if visitor._anonymous_id is None:
+            visitor._anonymous_id = visitor._visitor_id
+        visitor._visitor_id = authenticated_id
+        visitor._is_authenticated = True
+
+    def unauthenticate(self, visitor):
+        if visitor._anonymous_id is not None:
+            visitor._visitor_id = visitor._anonymous_id
+            visitor._anonymous_id = None
+            visitor._is_authenticated = False

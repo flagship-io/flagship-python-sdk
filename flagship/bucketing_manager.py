@@ -5,7 +5,8 @@ import traceback
 from threading import Thread
 
 import flagship
-from flagship.constants import TAG_BUCKETING, INFO_BUCKETING_POLLING, ERROR_BUCKETING_REQUEST
+from flagship.constants import TAG_BUCKETING, INFO_BUCKETING_POLLING, ERROR_BUCKETING_REQUEST, TAG_AUTHENTICATE, \
+    TAG_UNAUTHENTICATE, ERROR_BUCKETING_XPC_DISABLED
 from flagship.decision_manager import DecisionManager
 from flagship.http_helper import HttpHelper
 from flagship.utils import log, pretty_dict, log_exception
@@ -111,64 +112,8 @@ class BucketingManager(DecisionManager, Thread):
         except:
             pass
 
+    def authenticate(self, visitor, authenticated_id):
+        log(TAG_AUTHENTICATE, LogLevel.ERROR, ERROR_BUCKETING_XPC_DISABLED.format("authenticate()"))
 
-# class BucketingManager(DecisionManager):
-#
-#     def __init__(self, config, update_status):
-#         super(BucketingManager, self).__init__(config, update_status)
-#         self._thread = None
-#         if flagship.Flagship.status().value < Status.READY.value:
-#             self.update_status(Status.POLLING)
-#
-#     def init(self):
-#         if self._thread is None:
-#             self._thread = self.BucketingThread(self.flagship_config, None)
-#         self._thread.start_running()
-#
-#     def stop(self):
-#         if self._thread is not None:
-#             self._thread.stop()
-#
-#     def get_campaigns_modifications(self, visitor):
-#         pass
-#
-#     class BucketingThread(Thread):
-#
-#         def __init__(self, config, last_modified):
-#             Thread.__init__(self)
-#             self.flagship_config = config
-#             self.daemon = True
-#             self.is_running = False
-#             self.delay = config.polling_interval / 1000
-#             self.campaigns = None
-#             self.bucketing_file = None
-#             self.last_modified = None
-#
-#         def run(self):
-#             while self.is_running:
-#                 log(TAG_BUCKETING, LogLevel.DEBUG, INFO_BUCKETING_POLLING)
-#                 try:
-#                     new_bucketing_file = self.get_bucketing_file()
-#                     if new_bucketing_file is not None:
-#                         self.bucketing_file = new_bucketing_file
-#                 except:
-#                     pass
-#                 time.sleep(self.delay)
-#
-#         def start_running(self):
-#             if self.is_running is False:
-#                 self.is_running = True
-#                 self.start()
-#
-#         def stop_running(self):
-#             self.is_running = False
-#
-#         def get_bucketing_file(self):
-#             try:
-#                 last_modified, results = HttpHelper.send_bucketing_request(self.flagship_config, self.last_modified)
-#                 if last_modified is not None and results is not None:
-#                     self.last_modified = last_modified
-#                     self.bucketing_file = json.loads(results)
-#                     self.campaigns = self
-#             except:
-#                 log(TAG_BUCKETING, LogLevel.ERROR, ERROR_BUCKETING_REQUEST)
+    def unauthenticate(self, visitor):
+        log(TAG_UNAUTHENTICATE, LogLevel.ERROR, ERROR_BUCKETING_XPC_DISABLED.format("unauthenticate()"))

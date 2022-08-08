@@ -16,6 +16,13 @@ class IDecisionManager:
     def get_campaigns_modifications(self, visitor):
         pass
 
+    @abstractmethod
+    def authenticate(self, visitor, authenticated_id):
+        pass
+
+    @abstractmethod
+    def unauthenticate(self, visitor):
+        pass
 
 class DecisionManager(IDecisionManager):
     __metaclass__ = ABCMeta
@@ -49,3 +56,5 @@ class DecisionManager(IDecisionManager):
     @abstractmethod
     def stop(self):
         pass
+
+

@@ -3,9 +3,9 @@ from enum import Enum
 from flagship import param_types_validator, log, LogLevel
 from flagship.constants import TAG_UPDATE_CONTEXT, TAG_VISITOR, DEBUG_CONTEXT, TAG_FETCH_FLAGS, DEBUG_FETCH_FLAGS, \
     ERROR_METHOD_DEACTIVATED, ERROR_METHOD_DEACTIVATED_PANIC, TAG_TRACKING, ERROR_METHOD_DEACTIVATED_NO_CONSENT, \
-    ERROR_METHOD_DEACTIVATED_NOT_READY
+    ERROR_METHOD_DEACTIVATED_NOT_READY, TAG_AUTHENTICATE, TAG_UNAUTHENTICATE
 from flagship.flag import Flag
-from flagship.hits import Hit, _Consent
+from flagship.hits import Hit, _Consent, _Activate
 from flagship.http_helper import HttpHelper
 
 
@@ -47,6 +47,15 @@ class IVisitorStrategy:
     def set_consent(self, consent):
         pass
 
+    @abstractmethod
+    @param_types_validator(True, str)
+    def authenticate(self, visitorId):
+        pass
+
+    @abstractmethod
+    @param_types_validator(True)
+    def unauthenticate(self):
+        pass
 
 class DefaultStrategy(IVisitorStrategy):
 
@@ -85,6 +94,12 @@ class DefaultStrategy(IVisitorStrategy):
         self.visitor._has_consented = consent
         HttpHelper.send_hit(self.visitor, _Consent(consent))
 
+    def authenticate(self, visitor_id):
+        self.visitor._configuration_manager.decision_manager.authenticate(self.visitor, visitor_id)
+
+    def unauthenticate(self):
+        self.visitor._configuration_manager.decision_manager.authenticate(self.visitor)
+
 
 class PanicStrategy(DefaultStrategy):
 
@@ -108,6 +123,14 @@ class PanicStrategy(DefaultStrategy):
 
     def set_consent(self, consent):
         self.visitor._has_consented = consent
+
+    def authenticate(self, visitor_id):
+        log(TAG_AUTHENTICATE, LogLevel.ERROR,
+            ERROR_METHOD_DEACTIVATED.format("authenticate()", ERROR_METHOD_DEACTIVATED_PANIC))
+
+    def unauthenticate(self):
+        log(TAG_UNAUTHENTICATE, LogLevel.ERROR,
+            ERROR_METHOD_DEACTIVATED.format("unauthenticate()", ERROR_METHOD_DEACTIVATED_PANIC))
 
 
 class NoConsentStrategy(DefaultStrategy):

@@ -11,7 +11,6 @@ from flagship.utils import pretty_dict, log_exception, log
 from flagship.visitor_strategies import IVisitorStrategy, PanicStrategy, DefaultStrategy, NoConsentStrategy, \
     NotReadyStrategy
 
-
 class Visitor(IVisitorStrategy):
 
     class Instance(Enum):
@@ -50,29 +49,12 @@ class Visitor(IVisitorStrategy):
             else:
                 self._context[key] = value
 
-
-        # if key is None or len(str(key)) <= 0 or (not isinstance(key, str) and not isinstance(key, FlagshipContext)):
-        #     log(TAG_UPDATE_CONTEXT, LogLevel.ERROR, "[" + TAG_VISITOR.format(self._visitor_id) + "] " +
-        #         ERROR_UPDATE_CONTEXT_EMPTY_KEY)
-        # elif not isinstance(value, str) and not isinstance(value, int) and not isinstance(value, float) and not isinstance(
-        #         value, bool):
-        #     log(TAG_UPDATE_CONTEXT, LogLevel.ERROR, "[" + TAG_VISITOR.format(self._visitor_id) + "] " +
-        #         ERROR_UPDATE_CONTEXT_TYPE.format(key, "str, int, float, bool"))
-        # else:
-        #     existing_context = FlagshipContext.exists(key)
-        #     if isinstance(key, FlagshipContext) and FlagshipContext.is_valid(self, key, value, True):
-        #         self._context[key.value[0]] = value
-        #     elif existing_context is not None and FlagshipContext.is_valid(self, existing_context, value, True):
-        #         self._context[key.value[0]] = value
-        #     elif not isinstance(key, FlagshipContext) and not existing_context:
-        #         self._context[key] = value
-
     def _expose_flag(self, key):
         try:
             modification = self._get_modification(key)
             if modification is None:
                 raise FlagExpositionNotFoundException(self._visitor_id, key)
-            HttpHelper.send_hit(self, _Activate(modification.variation_group_id, modification.variation_id))
+            HttpHelper.send_activate(self, _Activate(modification.variation_group_id, modification.variation_id))
         except Exception as e:
             log_exception(TAG_FLAG_USER_EXPOSITION, e, traceback.format_exc())
 
@@ -148,5 +130,13 @@ class Visitor(IVisitorStrategy):
 
     def set_consent(self, consent):
         self._get_strategy().set_consent(consent)
+
+    def authenticate(self, visitorId):
+        self._get_strategy().authenticate(visitorId)
+
+    def unauthenticate(self):
+        self._get_strategy().unauthenticate()
+
+
 
 

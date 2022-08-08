@@ -10,7 +10,7 @@ class HitType(Enum):
     EVENT = 'EVENT'
     TRANSACTION = 'TRANSACTION'
     ITEM = 'ITEM'
-    CAMPAIGN = "CAMPAIGN"
+    ACTIVATE = "ACTIVATE"
     CONSENT = 'CONSENT'
     SEGMENT = 'SEGMENT'
 
@@ -45,7 +45,8 @@ class Hit(object):
     _k_transaction_shipping_method = 'sm'
     _k_transaction_item_count = 'icn'
     _k_transaction_coupon = 'tcc'
-    _k_variation_group_id = 'vgid'
+    _k_variation_group_id = 'caid'
+    # _k_variation_group_id = 'vgid'
     _k_variation_id = 'vaid'
     _k_consent = 'vc'
     _k_segment_list = 'sl'
@@ -385,12 +386,12 @@ class _Activate(Hit):
     @param_types_validator(True, str, str)
     def __init__(self, variation_group_id, variation_id):
         # type: (str, str) -> None
-        Hit.__init__(self, HitType.CAMPAIGN)
-        data = {
+        # Hit.__init__(self, HitType.ACTIVATE)
+        self._data = {
             self._k_variation_group_id: variation_group_id,
             self._k_variation_id: variation_id
         }
-        self._data.update(data)
+        # self._data.update(data)
 
 
 class _Consent(Hit):

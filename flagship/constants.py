@@ -2,6 +2,7 @@
 URL_DECISION_API = "https://decision.flagship.io/v2/"
 URL_CAMPAIGNS = "/campaigns/?exposeAllKeys=true"
 URL_ARIANE = "https://ariane.abtasty.com/"
+URL_ACTIVATE = URL_DECISION_API+"activate"
 URL_BUCKETING = "https://cdn.flagship.io/{}/bucketing.json"
 
 
@@ -24,6 +25,8 @@ TAG_GET_FLAG = "GetFlag"
 TAG_FLAG_USER_EXPOSITION = "ExposeFlag"
 TAG_FLAG = "Flag"
 TAG_BUCKETING = "Bucketing"
+TAG_AUTHENTICATE = "Authenticate"
+TAG_UNAUTHENTICATE = "Unauthenticate"
 
 
 # INFO
@@ -62,6 +65,7 @@ ERROR_METHOD_DEACTIVATED_NOT_READY = "SDK is not started yet."
 ERROR_METHOD_DEACTIVATED_NO_CONSENT = "visitor '{}' has not given his consent."
 
 ERROR_BUCKETING_REQUEST = "An error occurred happened during decision file request."
+ERROR_BUCKETING_XPC_DISABLED = "The '{}' method is disabled in Bucketing configuration."
 
 
 

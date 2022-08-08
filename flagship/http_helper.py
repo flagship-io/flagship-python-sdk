@@ -6,8 +6,9 @@ import traceback
 import requests
 from enum import Enum
 from flagship.constants import TAG_HTTP_REQUEST, DEBUG_REQUEST, URL_ARIANE, URL_BUCKETING, TAG_BUCKETING, \
-    ERROR_BUCKETING_REQUEST
+    ERROR_BUCKETING_REQUEST, URL_ACTIVATE
 from flagship.decorators import param_types_validator
+from flagship.hits import _Activate
 from flagship.log_manager import LogLevel
 from flagship.utils import pretty_dict, log
 
@@ -34,6 +35,31 @@ class HttpHelper:
 
     @staticmethod
     def send_hit(visitor, hit):
+        # if isinstance(hit, _Activate):
+        #     HttpHelper.send_activate(hit)
+        # else:
+            config = visitor._config
+            import flagship
+            headers = {
+                "x-api-key": config.api_key,
+                "x-sdk-client": "python",
+                "x-sdk-version": flagship.__version__
+            }
+            body = {
+                "cid": config.env_id,
+            }
+            if visitor._anonymous_id is not None:
+                body['cuid'] = visitor._visitor_id
+                body['vid'] = visitor._anonymous_id
+            else:
+                body['vid'] = visitor._visitor_id
+                body['cuid'] = None
+            body.update(hit.get_data())
+            response = requests.post(url=URL_ARIANE, headers=headers, data=body, timeout=config.timeout)
+            HttpHelper.log_request(HttpHelper.RequestType.POST, URL_ARIANE, headers, body, response)
+
+    @staticmethod
+    def send_activate(visitor, hit):
         config = visitor._config
         import flagship
         headers = {
@@ -42,17 +68,17 @@ class HttpHelper:
             "x-sdk-version": flagship.__version__
         }
         body = {
-            "eid": config.env_id,
+            "cid": config.env_id,
         }
         if visitor._anonymous_id is not None:
-            body['cuid'] = visitor._visitor_id
-            body['vid'] = visitor._anonymous_id
+            body['aid'] = visitor._anonymous_id
+            body['vid'] = visitor._visitor_id
         else:
             body['vid'] = visitor._visitor_id
-            body['cuid'] = None
+            body['aid'] = None
         body.update(hit.get_data())
         response = requests.post(url=URL_ARIANE, headers=headers, data=body, timeout=config.timeout)
-        HttpHelper.log_request(HttpHelper.RequestType.POST, URL_ARIANE, headers, body, response)
+        HttpHelper.log_request(HttpHelper.RequestType.POST, URL_ACTIVATE, headers, body, response)
 
     @staticmethod
     def send_bucketing_request(config, last_modified=""):
