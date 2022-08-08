@@ -98,7 +98,7 @@ class DefaultStrategy(IVisitorStrategy):
         self.visitor._configuration_manager.decision_manager.authenticate(self.visitor, visitor_id)
 
     def unauthenticate(self):
-        self.visitor._configuration_manager.decision_manager.authenticate(self.visitor)
+        self.visitor._configuration_manager.decision_manager.unauthenticate(self.visitor)
 
 
 class PanicStrategy(DefaultStrategy):

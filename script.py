@@ -127,7 +127,14 @@ def init():
     featureEnabled = visitor.get_flag("featureEnabled", False).value(False)
     print("=> " + str(featureEnabled))
     visitor.send_hit(Screen("aaaaa"))
+
     visitor.authenticate("online_1")
+    visitor.fetch_flags()
+    featureEnabled = visitor.get_flag("featureEnabled", False).value(False)
+    print("=> " + str(featureEnabled))
+    visitor.send_hit(Screen("aaaaa"))
+
+    visitor.unauthenticate()
     visitor.fetch_flags()
     featureEnabled = visitor.get_flag("featureEnabled", False).value(False)
     print("=> " + str(featureEnabled))
