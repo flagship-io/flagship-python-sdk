@@ -6,7 +6,7 @@ import traceback
 import requests
 from enum import Enum
 from flagship.constants import TAG_HTTP_REQUEST, DEBUG_REQUEST, URL_ARIANE, URL_BUCKETING, TAG_BUCKETING, \
-    ERROR_BUCKETING_REQUEST, URL_ACTIVATE
+    ERROR_BUCKETING_REQUEST, URL_ACTIVATE, URL_CONTEXT
 from flagship.decorators import param_types_validator
 from flagship.hits import _Activate
 from flagship.log_manager import LogLevel
@@ -77,9 +77,21 @@ class HttpHelper:
             body['vid'] = visitor._visitor_id
             body['aid'] = None
         body.update(hit.get_data())
-        response = requests.post(url=URL_ARIANE, headers=headers, data=body, timeout=config.timeout)
+        response = requests.post(url=URL_ARIANE, headers=headers, json=body, timeout=config.timeout)
         HttpHelper.log_request(HttpHelper.RequestType.POST, URL_ACTIVATE, headers, body, response)
 
+    @staticmethod
+    def send_context(visitor, hit):
+        env_id = visitor._config.env_id
+        endpoint = URL_CONTEXT.format(env_id)
+        import flagship
+        headers = {
+            'x-sdk-client': 'android',
+            'x-sdk-version': flagship.__version__
+        }
+        body = hit.get_data()
+        response = requests.post(url=endpoint, headers=headers, json=body, timeout=visitor._config.timeout)
+        HttpHelper.log_request(HttpHelper.RequestType.POST, endpoint, headers, body, response)
     @staticmethod
     def send_bucketing_request(config, last_modified=""):
         try:

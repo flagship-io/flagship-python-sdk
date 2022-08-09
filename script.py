@@ -117,46 +117,44 @@ def init():
     # visitor.set_consent(True)
     # visitor.send_hit(Screen('Script.py 3'))
 
-    Flagship.start("bkk4s7gcmjcg07fke9dg", "Q6FDmj6F188nh75lhEato2MwoyXDS7y34VrAL4Aa",
-                   DecisionApi(timeout=3000))
-
-    visitor = Flagship.new_visitor("xxx_1", instance_type=Visitor.Instance.SINGLE_INSTANCE, context={
-        "isVIPUser": True
-    })
-    visitor.fetch_flags()
-    featureEnabled = visitor.get_flag("featureEnabled", False).value(False)
-    print("=> " + str(featureEnabled))
-    visitor.send_hit(Screen("aaaaa"))
-
-    visitor.authenticate("online_1")
-    visitor.fetch_flags()
-    featureEnabled = visitor.get_flag("featureEnabled", False).value(False)
-    print("=> " + str(featureEnabled))
-    visitor.send_hit(Screen("aaaaa"))
-
-    visitor.unauthenticate()
-    visitor.fetch_flags()
-    featureEnabled = visitor.get_flag("featureEnabled", False).value(False)
-    print("=> " + str(featureEnabled))
-    visitor.send_hit(Screen("aaaaa"))
-
-
-
-
     # Flagship.start("bkk4s7gcmjcg07fke9dg", "Q6FDmj6F188nh75lhEato2MwoyXDS7y34VrAL4Aa",
-    #                Bucketing(timeout=3000, status_listener=CustomStatusListener(), polling_interval=10000))
-    # time.sleep(5)
-    # visitor = Flagship.new_visitor("toto3000", instance_type=Visitor.Instance.SINGLE_INSTANCE)
-    # visitor.update_context({
-    #     "coucou": 3,
-    #     "coucou2": 2,
-    #     "haha": False,
-    #     "isVIPUser": True,
-    #     "slug": True
+    #                DecisionApi(timeout=3000))
+    #
+    # visitor = Flagship.new_visitor("xxx_1", instance_type=Visitor.Instance.SINGLE_INSTANCE, context={
+    #     "isVIPUser": True
     # })
     # visitor.fetch_flags()
-    # time.sleep(5)
-    # print(visitor.get_flag("slug_variation", 0).value())
+    # featureEnabled = visitor.get_flag("featureEnabled", False).value(False)
+    # print("=> " + str(featureEnabled))
+    # visitor.send_hit(Screen("aaaaa"))
+    #
+    # visitor.authenticate("online_1")
+    # visitor.fetch_flags()
+    # featureEnabled = visitor.get_flag("featureEnabled", False).value(False)
+    # print("=> " + str(featureEnabled))
+    # visitor.send_hit(Screen("aaaaa"))
+    #
+    # visitor.unauthenticate()
+    # visitor.fetch_flags()
+    # featureEnabled = visitor.get_flag("featureEnabled", False).value(False)
+    # print("=> " + str(featureEnabled))
+    # visitor.send_hit(Screen("aaaaa"))
+
+
+    Flagship.start("bkk4s7gcmjcg07fke9dg", "Q6FDmj6F188nh75lhEato2MwoyXDS7y34VrAL4Aa",
+                   Bucketing(timeout=3000, status_listener=CustomStatusListener(), polling_interval=10000))
+    time.sleep(5)
+    visitor = Flagship.new_visitor("toto3000", instance_type=Visitor.Instance.SINGLE_INSTANCE)
+    visitor.update_context({
+        "coucou": 3,
+        "coucou2": 2,
+        "haha": False,
+        "isVIPUser": True,
+        "slug": True
+    })
+    visitor.fetch_flags()
+    time.sleep(5)
+    print(visitor.get_flag("slug_variation", 0).value())
 
     time.sleep(5000)
 

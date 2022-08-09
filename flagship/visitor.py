@@ -86,10 +86,8 @@ class Visitor(IVisitorStrategy):
             return DefaultStrategy(visitor=self)
 
 
-    def _send_context_request(self):
-        self._get_strategy().send_hit(_Segment(self._context))
-
-
+    # def _send_context_request(self):
+    #     self._get_strategy().send_hit(_Segment(self._context))
 
     def __str__(self):
         return pretty_dict({

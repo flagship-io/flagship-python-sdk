@@ -8,6 +8,7 @@ import flagship
 from flagship.constants import TAG_BUCKETING, INFO_BUCKETING_POLLING, ERROR_BUCKETING_REQUEST, TAG_AUTHENTICATE, \
     TAG_UNAUTHENTICATE, ERROR_BUCKETING_XPC_DISABLED
 from flagship.decision_manager import DecisionManager
+from flagship.hits import _Segment
 from flagship.http_helper import HttpHelper
 from flagship.utils import log, pretty_dict, log_exception
 from flagship.log_manager import LogLevel
@@ -82,7 +83,8 @@ class BucketingManager(DecisionManager, Thread):
                                 campaign_modifications.update(modification_values)
                             break
             # send context event
-            visitor._send_context_request()
+            # visitor._send_context_request()
+            HttpHelper.send_context(visitor, _Segment(visitor._visitor_id, visitor._context))
             return True, campaign_modifications
         except Exception as e:
             log_exception(TAG_BUCKETING, e, traceback.format_exc())

@@ -2,6 +2,7 @@ import json
 from enum import Enum
 
 from flagship.decorators import param_types_validator
+from flagship.utils import pretty_dict
 
 
 class HitType(Enum):
@@ -387,6 +388,7 @@ class _Activate(Hit):
     def __init__(self, variation_group_id, variation_id):
         # type: (str, str) -> None
         # Hit.__init__(self, HitType.ACTIVATE)
+        self.hit_type = HitType.ACTIVATE
         self._data = {
             self._k_variation_group_id: variation_group_id,
             self._k_variation_id: variation_id
@@ -404,10 +406,17 @@ class _Consent(Hit):
         self._data.update(data)
 
 class _Segment(Hit):
-    @param_types_validator(True, dict)
-    def __init__(self, context):
-        Hit.__init__(self, HitType.SEGMENT)
-        data = {
-            self._k_segment_list: context,
+    @param_types_validator(True, str, dict)
+    def __init__(self, visitor_id, context):
+        # Hit.__init__(self, HitType.SEGMENT)
+        # data = {
+        #     self._k_segment_list: context,
+        # }
+        # self._data.update(data)
+        self.hit_type = HitType.SEGMENT
+        self._data = {
+            'type': 'CONTEXT',
+            'visitorId': visitor_id,
+            'data': context
         }
-        self._data.update(data)
+
