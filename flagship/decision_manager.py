@@ -17,6 +17,10 @@ class IDecisionManager:
         pass
 
     @abstractmethod
+    def update_status(self):
+        pass
+
+    @abstractmethod
     def authenticate(self, visitor, authenticated_id):
         pass
 
@@ -27,8 +31,8 @@ class IDecisionManager:
 class DecisionManager(IDecisionManager):
     __metaclass__ = ABCMeta
 
-    def __init__(self, config, update_status):
-        self.update_status = update_status
+    def __init__(self, config, update_status_callback):
+        self.update_status_callback = update_status_callback
         self.flagship_config = config
         self.panic = False
 
@@ -41,17 +45,24 @@ class DecisionManager(IDecisionManager):
             try:
                 if 'panic' in campaigns_json and campaigns_json['panic'] is True:
                     self.panic = True
-                    self.update_status(Status.PANIC)
-                    log(TAG_PANIC, LogLevel.WARNING, WARNING_PANIC)
+                    # self.update_status(Status.PANIC)
+                    # log(TAG_PANIC, LogLevel.WARNING, WARNING_PANIC)
                 else:
                     self.panic = False
-                    # campaigns = Campaign.parse_campaigns(campaigns_json['campaigns'])
                     campaigns = Campaign.parse_campaigns(campaigns_json)
-                    self.update_status(Status.READY)
+                # self.update_status(Status.READY)
                 return campaigns
             except Exception as e:
                 log_exception(TAG_PARSING, e, traceback.format_exc())
         return None
+
+    def update_status(self):
+        if self.panic is True:
+            self.update_status_callback(Status.PANIC)
+            log(TAG_PANIC, LogLevel.WARNING, WARNING_PANIC)
+        else:
+            self.update_status_callback(Status.READY)
+
 
     @abstractmethod
     def stop(self):

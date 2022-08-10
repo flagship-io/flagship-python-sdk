@@ -24,14 +24,14 @@ class _FlagshipConfig:
         self.timeout = self.__get_arg('timeout', type(1), 2000, kwargs)
         self.status_listener = self.__get_arg('status_listener', StatusListener, None, kwargs)
         # self.cache_manager = self.__get_arg('cache_manager', CacheManager , None, kwargs)
-        self.__update_flagship_status()
+        # self.__update_flagship_status()
 
     def __get_arg(self, name, c_type, default, kwargs):
         return kwargs[name] if name in kwargs and isinstance(kwargs[name], c_type) else default
 
-    def __update_flagship_status(self):
-        if self.status_listener is not None:
-            self.status_listener.status(Status.READY)
+    # def __update_flagship_status(self):
+    #     if self.status_listener is not None:
+    #         self.status_listener.status(Status.READY)
 
     def is_set(self):
         return self.api_key is not None and self.api_key

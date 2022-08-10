@@ -6,7 +6,7 @@ import traceback
 import requests
 from enum import Enum
 from flagship.constants import TAG_HTTP_REQUEST, DEBUG_REQUEST, URL_ARIANE, URL_BUCKETING, TAG_BUCKETING, \
-    ERROR_BUCKETING_REQUEST, URL_ACTIVATE, URL_CONTEXT
+    ERROR_BUCKETING_REQUEST, URL_ACTIVATE, URL_CONTEXT, URL_DECISION_API, URL_CAMPAIGNS, URL_CONTEXT_PARAM
 from flagship.decorators import param_types_validator
 from flagship.hits import _Activate
 from flagship.log_manager import LogLevel
@@ -32,6 +32,33 @@ class HttpHelper:
         except Exception as e:
             print(traceback.format_exc())
             return False, None
+
+    @staticmethod
+    def send_campaign_request(visitor):
+        config = visitor._configuration_manager.flagship_config
+        url = URL_DECISION_API + config.env_id + URL_CAMPAIGNS + \
+              (URL_CONTEXT_PARAM if visitor._has_consented is False else "")
+        # url = URL_DECISION_API + config.env_id + URL_CAMPAIGNS
+        import flagship
+        headers = {
+            "x-api-key": config.api_key,
+            "x-sdk-client": "python",
+            "x-sdk-version": flagship.__version__
+        }
+        content = {
+            "visitorId": visitor._visitor_id,
+            "anonymousId": visitor._anonymous_id,
+            "trigger_hit": False,
+            "context": visitor._context
+
+        }
+        success, response = HttpHelper.send_http_request(HttpHelper.RequestType.POST, url, headers, content,
+                                                         config.timeout)
+        if success and len(response.content) > 0:
+            # return True, json.loads(response.content.decode("utf-8"))
+            return True, response.content
+        else:
+            return False, dict()
 
     @staticmethod
     def send_hit(visitor, hit):

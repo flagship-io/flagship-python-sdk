@@ -19,9 +19,9 @@ class BucketingManager(DecisionManager, Thread):
 
     local_decision_file_name = ".{}.decision"
 
-    def __init__(self, config, update_status):
+    def __init__(self, config, update_status_callback):
         Thread.__init__(self)
-        super(BucketingManager, self).__init__(config, update_status)
+        super(BucketingManager, self).__init__(config, update_status_callback)
         self.flagship_config = config
         self.daemon = True  # Attach the thread to main thread
         self.campaigns = None
@@ -30,7 +30,7 @@ class BucketingManager(DecisionManager, Thread):
         self.is_running = False
         self.delay = config.polling_interval / 1000
         if flagship.Flagship.status().value < Status.READY.value:
-            self.update_status(Status.POLLING)
+            self.update_status_callback(Status.POLLING)
         self.load_local_decision_file()
 
     def init(self):
@@ -64,27 +64,25 @@ class BucketingManager(DecisionManager, Thread):
                 campaigns = self.parse_campaign_response(bucketing_file_json)
                 if campaigns is not None:
                     self.campaigns = campaigns
-
-
-        except:
+                self.update_status()
+        except Exception as e:
             log(TAG_BUCKETING, LogLevel.ERROR, ERROR_BUCKETING_REQUEST)
 
     def get_campaigns_modifications(self, visitor):
         campaign_modifications = dict()
         try:
-            for campaign in self.campaigns:
-                for variation_group in campaign.variation_groups:
-                    if variation_group.is_targeting_valid(dict(visitor._context)):
-                        variation = variation_group.select_variation(visitor)
-                        if variation is not None:
-                            visitor.add_new_assignment_to_history(variation.variation_group_id, variation.variation_id)
-                            modification_values = variation.get_modification_values()
-                            if modification_values is not None:
-                                campaign_modifications.update(modification_values)
-                            break
-            # send context event
-            # visitor._send_context_request()
-            HttpHelper.send_context(visitor, _Segment(visitor._visitor_id, visitor._context))
+            if self.campaigns is not None:
+                for campaign in self.campaigns:
+                    for variation_group in campaign.variation_groups:
+                        if variation_group.is_targeting_valid(dict(visitor._context)):
+                            variation = variation_group.select_variation(visitor)
+                            if variation is not None:
+                                visitor.add_new_assignment_to_history(variation.variation_group_id, variation.variation_id)
+                                modification_values = variation.get_modification_values()
+                                if modification_values is not None:
+                                    campaign_modifications.update(modification_values)
+                                break
+                HttpHelper.send_context(visitor, _Segment(visitor._visitor_id, visitor._context))
             return True, campaign_modifications
         except Exception as e:
             log_exception(TAG_BUCKETING, e, traceback.format_exc())
