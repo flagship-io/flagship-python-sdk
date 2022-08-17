@@ -45,23 +45,21 @@ class DecisionManager(IDecisionManager):
             try:
                 if 'panic' in campaigns_json and campaigns_json['panic'] is True:
                     self.panic = True
-                    # self.update_status(Status.PANIC)
-                    # log(TAG_PANIC, LogLevel.WARNING, WARNING_PANIC)
                 else:
                     self.panic = False
                     campaigns = Campaign.parse_campaigns(campaigns_json)
-                # self.update_status(Status.READY)
                 return campaigns
             except Exception as e:
                 log_exception(TAG_PARSING, e, traceback.format_exc())
         return None
 
     def update_status(self):
-        if self.panic is True:
-            self.update_status_callback(Status.PANIC)
-            log(TAG_PANIC, LogLevel.WARNING, WARNING_PANIC)
-        else:
-            self.update_status_callback(Status.READY)
+        if self.update_status_callback is not None:
+            if self.panic is True:
+                self.update_status_callback(self.flagship_config, Status.PANIC)
+                log(TAG_PANIC, LogLevel.WARNING, WARNING_PANIC)
+            else:
+                self.update_status_callback(self.flagship_config, Status.READY)
 
 
     @abstractmethod

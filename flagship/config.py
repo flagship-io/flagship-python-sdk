@@ -11,8 +11,8 @@ __metaclass__ = type
 
 
 class _FlagshipConfig:
-    __env_id = ""
-    __api_key = ""
+    __env_id = ''
+    __api_key = ''
 
     def __init__(self, mode, **kwargs):
         self.decision_mode = mode if mode is not None else DecisionMode.DECISION_API
@@ -34,7 +34,8 @@ class _FlagshipConfig:
     #         self.status_listener.status(Status.READY)
 
     def is_set(self):
-        return self.api_key is not None and self.api_key
+        return self.api_key is not None and self.api_key is not None
+        # return self.api_key is not None and self.api_key
 
     def __str__(self):
         config = {

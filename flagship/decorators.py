@@ -35,8 +35,12 @@ def param_types_validator(self=False, *types):
                 ctype = types[j]
                 if isinstance(ctype, list):
                     for t in ctype:
-                        if isinstance(args[i], t):
+                        if args[i] is None:
                             raise_error = False
+                            break
+                        elif isinstance(args[i], t):
+                            raise_error = False
+                            break
                 elif isinstance(args[i], ctype):
                     raise_error = False
                 if raise_error:

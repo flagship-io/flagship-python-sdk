@@ -2,6 +2,8 @@ from __future__ import absolute_import
 
 import json
 
+import six
+
 import flagship
 
 
@@ -25,7 +27,7 @@ def pretty_dict(node, indent=2, string="", first=True):
         if first:
             string += '{\n'
         for key, value in node.items():
-            string += ((' ' * indent + "\"" + str(key)) + "\"")
+            string += ((' ' * indent + '"' + str(key)) + '"')
             if isinstance(value, dict):
                 string += ": {\n" + pretty_dict(value, indent + 2, "", False) + "\n" + (' ' * indent) + "},\n"
             elif isinstance(value, list):
@@ -45,8 +47,8 @@ def pretty_dict(node, indent=2, string="", first=True):
     else:
         if node is None:
             string += "null"
-        elif isinstance(node, str):
-            string += ('\"{}\"'.format(node))
+        elif isinstance(node, six.string_types):
+            string += ('"{}"'.format(node))
         elif isinstance(node, bool):
             string += ('{}'.format("true" if node is True else "false"))
         else:

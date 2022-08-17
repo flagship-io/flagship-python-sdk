@@ -1,6 +1,14 @@
+from flagship.constants import ERROR_INITIALIZATION_PARAM
+
+
 class FlagshipException(Exception):
     def __init__(self, message):
         super(Exception, self).__init__(message)
+
+
+class InitializationParamError(FlagshipException):
+    def __init__(self):
+        super(FlagshipException, self).__init__('[Initialization Param Error] ' + ERROR_INITIALIZATION_PARAM)
 
 
 class ParamTypeError(FlagshipException):

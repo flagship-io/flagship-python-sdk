@@ -30,7 +30,7 @@ class BucketingManager(DecisionManager, Thread):
         self.is_running = False
         self.delay = config.polling_interval / 1000
         if flagship.Flagship.status().value < Status.READY.value:
-            self.update_status_callback(Status.POLLING)
+            self.update_status_callback(self.flagship_config, Status.POLLING)
         self.load_local_decision_file()
 
     def init(self):
@@ -56,12 +56,10 @@ class BucketingManager(DecisionManager, Thread):
             last_modified, results = HttpHelper.send_bucketing_request(self.flagship_config, self.last_modified)
             if last_modified is not None and results is not None:
                 self.last_modified = last_modified
-                # self.bucketing_file = json.loads(results)
-                self.bucketing_file = results
+                self.bucketing_file = json.loads(results)
                 self.cache_local_decision_file()
             if self.bucketing_file is not None:
-                bucketing_file_json = json.loads(self.bucketing_file)
-                campaigns = self.parse_campaign_response(bucketing_file_json)
+                campaigns = self.parse_campaign_response(self.bucketing_file)
                 if campaigns is not None:
                     self.campaigns = campaigns
                 self.update_status()
@@ -92,7 +90,7 @@ class BucketingManager(DecisionManager, Thread):
         file_name = self.local_decision_file_name.format(self.flagship_config.env_id)
         if os.path.isfile(file_name):
             try:
-                with open(file_name, 'r') as f:
+                with open(file_name, 'r', encoding='utf-8') as f:
                     json_data = json.loads(f.read())
                     if 'data' in json_data and 'last_modified' in json_data:
                         self.last_modified = json_data['last_modified']
@@ -108,7 +106,7 @@ class BucketingManager(DecisionManager, Thread):
                 "data": self.bucketing_file
             }
             with open(file_name, 'w') as f:
-                json.dump(json_object, f, indent=2)
+                f.write(pretty_dict(json_object))
         except:
             pass
 

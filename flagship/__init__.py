@@ -1,9 +1,11 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 
 from flagship.config import _FlagshipConfig
 from flagship.config_manager import ConfigManager
-from flagship.constants import TAG_STATUS, INFO_STATUS_CHANGED, TAG_INITIALIZATION, INFO_READY
+from flagship.constants import TAG_STATUS, INFO_STATUS_CHANGED, TAG_INITIALIZATION, INFO_READY, ERROR_CONFIGURATION
 from flagship.decorators import param_types_validator
+from flagship.errors import InitializationParamError
 from flagship.log_manager import LogLevel
 from flagship.status import Status
 from flagship.utils import log
@@ -20,8 +22,8 @@ class Flagship:
         pass
 
     @staticmethod
-    @param_types_validator(False, str, str, _FlagshipConfig)
-    def start(env_id, api_key, configuration):
+    @param_types_validator(False, str, str, [_FlagshipConfig, None])
+    def start(env_id, api_key, configuration=None):
         Flagship.__get_instance().start(env_id, api_key, configuration)
 
     @staticmethod
@@ -67,23 +69,30 @@ class Flagship:
             self.configuration_manager = ConfigManager()
             self.device_context = {}
 
-        @param_types_validator(True, str, str, _FlagshipConfig)
+        @param_types_validator(True, str, str, [_FlagshipConfig, None])
         def start(self, env_id, api_key, flagship_config):
-            self.update_status(Status.STARTING)
+            self.update_status(flagship_config, Status.STARTING)
+            if not env_id or not api_key:
+                raise InitializationParamError()
             self.configuration_manager.init(env_id, api_key, flagship_config, self.update_status)
             if self.configuration_manager.is_set() is False:
-                self.update_status(Status.NOT_INITIALIZED)
-                self.__log(TAG_INITIALIZATION, )
+                self.update_status(self.configuration_manager.flagship_config, Status.NOT_INITIALIZED)
+                self.__log(TAG_INITIALIZATION, LogLevel.ERROR, ERROR_CONFIGURATION)
 
-        def update_status(self, new_status):
-            if new_status is not None and new_status != self.status:
+        def update_status(self, flagship_config, new_status):
+            if flagship_config is not None and new_status is not None and new_status != self.status:
                 self.status = new_status
                 log(TAG_STATUS, LogLevel.DEBUG, INFO_STATUS_CHANGED.format(str(new_status)))
+                # if new_status is Status.READY:
+                #     log(TAG_INITIALIZATION, LogLevel.INFO,
+                #         INFO_READY.format(str(__version__), str(self.configuration_manager.flagship_config)))
+                # if self.configuration_manager.flagship_config.status_listener is not None:
+                #     self.configuration_manager.flagship_config.status_listener.on_status_changed(new_status)
                 if new_status is Status.READY:
                     log(TAG_INITIALIZATION, LogLevel.INFO,
-                        INFO_READY.format(str(__version__), str(self.configuration_manager.flagship_config)))
-                if self.configuration_manager.flagship_config.status_listener is not None:
-                    self.configuration_manager.flagship_config.status_listener.on_status_changed(new_status)
+                        INFO_READY.format(str(__version__), str(flagship_config)))
+                if flagship_config.status_listener is not None:
+                    flagship_config.status_listener.on_status_changed(new_status)
 
         def new_visitor(self, visitor_id, **kwargs):
             new_visitor = Visitor(self.configuration_manager, visitor_id, **kwargs)

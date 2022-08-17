@@ -43,9 +43,11 @@ DEBUG_FETCH_FLAGS = "Flags have been updated.\n{}"
 
 #WARNING
 WARNING_PANIC = "Panic mode is enabled : all features are disabled except 'fetchFlags()'."
+WARNING_DEFAULT_CONFIG = "No flagship configuration is passed. Default configuration will be used."
 
 # ERRORS
-ERROR_INITIALIZATION_PARAM = "Params 'envId' and 'apiKey' must not be null."
+ERROR_INITIALIZATION_PARAM = "Params 'envId' and 'apiKey' must not be None or emtpy."
+ERROR_CONFIGURATION = "Configuration has failed, the SDK has not been initialized successfully."
 ERROR_PARAM_TYPE = "Parameter '{}' for function '{}' is not valid. Expecting {} type."
 ERROR_PARSING_CAMPAIGN = "An error occurred while parsing campaign json object."
 ERROR_PARSING_VARIATION_GROUP = "An error occurred while parsing variation group json object."
