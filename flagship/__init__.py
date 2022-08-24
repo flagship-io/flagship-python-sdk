@@ -104,6 +104,7 @@ class Flagship:
             return self.current_visitor
 
         def stop(self):
+            self.current_visitor = None
             self.status = Status.NOT_INITIALIZED
             self.configuration_manager.reset()
 

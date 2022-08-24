@@ -1,3 +1,4 @@
+import io
 import json
 import os
 import time
@@ -33,7 +34,7 @@ class BucketingManager(DecisionManager, Thread):
             self.update_status_callback(self.flagship_config, Status.POLLING)
         self.load_local_decision_file()
 
-    def init(self):
+    def start_running(self):
         if self.is_running is False:
             self.is_running = True
             self.start()
@@ -47,9 +48,8 @@ class BucketingManager(DecisionManager, Thread):
                 pass
             time.sleep(self.delay)
 
-    def stop(self):
+    def stop_running(self):
         self.is_running = False
-        self.stop()
 
     def update_bucketing_file(self):
         try:
@@ -58,6 +58,8 @@ class BucketingManager(DecisionManager, Thread):
                 self.last_modified = last_modified
                 self.bucketing_file = json.loads(results)
                 self.cache_local_decision_file()
+            if self.bucketing_file is None:
+                print('yoooo 0')
             if self.bucketing_file is not None:
                 campaigns = self.parse_campaign_response(self.bucketing_file)
                 if campaigns is not None:
@@ -88,24 +90,29 @@ class BucketingManager(DecisionManager, Thread):
 
     def load_local_decision_file(self):
         file_name = self.local_decision_file_name.format(self.flagship_config.env_id)
+        # print('yoooo 1: ' + str(os.path.isfile(file_name)) + ' ' + file_name)
         if os.path.isfile(file_name):
+            # print('yoooo 2: ' + str(os.path.isfile(file_name)) + ' ' + file_name)
             try:
-                with open(file_name, 'r', encoding='utf-8') as f:
+                with io.open(file_name, 'r', encoding='utf-8') as f:
+                    # print('yoooo 3: ' + str(os.path.isfile(file_name)) + ' ' + file_name)
                     json_data = json.loads(f.read())
                     if 'data' in json_data and 'last_modified' in json_data:
                         self.last_modified = json_data['last_modified']
                         self.bucketing_file = json_data['data']
+                    # print('yoooo 4: ' + str(self.bucketing_file))
             except Exception as e:
+                log_exception(TAG_BUCKETING, e, traceback.format_exc())
                 pass
 
     def cache_local_decision_file(self):
         try:
             file_name = self.local_decision_file_name.format(self.flagship_config.env_id)
             json_object = {
-                "last_modified": self.last_modified,
-                "data": self.bucketing_file
+                'last_modified': self.last_modified,
+                'data': self.bucketing_file
             }
-            with open(file_name, 'w') as f:
+            with io.open(file_name, 'w') as f:
                 f.write(pretty_dict(json_object))
         except:
             pass

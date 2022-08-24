@@ -105,19 +105,6 @@ def test_initialization_right():
     assert Flagship.config().polling_interval == 2000
     assert isinstance(Flagship.config().log_manager, CustomLogManager)
 
-    class CustomLogManager(LogManager):
-
-        def log(self, tag, level, message):
-            pass
-
-        def exception(self, exception, traceback):
-            pass
-
-    class CustomStatusListener(StatusListener):
-
-        def on_status_changed(self, new_status):
-            pass
-
     Flagship.start("_env_id_2", "_api_key_2", DecisionApi(
         timeout=4000,
         log_level=LogLevel.WARNING,

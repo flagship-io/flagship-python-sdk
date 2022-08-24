@@ -25,12 +25,12 @@ class ConfigManager:
             self.decision_manager = ApiManager(self.flagship_config, update_status)
         else:
             self.decision_manager = BucketingManager(self.flagship_config, update_status)
-        self.decision_manager.init()
+        self.decision_manager.start_running()
 
     def is_set(self):
         return self.flagship_config.is_set() and self.decision_manager is not None
 
     def reset(self):
         if self.decision_manager is not None:
-            self.decision_manager.stop()
+            self.decision_manager.stop_running()
         self.flagship_config = DecisionApi()

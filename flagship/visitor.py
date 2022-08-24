@@ -1,10 +1,11 @@
 import traceback
+import uuid
 
 from enum import Enum
 from flagship import param_types_validator, Status, LogLevel
 from flagship.constants import TAG_GET_FLAG, TAG_FLAG_USER_EXPOSITION, TAG_UPDATE_CONTEXT, TAG_VISITOR, \
     ERROR_UPDATE_CONTEXT_TYPE, ERROR_UPDATE_CONTEXT_EMPTY_KEY
-from flagship.errors import FlagNotFoundException, FlagExpositionNotFoundException
+from flagship.errors import FlagNotFoundException, FlagExpositionNotFoundException, FlagTypeException
 from flagship.hits import _Activate, _Segment
 from flagship.http_helper import HttpHelper
 from flagship.utils import pretty_dict, log_exception, log
@@ -21,15 +22,15 @@ class Visitor(IVisitorStrategy):
         super(Visitor, self).__init__(self)
         self._configuration_manager = configuration_manager
         self._config = configuration_manager.flagship_config
-        self._visitor_id = visitor_id
-        self._anonymous_id = None
         self._is_authenticated = self._get_arg(kwargs, 'authenticated', bool, False)
+        self._visitor_id = visitor_id
+        self._anonymous_id = uuid.uuid4() if self._is_authenticated is True else None
         from flagship.flagship_context import FlagshipContext
         self._context = FlagshipContext.load()
-        self._context.update(self._get_arg(kwargs, 'context', dict, {}))
         self._modifications = dict()
         self._has_consented = self._get_arg(kwargs, 'consent', bool, True)
-        self._get_strategy().set_consent(self._has_consented)
+        self.set_consent(self._has_consented)
+        self.update_context(self._get_arg(kwargs, 'context', dict, {}))
 
     # @param_types_validator(True, str, [int, float, str])
     def _update_context(self, key, value):
@@ -68,6 +69,8 @@ class Visitor(IVisitorStrategy):
             modification = self._get_modification(key)
             if modification is None:
                 raise FlagNotFoundException(self._visitor_id, key)
+            if not isinstance(default, type(modification.value)):
+                raise FlagTypeException(self._visitor_id, key)
             value = modification.value if modification is not None else default
             return value
         except Exception as e:

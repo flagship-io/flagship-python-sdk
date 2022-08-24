@@ -61,7 +61,8 @@ from flagship.status_listener import StatusListener
 
 def init():
     print(sys.version)
-    init_bucketing()
+    init_api()
+    # init_bucketing()
 
     # class CustomStatusListener(StatusListener):
     #
@@ -140,36 +141,68 @@ def init():
     # print("=> " + str(featureEnabled))
     # visitor.send_hit(Screen("aaaaa"))
 
-def init_bucketing():
-    class CustomStatusListener(StatusListener):
-
-        def __init__(self, function):
-            self.function = function
-
-        def on_status_changed(self, new_status):
-            print("New status = " + str(new_status))
-            if new_status == Status.READY:
-                self.function()
-
-    def create_visitor():
-        visitor = Flagship.new_visitor("toto3000", instance_type=Visitor.Instance.SINGLE_INSTANCE)
-        visitor.update_context({
-            "coucou": 3,
-            "coucou2": 2,
-            "haha": False,
-            "isVIPUser": True,
-            "slug": True
-        })
-        visitor.fetch_flags()
-        # time.sleep(5)
-        print(visitor.get_flag("slug_variation", 0).value())
 
 
+##################################################################
+
+def init_api():
     Flagship.start("bkk4s7gcmjcg07fke9dg", "Q6FDmj6F188nh75lhEato2MwoyXDS7y34VrAL4Aa",
-                   Bucketing(timeout=3000, status_listener=CustomStatusListener(create_visitor), polling_interval=10000))
+                   DecisionApi(timeout=3000))
+    visitor = Flagship.new_visitor("_visitor_ze", instance_type=Visitor.Instance.SINGLE_INSTANCE, context={
+        # "isVIPUser": True,
+        'daysSinceLastLaunch': 3
+    }, consent=False)
+    visitor.fetch_flags()
+    featureEnabled = visitor.get_flag("featureEnabled", False).value(False)
+    print("=> " + str(featureEnabled))
+    visitor.send_hit(Screen("aaaaa"))
+
+    visitor.authenticate("online_1")
+    visitor.fetch_flags()
+    featureEnabled = visitor.get_flag("featureEnabled", False).value(False)
+    print("=> " + str(featureEnabled))
+    visitor.send_hit(Screen("aaaaa"))
+
+    visitor.unauthenticate()
+    visitor.fetch_flags()
+    featureEnabled = visitor.get_flag("featureEnabled", False).value(False)
+    print("=> " + str(featureEnabled))
+    visitor.send_hit(Screen("aaaaa"))
 
 
-    time.sleep(5000)
+
+##################################################################
+
+# def init_bucketing():
+#     class CustomStatusListener(StatusListener):
+#
+#         def __init__(self, function):
+#             self.function = function
+#
+#         def on_status_changed(self, new_status):
+#             print("New status = " + str(new_status))
+#             if new_status == Status.READY:
+#                 self.function()
+#
+#     def create_visitor():
+#         visitor = Flagship.new_visitor("toto3000", instance_type=Visitor.Instance.SINGLE_INSTANCE)
+#         visitor.update_context({
+#             "coucou": 3,
+#             "coucou2": 2,
+#             "haha": False,
+#             "isVIPUser": True,
+#             "slug": True
+#         })
+#         visitor.fetch_flags()
+#         # time.sleep(5)
+#         print(visitor.get_flag("slug_variation", 0).value())
+#
+#
+#     Flagship.start("bkk4s7gcmjcg07fke9dg", "Q6FDmj6F188nh75lhEato2MwoyXDS7y34VrAL4Aa",
+#                    Bucketing(timeout=3000, status_listener=CustomStatusListener(create_visitor), polling_interval=10000))
+#
+#
+#     time.sleep(5000)
 
 
 init()

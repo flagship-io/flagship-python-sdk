@@ -45,7 +45,7 @@ class FlagshipLogManager:
         @rtype: FlagshipLogManager
 
         """
-        if isinstance(level, LogLevel) and level.value > 0:
+        if isinstance(level, LogLevel):
             self.log_level = level
             ch = logging.StreamHandler()
             self.logger = logging.getLogger(self.MAIN_TAG)
@@ -55,7 +55,7 @@ class FlagshipLogManager:
 
     @param_types_validator(True, str, LogLevel, str)
     def log(self, tag, level, message):
-        if self.logger is not None and 0 < level.value < self.log_level.value:
+        if self.logger is not None and 0 < level.value <= self.log_level.value:
             now = datetime.now().strftime("%d-%m-%Y %H:%M:%S")
             color = self.start_color.format(self.colors[level.value])
             template = '{}[{}][{}][{}]: {}{}'.format(color, now, self.MAIN_TAG, tag, message, self.end_color)

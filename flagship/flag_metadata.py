@@ -15,11 +15,19 @@ class FlagMetadata:
         return self.campaign_id is not "" and self.variation_group_id is not "" and self.variation_id is not ""
 
     def toJson(self):
-        return json.dumps(dict({
+        # return json.dumps(dict({
+        #     "campaignId": self.campaign_id,
+        #     "variationGroupId": self.variation_group_id,
+        #     "variationId": self.variation_id,
+        #     "isReference": self.is_reference,
+        #     "campaignType": self.campaign_type,
+        #     "campaignSlug": self.campaign_slug
+        # }))
+        return dict({
             "campaignId": self.campaign_id,
             "variationGroupId": self.variation_group_id,
             "variationId": self.variation_id,
             "isReference": self.is_reference,
             "campaignType": self.campaign_type,
             "campaignSlug": self.campaign_slug
-        }))
+        })

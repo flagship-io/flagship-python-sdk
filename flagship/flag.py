@@ -34,7 +34,7 @@ class Flag(IFlagStrategy):
         self.default_value = default_value
 
     def value(self, user_exposed=True):
-        return self._get_flag_strategy().value()
+        return self._get_flag_strategy().value(user_exposed)
 
     def user_exposed(self):
         self._get_flag_strategy().user_exposed()

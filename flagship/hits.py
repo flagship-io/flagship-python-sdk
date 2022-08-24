@@ -384,7 +384,7 @@ class Transaction(Hit):
 
 
 class _Activate(Hit):
-    @param_types_validator(True, str, str)
+    @param_types_validator(True, [str, bytes, unicode], [str, bytes, unicode])
     def __init__(self, variation_group_id, variation_id):
         # type: (str, str) -> None
         # Hit.__init__(self, HitType.ACTIVATE)

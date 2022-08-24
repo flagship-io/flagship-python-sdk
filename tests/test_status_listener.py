@@ -1,8 +1,9 @@
 import time
-
 from flagship import Flagship, Status
 from flagship.config import DecisionApi, Bucketing
 from flagship.status_listener import StatusListener
+from mock import mock_open, patch
+from test_constants_res import BUCKETING_RESPONSE_1
 
 
 def test_initialization_status_listener_api():
@@ -24,7 +25,9 @@ def test_initialization_status_listener_api():
     assert status[1] == Status.READY.name
 
 
-def test_initialization_status_listener_bucketing():
+@patch('io.open', mock_open(read_data=BUCKETING_RESPONSE_1))
+@patch('os.path.isfile', return_value=True)
+def test_initialization_status_listener_bucketing(isfile_mock):
     Flagship.stop()  # reset SDK
     status = []
 

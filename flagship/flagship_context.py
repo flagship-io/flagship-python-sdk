@@ -69,7 +69,8 @@ class FlagshipContext(Enum):
         for item in FlagshipContext:
             key = item.value[0]
             value = item.value[1]
-            if value is not None and len(str(value)) > 0 and FlagshipContext.is_valid(None, item, value, False):
+            if value is not None and len(str(value)) > 0:
+            # if value is not None and len(str(value)) > 0 and FlagshipContext.is_valid(None, item, value, False):
                 context[key] = value
         return context
 

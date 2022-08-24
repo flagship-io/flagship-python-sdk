@@ -7,11 +7,13 @@ import six
 import flagship
 
 
-def log(tag, level, message):
-    configuration = flagship.Flagship.config()
-    configured_log_manager = configuration.log_manager if configuration is not None else None
-    if configured_log_manager is not None:
-        configured_log_manager.log(tag, level, message)
+def log(tag, level, message, start_config=None):
+    configuration = start_config if start_config is not None else flagship.Flagship.config()
+    if configuration is not None:
+        custom_log_manager = configuration.log_manager
+        custom_log_level = configuration.log_level
+        if custom_log_manager is not None and (0 < level.value <= custom_log_level.value):
+            custom_log_manager.log(tag, level, message)
 
 
 def log_exception(tag, exception, traceback):

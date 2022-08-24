@@ -36,8 +36,10 @@ class ApiManager(DecisionManager):
             return False, dict()
         return True, modifications
 
-    def stop(self):
-        #todo stop loop
+    def start_running(self):
+        pass
+
+    def stop_running(self):
         pass
 
     def authenticate(self, visitor, authenticated_id):

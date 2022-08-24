@@ -13,6 +13,14 @@ class IDecisionManager:
     __metaclass__ = ABCMeta
 
     @abstractmethod
+    def start_running(self):
+        pass
+
+    @abstractmethod
+    def stop_running(self):
+        pass
+
+    @abstractmethod
     def get_campaigns_modifications(self, visitor):
         pass
 
@@ -36,9 +44,6 @@ class DecisionManager(IDecisionManager):
         self.flagship_config = config
         self.panic = False
 
-    def init(self):
-        pass
-
     def parse_campaign_response(self, campaigns_json):
         if campaigns_json is not None:
             campaigns = None
@@ -60,10 +65,5 @@ class DecisionManager(IDecisionManager):
                 log(TAG_PANIC, LogLevel.WARNING, WARNING_PANIC)
             else:
                 self.update_status_callback(self.flagship_config, Status.READY)
-
-
-    @abstractmethod
-    def stop(self):
-        pass
 
 

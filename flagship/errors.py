@@ -26,6 +26,10 @@ class FlagNotFoundException(Exception):
         from flagship.constants import ERROR_FLAG_NOT_FOUND
         super(Exception, self).__init__('[FlagNotFoundError] ' + ERROR_FLAG_NOT_FOUND.format(flag_key, visitor_id))
 
+class FlagTypeException(Exception):
+    def __init__(self, visitor_id, flag_key):
+        from flagship.constants import ERROR_FLAG_TYPE_DIFFERENT
+        super(Exception, self).__init__('[FlagTypeError] ' + ERROR_FLAG_TYPE_DIFFERENT.format(flag_key, visitor_id))
 
 class FlagExpositionNotFoundException(Exception):
     def __init__(self, visitor_id, flag_key):

@@ -1,14 +1,13 @@
-#URLS
+# URLS
 URL_DECISION_API = "https://decision.flagship.io/v2/"
 URL_CAMPAIGNS = "/campaigns/?exposeAllKeys=true"
 URL_ARIANE = "https://ariane.abtasty.com/"
-URL_ACTIVATE = URL_DECISION_API+"activate"
+URL_ACTIVATE = URL_DECISION_API + "activate"
 URL_BUCKETING = "https://cdn.flagship.io/{}/bucketing.json"
 URL_CONTEXT = "https://decision.flagship.io/v2/{}/events"
 URL_CONTEXT_PARAM = "&sendContextEvent=false"
 
-
-#TAGS
+# TAGS
 TAG_MAIN = "Flagship"
 TAG_INITIALIZATION = "Initialization"
 TAG_STATUS = "Status"
@@ -30,18 +29,17 @@ TAG_BUCKETING = "Bucketing"
 TAG_AUTHENTICATE = "Authenticate"
 TAG_UNAUTHENTICATE = "Unauthenticate"
 
-
 # INFO
 INFO_STATUS_CHANGED = "SDK status has changed ({})"
 INFO_READY = "Flagship version {} has started successfully.\nConfiguration: {}"
 INFO_BUCKETING_POLLING = "Polling event."
 
-#DEBUG
+# DEBUG
 DEBUG_CONTEXT = "Context have been updated with success.\n{}"
 DEBUG_REQUEST = "{} {} {} {}ms\n"
 DEBUG_FETCH_FLAGS = "Flags have been updated.\n{}"
 
-#WARNING
+# WARNING
 WARNING_PANIC = "Panic mode is enabled : all features are disabled except 'fetchFlags()'."
 WARNING_DEFAULT_CONFIG = "No flagship configuration is passed. Default configuration will be used."
 
@@ -58,9 +56,10 @@ ERROR_UPDATE_CONTEXT_TYPE = "Context key '{}' value must be of type: '{}'."
 ERROR_UPDATE_CONTEXT_EMPTY = "Context key '{}' will be ignored as its value is empty'."
 ERROR_UPDATE_CONTEXT_EMPTY_KEY = "Context key must be a non null or empty 'str'."
 
-
 ERROR_FLAG_NOT_FOUND = "Flag key '{}' has not been found for visitor '{}'. Default value have been returned."
-ERROR_FLAG_EXPOSITION_FLAG_NOT_FOUND = "Flag key '{}' has not been found for visitor '{}'. No flag exposition will be "\
+ERROR_FLAG_TYPE_DIFFERENT = "Flag key '{}' has been found for visitor '{}' but with a different type. " \
+                            "Default value have been returned."
+ERROR_FLAG_EXPOSITION_FLAG_NOT_FOUND = "Flag key '{}' has not been found for visitor '{}'. No flag exposition will be " \
                                        "sent. "
 ERROR_METHOD_DEACTIVATED = "Method '{}' have been deactivated: {}"
 ERROR_FLAG_METHOD_DEACTIVATED = "Flag '{}' method '{}' have been deactivated: {}"
@@ -70,7 +69,3 @@ ERROR_METHOD_DEACTIVATED_NO_CONSENT = "visitor '{}' has not given his consent."
 
 ERROR_BUCKETING_REQUEST = "An error occurred happened during decision file request."
 ERROR_BUCKETING_XPC_DISABLED = "The '{}' method is disabled in Bucketing configuration."
-
-
-
-
