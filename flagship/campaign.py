@@ -1,4 +1,5 @@
 import traceback
+from collections import OrderedDict
 
 from flagship.variation_group import VariationGroup
 from flagship.utils import log_exception, pretty_dict
@@ -13,7 +14,8 @@ class Campaign:
         self.variation_groups = variation_groups
 
     def get_modifications(self, use_bucketing, context):
-        modifications = dict()
+        # modifications = dict()
+        modifications = OrderedDict()
         for variation_group in self.variation_groups:
             if use_bucketing is False:
                 for key in variation_group.variations:
@@ -33,7 +35,8 @@ class Campaign:
         variation_groups_list = list()
         for vg in self.variation_groups:
             variation_groups_list.append(vg.to_dict())
-        return dict({
+        # return dict({
+        return OrderedDict({
             "campaign_id": self.campaign_id,
             "variation_groups": variation_groups_list
         })

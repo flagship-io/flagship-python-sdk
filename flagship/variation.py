@@ -1,4 +1,5 @@
 import traceback
+from collections import OrderedDict
 
 from flagship.modification import Modifications
 from flagship.constants import TAG_PARSING_VARIATION, ERROR_PARSING_VARIATION
@@ -19,7 +20,8 @@ class Variation:
         self.selected = selected
 
     def to_dict(self):
-        return dict({
+        # return dict({
+        return OrderedDict({
             "campaign_id": self.campaign_id,
             "variation_group_id": self.variation_group_id,
             "variation_id": self.variation_id,

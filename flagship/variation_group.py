@@ -1,5 +1,7 @@
+from __future__ import unicode_literals
 import random
 import traceback
+from collections import OrderedDict
 
 from flagship.constants import TAG_PARSING_VARIATION_GROUP, ERROR_PARSING_VARIATION_GROUP
 from flagship.errors import FlagshipParsingError
@@ -22,7 +24,8 @@ class VariationGroup:
         variation_list = list()
         for (k, v) in self.variations.items():
             variation_list.append(v.to_dict())
-        return dict({
+        # return dict({
+        return OrderedDict({
             "campaign_id": self.campaign_id,
             "variation_group_id": self.variation_group_id,
             "variations": variation_list
@@ -59,7 +62,8 @@ class VariationGroup:
     def parse(campaign_id, campaign_type, campaign_slug, variation_group_obj, bucketing):
         try:
             variation_group_id = variation_group_obj['id'] if bucketing else variation_group_obj['variationGroupId']
-            variations = dict()
+            # variations = dict()
+            variations = OrderedDict()
             if not bucketing:
                 variation_obj = variation_group_obj['variation']
                 new_variation = Variation.parse(campaign_id, campaign_type, campaign_slug, variation_group_id,

@@ -10,7 +10,7 @@ from flagship.constants import TAG_HTTP_REQUEST, DEBUG_REQUEST, URL_ARIANE, URL_
 from flagship.decorators import param_types_validator
 from flagship.hits import _Activate
 from flagship.log_manager import LogLevel
-from flagship.utils import pretty_dict, log
+from flagship.utils import pretty_dict, log, log_exception
 
 
 class HttpHelper:
@@ -73,7 +73,7 @@ class HttpHelper:
                 "x-sdk-version": flagship.__version__
             }
             body = {
-                "cid": config.env_id,
+                "cid": config.env_id
             }
             if visitor._anonymous_id is not None:
                 body['cuid'] = visitor._visitor_id
@@ -82,7 +82,7 @@ class HttpHelper:
                 body['vid'] = visitor._visitor_id
                 body['cuid'] = None
             body.update(hit.get_data())
-            response = requests.post(url=URL_ARIANE, headers=headers, data=body, timeout=config.timeout)
+            response = requests.post(url=URL_ARIANE, headers=headers, json=body, timeout=config.timeout)
             HttpHelper.log_request(HttpHelper.RequestType.POST, URL_ARIANE, headers, body, response)
 
     @staticmethod
@@ -104,7 +104,7 @@ class HttpHelper:
             body['vid'] = visitor._visitor_id
             body['aid'] = None
         body.update(hit.get_data())
-        response = requests.post(url=URL_ARIANE, headers=headers, json=body, timeout=config.timeout)
+        response = requests.post(url=URL_ACTIVATE, headers=headers, json=body, timeout=config.timeout)
         HttpHelper.log_request(HttpHelper.RequestType.POST, URL_ACTIVATE, headers, body, response)
 
     @staticmethod
@@ -136,7 +136,8 @@ class HttpHelper:
             if code < 300:
                 return last_modified, content
         except Exception as e:
-            log(TAG_BUCKETING, LogLevel.ERROR, ERROR_BUCKETING_REQUEST)
+            log_exception(TAG_BUCKETING, e, traceback.format_exc())
+            # log(TAG_BUCKETING, LogLevel.ERROR, ERROR_BUCKETING_REQUEST)
         return None, None
 
     @staticmethod

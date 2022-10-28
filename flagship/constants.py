@@ -69,3 +69,5 @@ ERROR_METHOD_DEACTIVATED_NO_CONSENT = "visitor '{}' has not given his consent."
 
 ERROR_BUCKETING_REQUEST = "An error occurred happened during decision file request."
 ERROR_BUCKETING_XPC_DISABLED = "The '{}' method is disabled in Bucketing configuration."
+
+ERROR_TRACKING_HIT_SUBCLASS = "send_hit() param must be a subclass of Hit."

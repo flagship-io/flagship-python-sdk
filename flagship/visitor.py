@@ -24,7 +24,7 @@ class Visitor(IVisitorStrategy):
         self._config = configuration_manager.flagship_config
         self._is_authenticated = self._get_arg(kwargs, 'authenticated', bool, False)
         self._visitor_id = visitor_id
-        self._anonymous_id = uuid.uuid4() if self._is_authenticated is True else None
+        self._anonymous_id = str(uuid.uuid4()) if self._is_authenticated is True else None
         from flagship.flagship_context import FlagshipContext
         self._context = FlagshipContext.load()
         self._modifications = dict()

@@ -3,7 +3,7 @@ from enum import Enum
 from flagship import param_types_validator, log, LogLevel
 from flagship.constants import TAG_UPDATE_CONTEXT, TAG_VISITOR, DEBUG_CONTEXT, TAG_FETCH_FLAGS, DEBUG_FETCH_FLAGS, \
     ERROR_METHOD_DEACTIVATED, ERROR_METHOD_DEACTIVATED_PANIC, TAG_TRACKING, ERROR_METHOD_DEACTIVATED_NO_CONSENT, \
-    ERROR_METHOD_DEACTIVATED_NOT_READY, TAG_AUTHENTICATE, TAG_UNAUTHENTICATE
+    ERROR_METHOD_DEACTIVATED_NOT_READY, TAG_AUTHENTICATE, TAG_UNAUTHENTICATE, ERROR_TRACKING_HIT_SUBCLASS
 from flagship.flag import Flag
 from flagship.hits import Hit, _Consent, _Activate
 from flagship.http_helper import HttpHelper
@@ -85,10 +85,13 @@ class DefaultStrategy(IVisitorStrategy):
     def get_flag(self, key, default):
         return Flag(self.visitor, key, default)
 
-    @param_types_validator(True, Hit)
+    # @param_types_validator(True, Hit)
     def send_hit(self, hit):
         if issubclass(type(hit), Hit):
             HttpHelper.send_hit(self.visitor, hit)
+        else:
+            log(TAG_TRACKING, LogLevel.ERROR, ERROR_TRACKING_HIT_SUBCLASS)
+
 
     def set_consent(self, consent):
         self.visitor._has_consented = consent
@@ -159,3 +162,29 @@ class NotReadyStrategy(DefaultStrategy):
         log(TAG_TRACKING, LogLevel.ERROR,
             ERROR_METHOD_DEACTIVATED.format("send_hit()", ERROR_METHOD_DEACTIVATED_NOT_READY
                                             .format(self.visitor._visitor_id)))
+
+    def update_context(self, context):
+        log(TAG_TRACKING, LogLevel.ERROR,
+            ERROR_METHOD_DEACTIVATED.format("update_context()", ERROR_METHOD_DEACTIVATED_NOT_READY
+                                            .format(self.visitor._visitor_id)))
+
+    def fetch_flags(self):
+        log(TAG_TRACKING, LogLevel.ERROR,
+            ERROR_METHOD_DEACTIVATED.format("fetch_flags()", ERROR_METHOD_DEACTIVATED_NOT_READY
+                                            .format(self.visitor._visitor_id)))
+
+    def set_consent(self, consent):
+        log(TAG_TRACKING, LogLevel.ERROR,
+            ERROR_METHOD_DEACTIVATED.format("set_consent()", ERROR_METHOD_DEACTIVATED_NOT_READY
+                                            .format(self.visitor._visitor_id)))
+
+    def authenticate(self, visitor_id):
+        log(TAG_TRACKING, LogLevel.ERROR,
+            ERROR_METHOD_DEACTIVATED.format("authenticate()", ERROR_METHOD_DEACTIVATED_NOT_READY
+                                            .format(self.visitor._visitor_id)))
+
+    def unauthenticate(self):
+        log(TAG_TRACKING, LogLevel.ERROR,
+            ERROR_METHOD_DEACTIVATED.format("unauthenticate()", ERROR_METHOD_DEACTIVATED_NOT_READY
+                                            .format(self.visitor._visitor_id)))
+

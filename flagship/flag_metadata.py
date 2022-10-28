@@ -12,7 +12,7 @@ class FlagMetadata:
         self.campaign_slug = modification.slug if modification is not None else ""
 
     def exists(self):
-        return self.campaign_id is not "" and self.variation_group_id is not "" and self.variation_id is not ""
+        return self.campaign_id != "" and self.variation_group_id != "" and self.variation_id != ""
 
     def toJson(self):
         # return json.dumps(dict({

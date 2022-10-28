@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 import io
 import json
 import os
@@ -29,24 +30,33 @@ class BucketingManager(DecisionManager, Thread):
         self.bucketing_file = None
         self.last_modified = None
         self.is_running = False
-        self.delay = config.polling_interval / 1000
+        if config.polling_interval > 0:
+            self.delay = config.polling_interval / 1000.0
+        else:
+            self.delay = None
         if flagship.Flagship.status().value < Status.READY.value:
             self.update_status_callback(self.flagship_config, Status.POLLING)
         self.load_local_decision_file()
 
     def start_running(self):
-        if self.is_running is False:
-            self.is_running = True
-            self.start()
+        if self.delay is None:
+            self.run_task()
+        else:
+            if self.is_running is False:
+                self.is_running = True
+                self.start()
 
     def run(self):
         while self.is_running:
             log(TAG_BUCKETING, LogLevel.DEBUG, INFO_BUCKETING_POLLING)
-            try:
-                self.update_bucketing_file()
-            except:
-                pass
+            self.run_task()
             time.sleep(self.delay)
+
+    def run_task(self):
+        try:
+            self.update_bucketing_file()
+        except:
+            log_exception(TAG_BUCKETING, LogLevel.ERROR, traceback.format_exc())
 
     def stop_running(self):
         self.is_running = False
@@ -58,15 +68,14 @@ class BucketingManager(DecisionManager, Thread):
                 self.last_modified = last_modified
                 self.bucketing_file = json.loads(results)
                 self.cache_local_decision_file()
-            if self.bucketing_file is None:
-                print('yoooo 0')
             if self.bucketing_file is not None:
                 campaigns = self.parse_campaign_response(self.bucketing_file)
                 if campaigns is not None:
                     self.campaigns = campaigns
                 self.update_status()
         except Exception as e:
-            log(TAG_BUCKETING, LogLevel.ERROR, ERROR_BUCKETING_REQUEST)
+            # log(TAG_BUCKETING, LogLevel.ERROR, ERROR_BUCKETING_REQUEST)
+            log_exception(TAG_BUCKETING, LogLevel.ERROR, traceback.format_exc())
 
     def get_campaigns_modifications(self, visitor):
         campaign_modifications = dict()
@@ -90,17 +99,14 @@ class BucketingManager(DecisionManager, Thread):
 
     def load_local_decision_file(self):
         file_name = self.local_decision_file_name.format(self.flagship_config.env_id)
-        # print('yoooo 1: ' + str(os.path.isfile(file_name)) + ' ' + file_name)
         if os.path.isfile(file_name):
-            # print('yoooo 2: ' + str(os.path.isfile(file_name)) + ' ' + file_name)
             try:
-                with io.open(file_name, 'r', encoding='utf-8') as f:
-                    # print('yoooo 3: ' + str(os.path.isfile(file_name)) + ' ' + file_name)
+                # with io.open(file_name, 'r', encoding='utf-8') as f:
+                with open(file_name, 'r') as f:
                     json_data = json.loads(f.read())
                     if 'data' in json_data and 'last_modified' in json_data:
                         self.last_modified = json_data['last_modified']
                         self.bucketing_file = json_data['data']
-                    # print('yoooo 4: ' + str(self.bucketing_file))
             except Exception as e:
                 log_exception(TAG_BUCKETING, e, traceback.format_exc())
                 pass
@@ -112,10 +118,11 @@ class BucketingManager(DecisionManager, Thread):
                 'last_modified': self.last_modified,
                 'data': self.bucketing_file
             }
-            with io.open(file_name, 'w') as f:
+            # with io.open(file_name, 'w', encoding='utf-8') as f:
+            with open(file_name, 'w') as f:
                 f.write(pretty_dict(json_object))
-        except:
-            pass
+        except Exception as e:
+            log_exception(TAG_BUCKETING, e, traceback.format_exc())
 
     def authenticate(self, visitor, authenticated_id):
         log(TAG_AUTHENTICATE, LogLevel.ERROR, ERROR_BUCKETING_XPC_DISABLED.format("authenticate()"))

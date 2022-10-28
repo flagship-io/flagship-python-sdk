@@ -1,5 +1,5 @@
+from __future__ import unicode_literals
 import sys
-
 
 def murmurHash(key):
     c1 = -0x3361d2af

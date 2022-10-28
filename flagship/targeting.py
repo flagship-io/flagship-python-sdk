@@ -22,8 +22,13 @@ class Targeting:
 
     def is_targeting_valid(self, context):
 
-        if self.key not in context:
+        if self.operator is None:
             return False
+        elif self.operator == 'EQUALS' and self.key == 'fs_all_users':
+            return True
+        elif self.key not in context:
+            return False
+
 
         value0 = context[self.key]
         value1 = self.value

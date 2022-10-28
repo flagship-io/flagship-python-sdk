@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 import json
 from enum import Enum
 
@@ -155,7 +156,7 @@ class EventCategory(Enum):
 
 
 class Event(Hit):
-    @param_types_validator(True, EventCategory, str)
+    # @param_types_validator(True, EventCategory, str)
     def __init__(self, category, action):
         # type: (EventCategory, action) -> None
 
@@ -202,7 +203,7 @@ class Event(Hit):
 
 
 class Item(Hit):
-    @param_types_validator(True, str, str)
+    @param_types_validator(True, str, str, str)
     def __init__(self, transaction_id, product_name, product_sku):
         # type: (str, str, str) -> None
         """
@@ -384,7 +385,7 @@ class Transaction(Hit):
 
 
 class _Activate(Hit):
-    @param_types_validator(True, [str, bytes, unicode], [str, bytes, unicode])
+    # @param_types_validator(True, [str, bytes], [str, bytes])
     def __init__(self, variation_group_id, variation_id):
         # type: (str, str) -> None
         # Hit.__init__(self, HitType.ACTIVATE)
@@ -396,17 +397,21 @@ class _Activate(Hit):
         # self._data.update(data)
 
 
-class _Consent(Hit):
+class _Consent(Event):
     @param_types_validator(True, bool)
     def __init__(self, consent):
-        Hit.__init__(self, HitType.CONSENT)
+        # Hit.__init__(self, HitType.CONSENT)
+        # data = {
+        #     self._k_consent: consent,
+        # }
+        Event.__init__(self, EventCategory.USER_ENGAGEMENT, 'fs_consent')
         data = {
-            self._k_consent: consent,
+            self._k_event_label: 'python:{}'.format(str(consent).lower())
         }
         self._data.update(data)
 
 class _Segment(Hit):
-    @param_types_validator(True, str, dict)
+    # @param_types_validator(True, str, dict)
     def __init__(self, visitor_id, context):
         # Hit.__init__(self, HitType.SEGMENT)
         # data = {
