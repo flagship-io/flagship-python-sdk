@@ -12,11 +12,26 @@ from flagship.utils import pretty_dict, log_exception, log
 from flagship.visitor_strategies import IVisitorStrategy, PanicStrategy, DefaultStrategy, NoConsentStrategy, \
     NotReadyStrategy
 
-class Visitor(IVisitorStrategy):
 
+class Visitor(IVisitorStrategy):
     class Instance(Enum):
+        """
+        This class specifies how Flagship SDK should handle the newly created visitor instance.
+        """
+
         SINGLE_INSTANCE = "SINGLE_INSTANCE",
+        """
+        The  newly created visitor instance will be returned and saved into the Flagship singleton.
+        Call `Flagship.get_visitor()` to retrieve the instance.
+        This option should be adopted on applications that handle only one visitor at the same time.
+        """
+
         NEW_INSTANCE = "NEW_INSTANCE"
+        """
+        The newly created visitor instance wont be saved and will simply be returned. Any previous visitor instance will
+        have to be recreated. This option should be adopted on applications that handle multiple visitors at the same 
+        time.
+        """
 
     def __init__(self, configuration_manager, visitor_id, **kwargs):
         super(Visitor, self).__init__(self)
@@ -43,7 +58,7 @@ class Visitor(IVisitorStrategy):
             if key is None or len(str(key)) <= 0 or (not isinstance(key, str) and not isinstance(key, FlagshipContext)):
                 log(TAG_UPDATE_CONTEXT, LogLevel.ERROR, "[" + TAG_VISITOR.format(self._visitor_id) + "] " +
                     ERROR_UPDATE_CONTEXT_EMPTY_KEY)
-            elif not isinstance(value, str) and not isinstance(value, int) and not isinstance(value, float)\
+            elif not isinstance(value, str) and not isinstance(value, int) and not isinstance(value, float) \
                     and not isinstance(value, bool):
                 log(TAG_UPDATE_CONTEXT, LogLevel.ERROR, "[" + TAG_VISITOR.format(self._visitor_id) + "] " +
                     ERROR_UPDATE_CONTEXT_TYPE.format(key, "str, int, float, bool"))
@@ -88,7 +103,6 @@ class Visitor(IVisitorStrategy):
         else:
             return DefaultStrategy(visitor=self)
 
-
     # def _send_context_request(self):
     #     self._get_strategy().send_hit(_Segment(self._context))
 
@@ -114,8 +128,7 @@ class Visitor(IVisitorStrategy):
     def add_new_assignment_to_history(self, variation_group_id, variation_id):
         pass
 
-
-#     Methods from Visitor Strategy
+    #     Methods from Visitor Strategy
 
     def update_context(self, context):
         return self._get_strategy().update_context(context)
@@ -137,7 +150,3 @@ class Visitor(IVisitorStrategy):
 
     def unauthenticate(self):
         self._get_strategy().unauthenticate()
-
-
-
-

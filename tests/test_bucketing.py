@@ -11,7 +11,7 @@ from flagship.hits import Screen
 from flagship.log_manager import LogLevel, LogManager
 from flagship.status_listener import StatusListener
 from flagship.targeting_comparator import TargetingComparator
-from tests.test_constants_res import BUCKETING_RESPONSE_1, BUCKETING_URL, BUCKETING_LAST_MODIFIED_1, \
+from test_constants_res import BUCKETING_RESPONSE_1, BUCKETING_URL, BUCKETING_LAST_MODIFIED_1, \
     BUCKETING_CACHED_RESPONSE_1, ARIANE_URL, ACTIVATE_URL, SEGMENT_URL, BUCKETING_RESPONSE_2, BUCKETING_RESPONSE_PANIC, \
     BUCKETING_RESPONSE_EMPTY
 

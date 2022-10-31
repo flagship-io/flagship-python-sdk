@@ -6,7 +6,7 @@ import responses
 from flagship import Flagship, LogLevel, Visitor
 from flagship.config import DecisionApi
 from flagship.hits import Page, Event, EventCategory, Transaction, Item, Screen
-from tests.test_constants_res import DECISION_API_URL, API_RESPONSE_1, ARIANE_URL, ACTIVATE_URL
+from test_constants_res import DECISION_API_URL, API_RESPONSE_1, ARIANE_URL, ACTIVATE_URL
 
 
 @responses.activate

@@ -24,26 +24,64 @@ class Flagship:
     @staticmethod
     @param_types_validator(False, str, str, [_FlagshipConfig, None])
     def start(env_id, api_key, configuration=None):
+        """
+        Start the flagship SDK.
+        @param env_id: Environment id provided by Flagship.
+        @param api_key: Secure api key provided by Flagship.
+        @param configuration: Flagship configuration to initialize with. Can be DecisionApi or Bucketing.
+        """
         Flagship.__get_instance().start(env_id, api_key, configuration)
 
     @staticmethod
     def config():
+        """
+        Return the current used flagship configuration.
+        @return: _FlagshipConfig
+        """
         return Flagship.__get_instance().configuration_manager.flagship_config
 
     @staticmethod
     def new_visitor(visitor_id, **kwargs):
+        """
+        Create and return a new Flagship visitor instance.
+        @param visitor_id: Unique visitor identifier.
+        @param kwargs: optional parameters, see below.
+
+        @keyword instance_type: Visitor.Instance.NEW_INSTANCE or Visitor.Instance.SINGLE_INSTANCE.
+        Default is SINGLE_INSTANCE.
+        @keyword authenticated: Bool that Specifies if the visitor is authenticated (True) or anonymous (False).
+        Default value is False.
+        @keyword consent: Bool that Specifies if the visitor has consented for personal data usage. When false some
+        features will be deactivated, cache will be deactivated and cleared. True by default.
+        @keyword context: Dict that specifies visitor initial context key / values used for targeting.
+        Context keys must be String, and values types must be one of the following : Number, Boolean, String.
+
+        @return: Newly created Visitor instance.
+        """
         return Flagship.__get_instance().new_visitor(visitor_id, **kwargs)
 
     @staticmethod
     def get_visitor():
+        """
+        This method will return any previous created visitor instance initialized with the SINGLE_INSTANCE.
+        @return: Visitor.
+        """
         return Flagship.__get_instance().get_visitor()
 
     @staticmethod
     def status():
+        """
+        Return the current SDK status.
+        @return: Status.
+        """
         return Flagship.__get_instance().status
 
     @staticmethod
     def stop():
+        """
+        Stop and reset the Flagship instance.
+        @return:
+        """
         return Flagship.__get_instance().stop()
 
     @staticmethod
@@ -83,11 +121,6 @@ class Flagship:
             if flagship_config is not None and new_status is not None and new_status != self.status:
                 self.status = new_status
                 log(TAG_STATUS, LogLevel.DEBUG, INFO_STATUS_CHANGED.format(str(new_status)))
-                # if new_status is Status.READY:
-                #     log(TAG_INITIALIZATION, LogLevel.INFO,
-                #         INFO_READY.format(str(__version__), str(self.configuration_manager.flagship_config)))
-                # if self.configuration_manager.flagship_config.status_listener is not None:
-                #     self.configuration_manager.flagship_config.status_listener.on_status_changed(new_status)
                 if new_status is Status.READY:
                     log(TAG_INITIALIZATION, LogLevel.INFO,
                         INFO_READY.format(str(__version__), str(flagship_config)))

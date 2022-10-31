@@ -11,6 +11,10 @@ __metaclass__ = type
 
 
 class _FlagshipConfig:
+    """
+     FlagshipConfig configuration.
+    """
+
     __env_id = ''
     __api_key = ''
 
@@ -54,6 +58,18 @@ class _FlagshipConfig:
 
 class DecisionApi(_FlagshipConfig):
     def __init__(self, **kwargs):
+        """
+        Run the SDK in DecisionApi mode. The campaign assignments and targeting validation take place server-side.
+        In this mode, each call to the fetchFlags method to refresh the flags will create an HTTP request.
+        @param kwargs: optional parameters, see below.
+
+        @keyword log_level: Specifies a log level to filter logs emitted by the SDK. Requires LogLevel type.
+        @keyword log_manager: Specifies a custom implementation of LogManager in order to receive logs from the SDK.
+        Requires a LogManager class implementation.
+        @keyword timeout: Specifies timeout for api requests.
+        @keyword status_listener: Specifies a callback to be notified when the SDK status has changed.
+        Requires a StatusListener class implementation.
+       """
         super(DecisionApi, self).__init__(DecisionMode.DECISION_API, **kwargs)
 
     def __str__(self):
@@ -73,6 +89,22 @@ class DecisionApi(_FlagshipConfig):
 
 class Bucketing(_FlagshipConfig):
     def __init__(self, **kwargs):
+        """
+        When the SDK is running in Bucketing mode, the SDK downloads all the campaigns configurations at once in a
+        single bucketing file so that variation assignment can be computed client-side by the SDK. This bucketing file
+        is stored in cache and will only be downloaded again when campaign configurations are modified in the Flagship
+        interface.
+        @param kwargs: optional parameters, see below.
+
+        @keyword log_level: Specifies a log level to filter logs emitted by the SDK. Requires LogLevel type.
+        @keyword log_manager: Specifies a custom implementation of LogManager in order to receive logs from the SDK.
+        Requires a LogManager class implementation.
+        @keyword timeout: Specifies timeout for api requests.
+        @keyword status_listener: Specifies a callback to be notified when the SDK status has changed.
+        Requires a StatusListener class implementation.
+        @keyword polling_interval: Define the time interval between two bucketing updates in milliseconds.
+        Default is 60 seconds.
+        """
         super(Bucketing, self).__init__(DecisionMode.BUCKETING, **kwargs)
 
     def __str__(self):
