@@ -79,6 +79,7 @@ def test_flag_metadata():
 
     assert _visitor_8.get_flag("flag_do_not exists", "default").exists() is False
     metadata = _visitor_8.get_flag("flag_do_not exists", "default").metadata()
+    metadata.v
     assert metadata.variation_id == ""
     assert metadata.variation_group_id == ""
     assert metadata.campaign_id == ""

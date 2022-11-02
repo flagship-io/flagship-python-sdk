@@ -1,9 +1,10 @@
 from __future__ import unicode_literals
+
 import json
+
 from enum import Enum
 
 from flagship.decorators import param_types_validator
-from flagship.utils import pretty_dict
 
 
 class HitType(Enum):

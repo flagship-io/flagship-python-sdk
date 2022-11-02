@@ -27,6 +27,9 @@ class IFlagStrategy:
 
 
 class Flag(IFlagStrategy):
+    """
+    Class representing a Flagship flag.
+    """
 
     def __init__(self, visitor, key, default_value):
         self._visitor = visitor
@@ -34,15 +37,37 @@ class Flag(IFlagStrategy):
         self.default_value = default_value
 
     def value(self, user_exposed=True):
+        """
+        Returns the current value for this flag or return default value if the flag doesn't exist or if the current
+        value and defaultValue types are different.
+
+        @param user_exposed: Tells Flagship the user have been exposed and have seen this flag. This will increment
+        the visits for the current variation on your campaign reporting. Default value is true.
+        If needed it is possible to set this param to false and call userExposed() afterward when the user sees it.
+        @return:  The current Flag value or default value.
+        """
         return self._get_flag_strategy().value(user_exposed)
 
     def user_exposed(self):
+        """
+        Tells Flagship the user have been exposed and have seen this Flag. This will increment the visits for the
+        current variation on your campaign reporting.
+        @return:
+        """
         self._get_flag_strategy().user_exposed()
 
     def exists(self):
+        """
+        Check if this Flag exists in Flagship SDK
+        @return: True if the Flag exists in Flagship SDK, False otherwise.
+        """
         return self._get_flag_strategy().metadata().exists()
 
     def metadata(self):
+        """
+        Returns the campaign information metadata or an empty object if the flag doesn't exist.
+        @return: campaign metadata.
+        """
         return self._get_flag_strategy().metadata()
 
     def _get_flag_strategy(self):
