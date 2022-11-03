@@ -8,26 +8,72 @@ from flagship.decorators import param_types_validator
 
 
 class LogLevel(Enum):
+    """
+    This enum class defines Flagship log levels that can be used to control SDK outputs.
+    """
+
     ALL = 100
+    """
+    All logs will be logged.
+    """
     CRITICAL = 50
+    """
+    Critical errors and below will be logged.
+    """
+
     ERROR = 40
+    """
+    Errors, caught exception events and below will be logged.
+    """
+
     WARNING = 30
+    """
+    Only Warnings events and below will be logged.
+    """
+
     INFO = 20
+    """
+    Only info logs and below will be logged.
+    """
+
     DEBUG = 10
+    """
+    Only debug logs and below will be logged.
+    """
+
     NONE = 0
+    """
+    NONE = 0: Logging will be disabled.
+    """
 
 
 class LogManager:
+    """
+    Class to extend in order to provide a custom Log manager.
+    """
     __metaclass__ = ABCMeta
 
     @abstractmethod
     @param_types_validator(True, str, LogLevel, str)
     def log(self, tag, level, message):
+        """
+        Called when the SDK produce a log.
+        @param tag: location of the SDK where the log come from.
+        @param level: Severity of the log emitted.
+        @param message: log message.
+        @return:
+        """
         pass
 
     @abstractmethod
     @param_types_validator(True, Exception, str)
     def exception(self, exception, traceback):
+        """
+        Called when the SDK has caught an Exception.
+        @param exception: exception that caused the exception.
+        @param traceback: exception traceback.
+        @return:
+        """
         pass
 
 

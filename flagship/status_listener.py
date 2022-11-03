@@ -6,6 +6,9 @@ from flagship.status import Status
 
 
 class StatusListener:
+    """
+    This is the Implementation to call when the SDK status has changed.
+    """
     __metaclass__ = ABCMeta
 
     @param_types_validator(True, Status)
@@ -16,4 +19,8 @@ class StatusListener:
     @abstractmethod
     @param_types_validator(True, Status)
     def on_status_changed(self, new_status):
+        """
+        Implement this method to be notified each time the SDK status changes.
+        @param new_status: New SDK status
+        """
         pass

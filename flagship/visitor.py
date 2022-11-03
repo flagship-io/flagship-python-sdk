@@ -34,6 +34,12 @@ class Visitor(IVisitorStrategy):
         """
 
     def __init__(self, configuration_manager, visitor_id, **kwargs):
+        """
+        Flagship visitor representation.
+        @param configuration_manager:
+        @param visitor_id:
+        @param kwargs:
+        """
         super(Visitor, self).__init__(self)
         self._configuration_manager = configuration_manager
         self._config = configuration_manager.flagship_config
@@ -131,22 +137,72 @@ class Visitor(IVisitorStrategy):
     #     Methods from Visitor Strategy
 
     def update_context(self, context):
+        """
+        Update the visitor context values, matching the given keys, used for targeting.
+
+        A new context value associated with this key will be created if there is no previous matching value.
+        Context keys must be Str, and values types must be one of the following : Number, Bool, Str.
+
+        Once the visitor context is updated, it is required to update the current flags by calling fetch_flags().
+
+        @param context: Tuple (key, value) or dict.
+        @return:
+        """
         return self._get_strategy().update_context(context)
 
     def fetch_flags(self):
+        """
+        This function will update all the campaigns flags from the server according to the visitor context.
+        @return:
+        """
         return self._get_strategy().fetch_flags()
 
     def get_flag(self, key, default):
+        """
+        This function will return a flag object containing the current value returned by Flagship and the associated
+        campaign information. If the key is not found an empty Flag object with the default value will be returned.
+
+        @param key: key associated to the flag.
+        @param default: fallback default value to use
+        @return: Flag
+        """
         return self._get_strategy().get_flag(key, default)
 
     def send_hit(self, hit):
+        """
+        Send a Hit to Flagship servers for reporting.
+        @param hit: Hit to track.
+        @return:
+        """
         return self._get_strategy().send_hit(hit)
 
     def set_consent(self, consent):
+        """
+        Specify if the visitor has consented for personal data usage. When false some features will be deactivated,
+        cache will be deactivated and cleared.
+        @param consent: bool for consent.
+        @return:
+        """
         self._get_strategy().set_consent(consent)
 
-    def authenticate(self, visitorId):
-        self._get_strategy().authenticate(visitorId)
+    def authenticate(self, visitor_id):
+        """
+        Tag the current visitor as authenticated, This will insure to keep the same experience after fetch_flags().
+
+        Once authenticated, it is required to update the current flags by calling fetch_flags() again.
+
+        @param visitor_id of the current authenticated visitor.
+        @return:
+        """
+        self._get_strategy().authenticate(visitor_id)
 
     def unauthenticate(self):
+        """
+        Tag the current visitor as unauthenticated, This will insure to get back to the initial experience after
+        fetch flags.
+
+        Once unauthenticated, it is required to update the current flags by calling fetch_flags() again.
+
+        @return:
+        """
         self._get_strategy().unauthenticate()

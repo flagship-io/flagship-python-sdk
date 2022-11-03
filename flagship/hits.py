@@ -411,6 +411,7 @@ class _Consent(Event):
         }
         self._data.update(data)
 
+
 class _Segment(Hit):
     # @param_types_validator(True, str, dict)
     def __init__(self, visitor_id, context):
@@ -425,4 +426,3 @@ class _Segment(Hit):
             'visitorId': visitor_id,
             'data': context
         }
-
