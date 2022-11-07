@@ -1,5 +1,3 @@
-import pytest
-
 from flagship.app import Flagship
 from flagship.config import Config
 

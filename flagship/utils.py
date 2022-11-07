@@ -1,5 +1,3 @@
-
-
 def is_url_valid(url):
     import re
     regex = re.compile(

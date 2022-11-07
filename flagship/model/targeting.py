@@ -1,7 +1,3 @@
-import json
-
-from enum import Enum
-
 from flagship.model.targeting_comparator import TargetingComparator
 
 

@@ -5,13 +5,13 @@ import os
 import random
 import string
 import time
-from unittest import TestCase
 
 import responses
 
 from flagship.app import Flagship
 from flagship.config import Config
-from flagship.helpers.hits import Page, Screen
+from flagship.helpers.hits import Screen
+from flagship.visitor import FlagshipVisitor
 
 
 def test_bucketing_wrong_config():

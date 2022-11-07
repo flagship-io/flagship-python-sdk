@@ -1,5 +1,3 @@
-import unittest
-
 from flagship.app import Flagship
 from flagship.config import Config
 from flagship.handler import FlagshipEventHandler

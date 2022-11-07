@@ -1,4 +1,3 @@
-import json
 import logging
 import random
 from datetime import datetime
@@ -11,7 +10,6 @@ from flagship.helpers.hits import Hit
 from flagship.helpers.preset_context import PresetContext
 from flagship.model.campaign import Campaign
 from flagship.model.modification import Modification
-from datetime import datetime
 
 
 class FlagshipVisitor:

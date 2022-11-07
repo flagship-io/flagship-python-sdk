@@ -4,7 +4,6 @@ import traceback
 from flagship.app import Flagship
 from flagship.config import Config
 import responses
-from flagship.handler import FlagshipEventHandler
 from flagship.helpers.hits import Page, Event, EventCategory, Transaction, Item, Screen
 
 

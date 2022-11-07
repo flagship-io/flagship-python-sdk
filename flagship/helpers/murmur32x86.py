@@ -1,6 +1,3 @@
-import sys
-
-
 def murmurHash(key):
     c1 = -0x3361d2af
     c2 = 0x1b873593

@@ -48,7 +48,6 @@ class ApiManager:
             body["anonymousId"] = anoymousId
         try:
             url = self.get_endpoint() + '' + self._env_id + '' + self.__campaigns
-            print(str(self._config.timeout))
             r = requests.post(url, headers=header, json=body, timeout=self._config.timeout)
             self.__log_request(url, r, body)
             return r
