@@ -18,8 +18,23 @@ class BucketingObserver:
         pass
 
 
+class BucketingLocalStorage:
+
+    def file_exists(self, file_name):
+        return os.path.isfile(file_name)
+
+    def read_file(self, file_name):
+        with open(file_name, 'r') as f:
+            return json.loads(f.read())
+
+    def write_file(self, file_name, data):
+        with open(file_name, 'w') as f:
+            json.dump(data, f, indent=4)
+
+
 class BucketingManager(BucketingObserver):
     file_name = 'bucketing.json'
+    storage = BucketingLocalStorage()
 
     def __init__(self, config):
         BucketingObserver.__init__(self)
@@ -61,12 +76,11 @@ class BucketingManager(BucketingObserver):
 
     @staticmethod
     def load_bucketing_file():
-        if os.path.isfile(BucketingManager.file_name):
+        if BucketingManager.storage.file_exists(BucketingManager.file_name):
             try:
-                with open(BucketingManager.file_name, 'r') as f:
-                    json_data = json.loads(f.read())
-                    if 'content' in json_data and 'last_modified' in json_data:
-                        return json_data
+                json_data = BucketingManager.storage.read_file(BucketingManager.file_name)
+                if 'content' in json_data and 'last_modified' in json_data:
+                    return json_data
             except Exception as e:
                 return None
         return None
@@ -85,8 +99,7 @@ class BucketingManager(BucketingObserver):
                 'last_modified': last_modified,
                 'content': content
             }
-            with open(BucketingManager.file_name, 'w') as f:
-                json.dump(json_object, f, indent=4)
+            BucketingManager.storage.write_file(BucketingManager.file_name, json_object)
             bucketing_data = json_object
         return bucketing_data
 
