@@ -1,5 +1,5 @@
 requests==2.27.1
-typing==3.10.0.0 ; python_version < '3.5'
+typing==3.7.4.3 ; python_version < '3.5'
 six==1.16.0
 enum34~=1.1.10
 responses==0.17.0
