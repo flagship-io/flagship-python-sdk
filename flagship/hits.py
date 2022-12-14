@@ -1,6 +1,9 @@
 from __future__ import unicode_literals
 
 import json
+import sys
+import time
+import uuid
 
 from enum import Enum
 
@@ -16,12 +19,14 @@ class HitType(Enum):
     ACTIVATE = "ACTIVATE"
     CONSENT = 'CONSENT'
     SEGMENT = 'SEGMENT'
+    BATCH = 'BATCH'
 
 
 class Hit(object):
     _k_origin = 'dl'  # origin
     _k_env_id = 'cid'  # env_id
     _k_visitor_id = 'vid'  # visitor id
+    _k_customer_visitor_id = 'cuid'
     _k_type = 't'
     _k_ds = 'ds'
     # _k_timestamp = 'cst'
@@ -52,11 +57,17 @@ class Hit(object):
     # _k_variation_group_id = 'vgid'
     _k_variation_id = 'vaid'
     _k_consent = 'vc'
-    _k_segment_list = 'sl'
+    _k_segment_list = 's'
+    _k_queue_time = 'qt'
+    _k_batch = 'h'
 
     @param_types_validator(True, HitType)
     def __init__(self, hit_type):
         self.hit_type = hit_type
+        self._hit_id = uuid.uuid4()
+        self._visitor_id = None
+        self._anonymous_id = None
+        self._timestamp = time.time() * 1000
         self._data = {
             self._k_type: hit_type.value,
             self._k_ds: 'APP',
@@ -112,8 +123,37 @@ class Hit(object):
         self._data[self._k_locale] = locale
         return self
 
-    def get_data(self):
+    def _with_hit_id(self, hit_id):
+        self._hit_id = hit_id
+        return self
+
+    def _with_visitor_ids(self, visitor_id, anonymous_id):
+        self._visitor_id = visitor_id
+        self._anonymous_id = anonymous_id
+        if anonymous_id is not None:
+            self._data[self._k_customer_visitor_id] = visitor_id
+            self._data[self._k_visitor_id] = anonymous_id
+        else:
+            self._data[self._k_visitor_id] = visitor_id
+            self._data[self._k_customer_visitor_id] = None
+        return self
+
+    def _with_timestamp(self, timestamp):
+        self._timestamp = timestamp
+        return self
+
+    def data(self):
         return self._data
+
+    def size(self):
+        return sys.getsizeof(self._data)
+
+    def check_data_validity(self):
+        if (not bool(self._data[self._k_type]) or
+                not bool(self._data[self._k_type]) or
+                not bool(self._data[self._k_type])):
+            return False
+        return True
 
     def __str__(self):
         return 'Hit : ' + json.dumps(self._data)
@@ -134,6 +174,16 @@ class Page(Hit):
         }
         self._data.update(data)
 
+    def check_data_validity(self):
+        from urlparse import urlparse
+        if (super().check_data_validity() is False or
+                self._data[self._k_ds] != 'APP' or
+                not bool(self._data[self._k_origin]) or
+                urlparse(self._data[self._k_origin]).scheme is False or
+                urlparse(self._data[self._k_origin]).netloc is False):
+            return False
+        return True
+
 
 class Screen(Hit):
     @param_types_validator(True, str)
@@ -141,7 +191,6 @@ class Screen(Hit):
         # type: (str) -> None
         """
         Create a Screen hit.
-
         :param origin: name of the current screen. Max length 2048 Bytes.
         """
         Hit.__init__(self, HitType.SCREENVIEW)
@@ -149,6 +198,13 @@ class Screen(Hit):
             self._k_origin: origin
         }
         self._data.update(data)
+
+    def check_data_validity(self):
+        if (super().check_data_validity() is False or
+                self._data[self._k_ds] != 'APP' or
+                not bool(self._data[self._k_origin])):
+            return False
+        return True
 
 
 class EventCategory(Enum):
@@ -201,6 +257,14 @@ class Event(Hit):
         if t == int or t == str or t == float or t == bool:
             self._data[self._k_event_value] = value
         return self
+
+    def check_data_validity(self):
+        if (super().check_data_validity() is False) or \
+                (self._data[self._k_ds] != 'APP') or \
+                not bool(self._data[self._k_event_category]) or \
+                not bool(self._data[self._k_event_action]):
+            return False
+        return True
 
 
 class Item(Hit):
@@ -269,6 +333,15 @@ class Item(Hit):
         """
         self._data[self._k_item_category] = category
         return self
+
+    def check_data_validity(self):
+        if (super().check_data_validity() is False) or \
+                (self._data[self._k_ds] != 'APP') or \
+                not bool(self._data[self._k_transaction_id]) or \
+                not bool(self._data[self._k_item_name]) or \
+                not bool(self._data[self._k_item_code]):
+            return False
+        return True
 
 
 class Transaction(Hit):
@@ -384,12 +457,19 @@ class Transaction(Hit):
         self._data[self._k_transaction_coupon] = coupon
         return self
 
+    def check_data_validity(self):
+        if (super().check_data_validity() is False) or \
+                (self._data[self._k_ds] != 'APP') or \
+                not bool(self._data[self._k_transaction_id]) or \
+                not bool(self._data[self._k_transaction_affiliation]):
+            return False
+        return True
+
 
 class _Activate(Hit):
     # @param_types_validator(True, [str, bytes], [str, bytes])
     def __init__(self, variation_group_id, variation_id):
         # type: (str, str) -> None
-        # Hit.__init__(self, HitType.ACTIVATE)
         self.hit_type = HitType.ACTIVATE
         self._data = {
             self._k_variation_group_id: variation_group_id,
@@ -397,32 +477,82 @@ class _Activate(Hit):
         }
         # self._data.update(data)
 
+    def check_data_validity(self):
+        if (super().check_data_validity() is False or
+                self._data[self._k_ds] != 'APP' or
+                not bool(self._data[self._k_variation_group_id]) or
+                not bool(self._data[self._k_variation_id])):
+            return False
+        return True
+
 
 class _Consent(Event):
     @param_types_validator(True, bool)
     def __init__(self, consent):
-        # Hit.__init__(self, HitType.CONSENT)
-        # data = {
-        #     self._k_consent: consent,
-        # }
         Event.__init__(self, EventCategory.USER_ENGAGEMENT, 'fs_consent')
         data = {
             self._k_event_label: 'python:{}'.format(str(consent).lower())
         }
         self._data.update(data)
 
+    def check_data_validity(self):
+        if (super().check_data_validity() is False or
+                not bool(self._data[self._k_event_label])):
+            return False
+        return True
+
 
 class _Segment(Hit):
     # @param_types_validator(True, str, dict)
     def __init__(self, visitor_id, context):
-        # Hit.__init__(self, HitType.SEGMENT)
-        # data = {
-        #     self._k_segment_list: context,
-        # }
-        # self._data.update(data)
-        self.hit_type = HitType.SEGMENT
-        self._data = {
-            'type': 'CONTEXT',
-            'visitorId': visitor_id,
-            'data': context
+        Hit.__init__(self, HitType.SEGMENT)
+        data = {
+            self._k_visitor_id: visitor_id,
+            self._k_segment_list: context
         }
+        self._data.update(data)
+
+    def check_data_validity(self):
+        if (super().check_data_validity() is False or
+                self._data[self._k_ds] != 'APP' or
+                not bool(self._data[self._k_visitor_id]) or
+                self._data[self._k_segment_list] is None or
+                len(self._data[self._k_segment_list]) < 0):
+            return False
+        return True
+
+
+class _Batch(Hit):
+    hits = list()
+
+    def __init__(self):
+        Hit.__init__(self, HitType.BATCH)
+        self._data[self._k_batch] = []
+
+    def add_child(self, hit):
+        from flagship.tracking_manager import TrackingManagerInterface
+        is_timestamp_valid = ((time.time() * 1000) - hit._timestamp) < TrackingManagerInterface.HIT_EXPIRATION
+        if is_timestamp_valid:
+            self.hits.append(hit)
+            self._data[self._k_batch].append(hit._data)
+
+    def data(self):
+        batch_data = []
+        for h in self.hits:
+            h._data[self._k_queue_time] = ((time.time() * 1000) - h._timestamp)
+            batch_data.append(h._data)
+        self._data[self._k_batch] = batch_data
+
+    def check_data_validity(self):
+        if super().check_data_validity is False:
+            return False
+        for h in self.hits:
+            if h.check_data_validity is False:
+                return False
+            if h._data[self._k_queue_time] is None:
+                return False
+            if len(self.hits) == 0:
+                return False
+        return True
+
+

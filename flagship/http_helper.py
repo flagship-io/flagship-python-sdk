@@ -5,7 +5,7 @@ import traceback
 
 import requests
 from enum import Enum
-from flagship.constants import TAG_HTTP_REQUEST, DEBUG_REQUEST, URL_ARIANE, URL_BUCKETING, TAG_BUCKETING, \
+from flagship.constants import TAG_HTTP_REQUEST, DEBUG_REQUEST, URL_TRACKING, URL_BUCKETING, TAG_BUCKETING, \
     ERROR_BUCKETING_REQUEST, URL_ACTIVATE, URL_CONTEXT, URL_DECISION_API, URL_CAMPAIGNS, URL_CONTEXT_PARAM
 from flagship.decorators import param_types_validator
 from flagship.hits import _Activate
@@ -82,8 +82,8 @@ class HttpHelper:
                 body['vid'] = visitor._visitor_id
                 body['cuid'] = None
             body.update(hit.get_data())
-            response = requests.post(url=URL_ARIANE, headers=headers, json=body, timeout=config.timeout)
-            HttpHelper.log_request(HttpHelper.RequestType.POST, URL_ARIANE, headers, body, response)
+            response = requests.post(url=URL_TRACKING, headers=headers, json=body, timeout=config.timeout)
+            HttpHelper.log_request(HttpHelper.RequestType.POST, URL_TRACKING, headers, body, response)
 
     @staticmethod
     def send_activate(visitor, hit):

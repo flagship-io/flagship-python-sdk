@@ -9,6 +9,8 @@ from flagship.log_manager import FlagshipLogManager, LogLevel, LogManager
 
 __metaclass__ = type
 
+from flagship.tracking_manager import TrackingManagerConfig
+
 
 class _FlagshipConfig:
     """
@@ -27,6 +29,8 @@ class _FlagshipConfig:
         self.polling_interval = self.__get_arg('polling_interval', type(1), 60000, kwargs)
         self.timeout = self.__get_arg('timeout', type(1), 2000, kwargs)
         self.status_listener = self.__get_arg('status_listener', StatusListener, None, kwargs)
+        self.tracking_manager_config = self.__get_arg('tracking_manager_config', TrackingManagerConfig,
+                                                      TrackingManagerConfig(), kwargs)
         # self.cache_manager = self.__get_arg('cache_manager', CacheManager , None, kwargs)
         # self.__update_flagship_status()
 
@@ -51,6 +55,7 @@ class _FlagshipConfig:
             'polling_interval': self.polling_interval,
             'timeout': self.timeout,
             'status_listener': None if self.status_listener is None else str(self.status_listener.__class__.__name__),
+            'tracking_manager_config': str(self.tracking_manager_config.__class__.__name__)
             # 'cache_manager': None if self.cache_manager is None else str(self.cache_manager.__class__.__name__)
         }
         return json.dumps(config, indent=4)
@@ -69,6 +74,7 @@ class DecisionApi(_FlagshipConfig):
         @keyword timeout: Specifies timeout for api requests.
         @keyword status_listener: Specifies a callback to be notified when the SDK status has changed.
         Requires a StatusListener class implementation.
+        @keyword tracking_manager_config: Define a custom tracking manager configuration.
        """
         super(DecisionApi, self).__init__(DecisionMode.DECISION_API, **kwargs)
 
@@ -82,6 +88,7 @@ class DecisionApi(_FlagshipConfig):
             # 'polling_interval': self.polling_interval,
             'timeout': self.timeout,
             'status_listener': None if self.status_listener is None else str(self.status_listener.__class__.__name__),
+            'tracking_manager_config': str(self.tracking_manager_config.__class__.__name__)
             # 'cache_manager': None if self.cache_manager is None else str(self.cache_manager.__class__.__name__)
         }
         return json.dumps(config, indent=4)
@@ -103,6 +110,7 @@ class Bucketing(_FlagshipConfig):
         @keyword status_listener: Specifies a callback to be notified when the SDK status has changed.
         Requires a StatusListener class implementation.
         @keyword polling_interval: Define the time interval between two bucketing updates in milliseconds.
+        @keyword tracking_manager_config: Define a custom tracking manager configuration.
         Default is 60 seconds.
         """
         super(Bucketing, self).__init__(DecisionMode.BUCKETING, **kwargs)
@@ -117,6 +125,7 @@ class Bucketing(_FlagshipConfig):
             'polling_interval': self.polling_interval,
             'timeout': self.timeout,
             'status_listener': None if self.status_listener is None else str(self.status_listener.__class__.__name__),
+            'tracking_manager_config': str(self.tracking_manager_config.__class__.__name__)
             # 'cache_manager': None if self.cache_manager is None else str(self.cache_manager.__class__.__name__)
         }
         return json.dumps(config, indent=4)

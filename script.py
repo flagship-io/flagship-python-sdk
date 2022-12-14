@@ -192,7 +192,7 @@ def init_bucketing():
             "haha": False,
             "isVIPUser": True,
             "slug": True,
-            "daysSinceLastLaunch":3
+            "daysSinceLastLaunch": 3
         })
         visitor.fetch_flags()
         # time.sleep(5)
