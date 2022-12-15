@@ -6,6 +6,7 @@ from enum import Enum
 from threading import Thread
 
 from flagship.hits import _Consent, _Batch
+from flagship.http_helper import HttpHelper
 
 
 class TrackingManagerCacheStrategyInterface:
@@ -55,8 +56,7 @@ class TrackingManagerConfig:
         self.pool_max_size = kwargs['pool_max_size'] if 'pool_max_size' in kwargs else self.DEFAULT_MAX_POOL_SIZE
 
 
-class TrackingManagerInterface(TrackingManagerCacheStrategyInterface, Thread):
-
+class TrackingManager(TrackingManagerCacheStrategyInterface, Thread):
     BATCH_MAX_SIZE = 2500000
     HIT_EXPIRATION = 14400000
 
@@ -88,6 +88,7 @@ class TrackingManagerInterface(TrackingManagerCacheStrategyInterface, Thread):
 
     def run(self):
         while self.is_running:
+            self.send_batch()
             time.sleep(self.time_interval / 1000.0)
             pass
 
@@ -175,9 +176,11 @@ class TrackingManagerCacheStrategyAbstract(TrackingManagerCacheStrategyInterface
         batch = _Batch()
         while batch.add_child(self.tracking_manager.hitQueue.get()):
             pass
+        if batch.size() > 0:
+            HttpHelper.send_batch(self.tracking_manager.config, batch)
 
 
-class BatchingWithContinuousCacheStrategyInterface(TrackingManagerCacheStrategyAbstract):
+class ContinuousCacheStrategyInterface(TrackingManagerCacheStrategyAbstract):
 
     def __init__(self, tracking_manager):
         TrackingManagerCacheStrategyAbstract.__init__(self)
@@ -202,4 +205,4 @@ class BatchingWithContinuousCacheStrategyInterface(TrackingManagerCacheStrategyA
         pass
 
     def send_batch(self):
-        pass
+        super().send_batch()

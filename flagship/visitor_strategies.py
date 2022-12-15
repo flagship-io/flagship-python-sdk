@@ -88,7 +88,8 @@ class DefaultStrategy(IVisitorStrategy):
     # @param_types_validator(True, Hit)
     def send_hit(self, hit):
         if issubclass(type(hit), Hit):
-            HttpHelper.send_hit(self.visitor, hit)
+            hit._with_visitor_ids(self.visitor._visitor_id, self.visitor._anonymous_id)
+            #HttpHelper.send_hit(self.visitor, hit)
         else:
             log(TAG_TRACKING, LogLevel.ERROR, ERROR_TRACKING_HIT_SUBCLASS)
 

@@ -559,4 +559,7 @@ class _Batch(Hit):
                 return False
         return True
 
+    def size(self):
+        return len(self.hits)
+
 

@@ -60,30 +60,44 @@ class HttpHelper:
         else:
             return False, dict()
 
+    # @staticmethod
+    # def send_hit(visitor, hit):
+    #     # if isinstance(hit, _Activate):
+    #     #     HttpHelper.send_activate(hit)
+    #     # else:
+    #         config = visitor._config
+    #         import flagship
+    #         headers = {
+    #             "x-api-key": config.api_key,
+    #             "x-sdk-client": "python",
+    #             "x-sdk-version": flagship.__version__
+    #         }
+    #         body = {
+    #             "cid": config.env_id
+    #         }
+    #         if visitor._anonymous_id is not None:
+    #             body['cuid'] = visitor._visitor_id
+    #             body['vid'] = visitor._anonymous_id
+    #         else:
+    #             body['vid'] = visitor._visitor_id
+    #             body['cuid'] = None
+    #         body.update(hit.get_data())
+    #         response = requests.post(url=URL_TRACKING, headers=headers, json=body, timeout=config.timeout)
+    #         HttpHelper.log_request(HttpHelper.RequestType.POST, URL_TRACKING, headers, body, response)
+
     @staticmethod
-    def send_hit(visitor, hit):
-        # if isinstance(hit, _Activate):
-        #     HttpHelper.send_activate(hit)
-        # else:
-            config = visitor._config
-            import flagship
-            headers = {
-                "x-api-key": config.api_key,
-                "x-sdk-client": "python",
-                "x-sdk-version": flagship.__version__
-            }
-            body = {
-                "cid": config.env_id
-            }
-            if visitor._anonymous_id is not None:
-                body['cuid'] = visitor._visitor_id
-                body['vid'] = visitor._anonymous_id
-            else:
-                body['vid'] = visitor._visitor_id
-                body['cuid'] = None
-            body.update(hit.get_data())
-            response = requests.post(url=URL_TRACKING, headers=headers, json=body, timeout=config.timeout)
-            HttpHelper.log_request(HttpHelper.RequestType.POST, URL_TRACKING, headers, body, response)
+    def send_batch(config, batch):
+        import flagship
+        headers = {
+            "x-sdk-client": "python",
+            "x-sdk-version": flagship.__version__
+        }
+        body = {
+            "cid": config.env_id
+        }
+        body.update(batch.data())
+        response = requests.post(url=URL_TRACKING, headers=headers, json=body, timeout=config.timeout)
+        HttpHelper.log_request(HttpHelper.RequestType.POST, URL_TRACKING, headers, body, response)
 
     @staticmethod
     def send_activate(visitor, hit):
