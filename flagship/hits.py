@@ -523,6 +523,7 @@ class _Segment(Hit):
 
 
 class _Batch(Hit):
+
     hits = list()
 
     def __init__(self):
@@ -532,9 +533,12 @@ class _Batch(Hit):
     def add_child(self, hit):
         from flagship.tracking_manager import TrackingManagerInterface
         is_timestamp_valid = ((time.time() * 1000) - hit._timestamp) < TrackingManagerInterface.HIT_EXPIRATION
-        if is_timestamp_valid:
+        is_size_valid = (sys.getsizeof(self._data) + sys.getsizeof(hit._data)) < TrackingManagerInterface.BATCH_MAX_SIZE
+        if isinstance(hit, Hit) and is_timestamp_valid and is_size_valid:
             self.hits.append(hit)
             self._data[self._k_batch].append(hit._data)
+            return True
+        return False
 
     def data(self):
         batch_data = []
