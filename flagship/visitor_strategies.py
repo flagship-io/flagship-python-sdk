@@ -89,6 +89,8 @@ class DefaultStrategy(IVisitorStrategy):
     def send_hit(self, hit):
         if issubclass(type(hit), Hit):
             hit._with_visitor_ids(self.visitor._visitor_id, self.visitor._anonymous_id)
+            tracking_manager = self.visitor._configuration_manager.tracking_manager
+            tracking_manager.add_hit(hit)
             #HttpHelper.send_hit(self.visitor, hit)
         else:
             log(TAG_TRACKING, LogLevel.ERROR, ERROR_TRACKING_HIT_SUBCLASS)
@@ -96,7 +98,8 @@ class DefaultStrategy(IVisitorStrategy):
 
     def set_consent(self, consent):
         self.visitor._has_consented = consent
-        HttpHelper.send_hit(self.visitor, _Consent(consent))
+        # HttpHelper.send_hit(self.visitor, _Consent(consent))
+        self.send_hit(_Consent(consent))
 
     def authenticate(self, visitor_id):
         self.visitor._configuration_manager.decision_manager.authenticate(self.visitor, visitor_id)

@@ -57,6 +57,7 @@ from flagship.flagship_context import FlagshipContext
 from flagship.hits import Hit, Screen
 from flagship.log_manager import LogManager
 from flagship.status_listener import StatusListener
+from flagship.tracking_manager import TrackingManagerConfig
 
 
 def init():
@@ -174,6 +175,8 @@ def init():
 ##################################################################
 
 def init_bucketing():
+
+    visitor = None
     class CustomStatusListener(StatusListener):
 
         def __init__(self, function):
@@ -198,12 +201,19 @@ def init_bucketing():
         # time.sleep(5)
         print(visitor.get_flag("slug_variation", 0).value())
 
+        time.sleep(1)
+        visitor.send_hit(Screen("coucou 1"))
+        visitor.send_hit(Screen("coucou 2"))
+        visitor.send_hit(Screen("coucou 3"))
+        visitor.send_hit(Screen("coucou 4"))
+        visitor.send_hit(Screen("coucou 5"))
+
 
     Flagship.start("bkk4s7gcmjcg07fke9dg", "Q6FDmj6F188nh75lhEato2MwoyXDS7y34VrAL4Aa",
-                   Bucketing(timeout=3000, status_listener=CustomStatusListener(create_visitor), polling_interval=10000))
+                   Bucketing(timeout=3000, status_listener=CustomStatusListener(create_visitor), polling_interval=10000,
+                             tracking_manager_config=TrackingManagerConfig(pool_max_size=10, time_interval=5000)))
 #
-#
-    time.sleep(5000)
+    time.sleep(20000)
 
 
 init()

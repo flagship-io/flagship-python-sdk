@@ -5,6 +5,7 @@ from flagship.config import DecisionApi
 from flagship.constants import WARNING_DEFAULT_CONFIG, TAG_INITIALIZATION
 from flagship.decision_mode import DecisionMode
 from flagship.log_manager import LogLevel
+from flagship.tracking_manager import TrackingManager
 
 
 class ConfigManager:
@@ -12,6 +13,7 @@ class ConfigManager:
     def __init__(self):
         self.flagship_config = DecisionApi()
         self.decision_manager = None
+        self.tracking_manager = TrackingManager(self.flagship_config)
 
     def init(self, env_id, api_key, config=None, update_status=None):
         if config is not None:
@@ -25,6 +27,8 @@ class ConfigManager:
             self.decision_manager = ApiManager(self.flagship_config, update_status)
         else:
             self.decision_manager = BucketingManager(self.flagship_config, update_status)
+        self.tracking_manager.init(self.flagship_config)
+        self.tracking_manager.start_running()
         self.decision_manager.start_running()
 
     def is_set(self):
@@ -33,4 +37,7 @@ class ConfigManager:
     def reset(self):
         if self.decision_manager is not None:
             self.decision_manager.stop_running()
+        if self.tracking_manager is not None:
+            self.tracking_manager.stop_running()
         self.flagship_config = DecisionApi()
+

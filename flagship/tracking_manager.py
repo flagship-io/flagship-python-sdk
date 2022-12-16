@@ -1,7 +1,9 @@
 import time
-from Queue import Queue
+try:
+    from Queue import Queue
+except ImportError:
+    from queue import Queue
 from abc import ABCMeta, abstractmethod
-from collections import OrderedDict
 from enum import Enum
 from threading import Thread
 
@@ -9,23 +11,23 @@ from flagship.hits import _Consent, _Batch
 from flagship.http_helper import HttpHelper
 
 
-class TrackingManagerCacheStrategyInterface:
+class TrackingManagerCacheStrategyInterface(object):
     __metaclass__ = ABCMeta
 
     @abstractmethod
-    def addHit(self, hit):
+    def add_hit(self, hit):
         pass
 
     @abstractmethod
-    def addHits(self, hits):
+    def add_hits(self, hits):
         pass
 
     @abstractmethod
-    def deleteHitsById(self, ids):
+    def delete_hits_by_id(self, ids):
         pass
 
     @abstractmethod
-    def deleteHitsByVisitorId(self, visitor_id):
+    def delete_hits_by_visitor_id(self, visitor_id):
         pass
 
     @abstractmethod
@@ -90,22 +92,22 @@ class TrackingManager(TrackingManagerCacheStrategyInterface, Thread):
         while self.is_running:
             self.send_batch()
             time.sleep(self.time_interval / 1000.0)
-            pass
 
     def stop_running(self):
         self.is_running = False
+        # self.hitQueue.close()
 
-    def addHit(self, hit):
-        return self.strategy.addHit(hit)
+    def add_hit(self, hit):
+        return self.strategy.add_hit(hit)
 
-    def addHits(self, hits):
-        return self.strategy.addHits(hits)
+    def add_hits(self, hits):
+        return self.strategy.add_hits(hits)
 
-    def deleteHitsById(self, ids, delete_consent_hits=True):
-        return self.strategy.deleteHitsById(ids)
+    def delete_hits_by_id(self, ids, delete_consent_hits=True):
+        return self.strategy.delete_hits_by_id(ids)
 
-    def deleteHitsByVisitorId(self, visitor_id, delete_consent_hits=True):
-        return self.strategy.deleteHitsByVisitorId(visitor_id)
+    def delete_hits_by_visitor_id(self, visitor_id, delete_consent_hits=True):
+        return self.strategy.delete_hits_by_visitor_id(visitor_id)
 
     def lookup_pool(self):
         return self.strategy.lookup_pool()
@@ -118,32 +120,33 @@ class TrackingManager(TrackingManagerCacheStrategyInterface, Thread):
 
     def get_strategy(self):
         if self.tracking_manager_config.strategy == TrackingManagerStrategy.BATCHING_WITH_CONTINUOUS_CACHING_STRATEGY:
-            return BatchingWithContinuousCacheStrategyInterface(self)
+            return ContinuousCacheStrategy(self)
 
 
 class TrackingManagerCacheStrategyAbstract(TrackingManagerCacheStrategyInterface):
+    __metaclass__ = ABCMeta
 
     def __init__(self, tracking_manager):
         TrackingManagerCacheStrategyInterface.__init__(self)
         self.tracking_manager = tracking_manager
 
-    def addHit(self, hit):
-        if hit.is_valid():
+    def add_hit(self, hit):
+        if hit.check_data_validity():
             self.tracking_manager.hitQueue.put(hit)
             return True
         else:
             # delete hit
-            self.deleteHitsById([hit.id])
+            self.delete_hits_by_id([hit.id])
             return False
 
-    def addHits(self, hits):
+    def add_hits(self, hits):
         success_hits = list()
         for h in hits:
-            if self.addHit(h) is True:
+            if self.add_hit(h) is True:
                 success_hits.append(h)
         return success_hits
 
-    def deleteHitsById(self, ids, delete_consent_hits=True):
+    def delete_hits_by_id(self, ids, delete_consent_hits=True):
         removed_ids = list()
         for item in self.tracking_manager.hitQueue.queue:
             if item.id in ids:
@@ -154,7 +157,7 @@ class TrackingManagerCacheStrategyAbstract(TrackingManagerCacheStrategyInterface
                     self.tracking_manager.hitQueue.queue.remove(item)
         return removed_ids
 
-    def deleteHitsByVisitorId(self, visitor_id, delete_consent_hits=True):
+    def delete_hits_by_visitor_id(self, visitor_id, delete_consent_hits=True):
         removed_ids = list()
         for item in self.tracking_manager.hitQueue.queue:
             if item.visitor_id == visitor_id:
@@ -172,30 +175,33 @@ class TrackingManagerCacheStrategyAbstract(TrackingManagerCacheStrategyInterface
         # do nothing
         pass
 
+    @abstractmethod
     def send_batch(self):
         batch = _Batch()
-        while batch.add_child(self.tracking_manager.hitQueue.get()):
-            pass
+        while not self.tracking_manager.hitQueue.empty():
+            h = self.tracking_manager.hitQueue.get(block=True)
+            batch.add_child(h)
+            self.tracking_manager.hitQueue.task_done()
         if batch.size() > 0:
             HttpHelper.send_batch(self.tracking_manager.config, batch)
 
 
-class ContinuousCacheStrategyInterface(TrackingManagerCacheStrategyAbstract):
+class ContinuousCacheStrategy(TrackingManagerCacheStrategyAbstract):
 
     def __init__(self, tracking_manager):
-        TrackingManagerCacheStrategyAbstract.__init__(self)
+        TrackingManagerCacheStrategyAbstract.__init__(self, tracking_manager)
         self.tracking_manager = tracking_manager
 
-    def addHit(self, hit):
+    def add_hit(self, hit):
+        TrackingManagerCacheStrategyAbstract.add_hit(self, hit)
+
+    def add_hits(self, hits):
         pass
 
-    def addHits(self, hits):
+    def delete_hits_by_id(self, ids, delete_consent_hits=True):
         pass
 
-    def deleteHitsById(self, ids, delete_consent_hits=True):
-        pass
-
-    def deleteHitsByVisitorId(self, visitor_id, delete_consent_hits=True):
+    def delete_hits_by_visitor_id(self, visitor_id, delete_consent_hits=True):
         pass
 
     def lookup_pool(self):
@@ -205,4 +211,4 @@ class ContinuousCacheStrategyInterface(TrackingManagerCacheStrategyAbstract):
         pass
 
     def send_batch(self):
-        super().send_batch()
+        TrackingManagerCacheStrategyAbstract.send_batch(self)

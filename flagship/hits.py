@@ -176,7 +176,7 @@ class Page(Hit):
 
     def check_data_validity(self):
         from urlparse import urlparse
-        if (super().check_data_validity() is False or
+        if (Hit.check_data_validity(self) is False or
                 self._data[self._k_ds] != 'APP' or
                 not bool(self._data[self._k_origin]) or
                 urlparse(self._data[self._k_origin]).scheme is False or
@@ -200,7 +200,7 @@ class Screen(Hit):
         self._data.update(data)
 
     def check_data_validity(self):
-        if (super().check_data_validity() is False or
+        if (Hit.check_data_validity(self) is False or
                 self._data[self._k_ds] != 'APP' or
                 not bool(self._data[self._k_origin])):
             return False
@@ -259,7 +259,7 @@ class Event(Hit):
         return self
 
     def check_data_validity(self):
-        if (super().check_data_validity() is False) or \
+        if (Hit.check_data_validity(self) is False) or \
                 (self._data[self._k_ds] != 'APP') or \
                 not bool(self._data[self._k_event_category]) or \
                 not bool(self._data[self._k_event_action]):
@@ -335,11 +335,11 @@ class Item(Hit):
         return self
 
     def check_data_validity(self):
-        if (super().check_data_validity() is False) or \
-                (self._data[self._k_ds] != 'APP') or \
-                not bool(self._data[self._k_transaction_id]) or \
-                not bool(self._data[self._k_item_name]) or \
-                not bool(self._data[self._k_item_code]):
+        if (Hit.check_data_validity(self) is False or
+                self._data[self._k_ds] != 'APP' or
+                not bool(self._data[self._k_transaction_id]) or
+                not bool(self._data[self._k_item_name]) or
+                not bool(self._data[self._k_item_code])):
             return False
         return True
 
@@ -458,10 +458,10 @@ class Transaction(Hit):
         return self
 
     def check_data_validity(self):
-        if (super().check_data_validity() is False) or \
-                (self._data[self._k_ds] != 'APP') or \
-                not bool(self._data[self._k_transaction_id]) or \
-                not bool(self._data[self._k_transaction_affiliation]):
+        if (Hit.check_data_validity(self) is False or
+                self._data[self._k_ds] != 'APP' or
+                not bool(self._data[self._k_transaction_id]) or
+                not bool(self._data[self._k_transaction_affiliation])):
             return False
         return True
 
@@ -478,7 +478,7 @@ class _Activate(Hit):
         # self._data.update(data)
 
     def check_data_validity(self):
-        if (super().check_data_validity() is False or
+        if (Hit.check_data_validity(self) is False or
                 self._data[self._k_ds] != 'APP' or
                 not bool(self._data[self._k_variation_group_id]) or
                 not bool(self._data[self._k_variation_id])):
@@ -496,7 +496,7 @@ class _Consent(Event):
         self._data.update(data)
 
     def check_data_validity(self):
-        if (super().check_data_validity() is False or
+        if (Hit.check_data_validity(self) is False or
                 not bool(self._data[self._k_event_label])):
             return False
         return True
@@ -513,7 +513,7 @@ class _Segment(Hit):
         self._data.update(data)
 
     def check_data_validity(self):
-        if (super().check_data_validity() is False or
+        if (Hit.check_data_validity(self) is False or
                 self._data[self._k_ds] != 'APP' or
                 not bool(self._data[self._k_visitor_id]) or
                 self._data[self._k_segment_list] is None or
@@ -521,19 +521,17 @@ class _Segment(Hit):
             return False
         return True
 
-
 class _Batch(Hit):
-
-    hits = list()
 
     def __init__(self):
         Hit.__init__(self, HitType.BATCH)
+        self.hits = list()
         self._data[self._k_batch] = []
 
     def add_child(self, hit):
-        from flagship.tracking_manager import TrackingManagerInterface
-        is_timestamp_valid = ((time.time() * 1000) - hit._timestamp) < TrackingManagerInterface.HIT_EXPIRATION
-        is_size_valid = (sys.getsizeof(self._data) + sys.getsizeof(hit._data)) < TrackingManagerInterface.BATCH_MAX_SIZE
+        from flagship.tracking_manager import TrackingManager
+        is_timestamp_valid = ((time.time() * 1000) - hit._timestamp) < TrackingManager.HIT_EXPIRATION
+        is_size_valid = (sys.getsizeof(self._data) + sys.getsizeof(hit._data)) < TrackingManager.BATCH_MAX_SIZE
         if isinstance(hit, Hit) and is_timestamp_valid and is_size_valid:
             self.hits.append(hit)
             self._data[self._k_batch].append(hit._data)
@@ -546,9 +544,10 @@ class _Batch(Hit):
             h._data[self._k_queue_time] = ((time.time() * 1000) - h._timestamp)
             batch_data.append(h._data)
         self._data[self._k_batch] = batch_data
+        return self._data
 
     def check_data_validity(self):
-        if super().check_data_validity is False:
+        if Hit.check_data_validity(self) is False:
             return False
         for h in self.hits:
             if h.check_data_validity is False:
