@@ -63,12 +63,12 @@ class Hit(object):
 
     @param_types_validator(True, HitType)
     def __init__(self, hit_type):
-        self.hit_type = hit_type
-        self._hit_id = uuid.uuid4()
-        self._visitor_id = None
-        self._anonymous_id = None
-        self._timestamp = time.time() * 1000
-        self._data = {
+        self.type = hit_type
+        self.id = uuid.uuid4()
+        self.visitor_id = None
+        self.anonymous_id = None
+        self.timestamp = int(time.time()) * 1000
+        self.hit_data = {
             self._k_type: hit_type.value,
             self._k_ds: 'APP',
             # self._k_timestamp: int(round(time.time() * 1000))
@@ -84,7 +84,7 @@ class Hit(object):
         :param ip: ip
         :return: Hit
         """
-        self._data[self._k_ip] = ip
+        self.hit_data[self._k_ip] = ip
         return self
 
     @param_types_validator(True, int, int)
@@ -97,7 +97,7 @@ class Hit(object):
         :return: Hit
         """
         if width > 0 and height > 0:
-            self._data[self._k_resolution] = '{}x{}'.format(width, height)
+            self.hit_data[self._k_resolution] = '{}x{}'.format(width, height)
         return self
 
     @param_types_validator(True, int)
@@ -109,7 +109,7 @@ class Hit(object):
         :param number: session number.
         :return: Hit
         """
-        self._data[self._k_session] = number
+        self.hit_data[self._k_session] = number
         return self
 
     @param_types_validator(True, str)
@@ -120,43 +120,43 @@ class Hit(object):
         :param locale: locale of the user's device. Max length 20 Bytes.
         :return: Hit
         """
-        self._data[self._k_locale] = locale
+        self.hit_data[self._k_locale] = locale
         return self
 
     def _with_hit_id(self, hit_id):
-        self._hit_id = hit_id
+        self.id = hit_id
         return self
 
     def _with_visitor_ids(self, visitor_id, anonymous_id):
-        self._visitor_id = visitor_id
-        self._anonymous_id = anonymous_id
+        self.visitor_id = visitor_id
+        self.anonymous_id = anonymous_id
         if anonymous_id is not None:
-            self._data[self._k_customer_visitor_id] = visitor_id
-            self._data[self._k_visitor_id] = anonymous_id
+            self.hit_data[self._k_customer_visitor_id] = visitor_id
+            self.hit_data[self._k_visitor_id] = anonymous_id
         else:
-            self._data[self._k_visitor_id] = visitor_id
-            self._data[self._k_customer_visitor_id] = None
+            self.hit_data[self._k_visitor_id] = visitor_id
+            self.hit_data[self._k_customer_visitor_id] = None
         return self
 
     def _with_timestamp(self, timestamp):
-        self._timestamp = timestamp
+        self.timestamp = timestamp
         return self
 
     def data(self):
-        return self._data
+        return self.hit_data
 
     def size(self):
-        return sys.getsizeof(self._data)
+        return sys.getsizeof(self.hit_data)
 
     def check_data_validity(self):
-        if (not bool(self._data[self._k_type]) or
-                not bool(self._data[self._k_type]) or
-                not bool(self._data[self._k_type])):
+        if (not bool(self.hit_data[self._k_type]) or
+                not bool(self.hit_data[self._k_type]) or
+                not bool(self.hit_data[self._k_type])):
             return False
         return True
 
     def __str__(self):
-        return 'Hit : ' + json.dumps(self._data)
+        return 'Hit : ' + json.dumps(self.hit_data)
 
 
 class Page(Hit):
@@ -172,15 +172,15 @@ class Page(Hit):
         data = {
             self._k_origin: origin
         }
-        self._data.update(data)
+        self.hit_data.update(data)
 
     def check_data_validity(self):
         from urlparse import urlparse
-        if (Hit.check_data_validity(self) is False or
-                self._data[self._k_ds] != 'APP' or
-                not bool(self._data[self._k_origin]) or
-                urlparse(self._data[self._k_origin]).scheme is False or
-                urlparse(self._data[self._k_origin]).netloc is False):
+        if ((Hit.check_data_validity(self) is False) or
+                (self.hit_data[self._k_ds] != 'APP') or
+                (not bool(self.hit_data[self._k_origin])) or
+                (bool(urlparse(self.hit_data[self._k_origin]).scheme) is False) or
+                (bool(urlparse(self.hit_data[self._k_origin]).netloc) is False)):
             return False
         return True
 
@@ -197,12 +197,12 @@ class Screen(Hit):
         data = {
             self._k_origin: origin
         }
-        self._data.update(data)
+        self.hit_data.update(data)
 
     def check_data_validity(self):
-        if (Hit.check_data_validity(self) is False or
-                self._data[self._k_ds] != 'APP' or
-                not bool(self._data[self._k_origin])):
+        if ((Hit.check_data_validity(self) is False) or
+                (self.hit_data[self._k_ds] != 'APP') or
+                (not bool(self.hit_data[self._k_origin]))):
             return False
         return True
 
@@ -229,7 +229,7 @@ class Event(Hit):
                 self._k_event_category: category.value,
                 self._k_event_action: action
             }
-            self._data.update(data)
+            self.hit_data.update(data)
         else:
             pass
 
@@ -242,7 +242,7 @@ class Event(Hit):
         :param label: event description. Max length 500 Bytes.
         :return: Page
         """
-        self._data[self._k_event_label] = label
+        self.hit_data[self._k_event_label] = label
         return self
 
     @param_types_validator(True, int)
@@ -255,14 +255,14 @@ class Event(Hit):
         """
         t = type(value)
         if t == int or t == str or t == float or t == bool:
-            self._data[self._k_event_value] = value
+            self.hit_data[self._k_event_value] = value
         return self
 
     def check_data_validity(self):
-        if (Hit.check_data_validity(self) is False) or \
-                (self._data[self._k_ds] != 'APP') or \
-                not bool(self._data[self._k_event_category]) or \
-                not bool(self._data[self._k_event_action]):
+        if ((Hit.check_data_validity(self) is False) or
+                (self.hit_data[self._k_ds] != 'APP') or
+                (not bool(self.hit_data[self._k_event_category])) or
+                (not bool(self.hit_data[self._k_event_action]))):
             return False
         return True
 
@@ -283,7 +283,7 @@ class Item(Hit):
             self._k_item_name: product_name,
             self._k_item_code: product_sku
         }
-        self._data.update(data)
+        self.hit_data.update(data)
 
     @param_types_validator(True, [int, float])
     def with_price(self, price):
@@ -294,7 +294,7 @@ class Item(Hit):
         :param price: item price.
         :return: Item
         """
-        self._data[self._k_item_price] = price
+        self.hit_data[self._k_item_price] = price
         return self
 
     @param_types_validator(True, int)
@@ -306,7 +306,7 @@ class Item(Hit):
         :param item_quantity:
         :return: Item
         """
-        self._data[self._k_item_quantity] = item_quantity
+        self.hit_data[self._k_item_quantity] = item_quantity
         return self
 
     # @exception_handler()
@@ -331,15 +331,15 @@ class Item(Hit):
         :param category: category name. Max length 500 Bytes.
         :return: Item
         """
-        self._data[self._k_item_category] = category
+        self.hit_data[self._k_item_category] = category
         return self
 
     def check_data_validity(self):
-        if (Hit.check_data_validity(self) is False or
-                self._data[self._k_ds] != 'APP' or
-                not bool(self._data[self._k_transaction_id]) or
-                not bool(self._data[self._k_item_name]) or
-                not bool(self._data[self._k_item_code])):
+        if ((Hit.check_data_validity(self) is False) or
+                (self.hit_data[self._k_ds] != 'APP') or
+                (not bool(self.hit_data[self._k_transaction_id])) or
+                (not bool(self.hit_data[self._k_item_name])) or
+                (not bool(self.hit_data[self._k_item_code]))):
             return False
         return True
 
@@ -359,7 +359,7 @@ class Transaction(Hit):
             self._k_transaction_id: transaction_id,
             self._k_transaction_affiliation: affiliation
         }
-        self._data.update(data)
+        self.hit_data.update(data)
 
     @param_types_validator(True, [int, float])
     def with_total_revenue(self, revenue):
@@ -371,7 +371,7 @@ class Transaction(Hit):
         :param revenue: total revenue.
         :return: Transaction
         """
-        self._data[self._k_transaction_revenue] = revenue
+        self.hit_data[self._k_transaction_revenue] = revenue
         return self
 
     @param_types_validator(True, [int, float])
@@ -383,7 +383,7 @@ class Transaction(Hit):
         :param shipping: total.
         :return: Transaction
         """
-        self._data[self._k_transaction_shipping] = shipping
+        self.hit_data[self._k_transaction_shipping] = shipping
         return self
 
     @param_types_validator(True, str)
@@ -395,7 +395,7 @@ class Transaction(Hit):
         :param shipping_method: shipping method. Max length 10 Bytes.
         :return: Transaction
         """
-        self._data[self._k_transaction_shipping_method] = shipping_method
+        self.hit_data[self._k_transaction_shipping_method] = shipping_method
         return self
 
     @param_types_validator(True, [int, float])
@@ -407,7 +407,7 @@ class Transaction(Hit):
         :param taxes: total taxes.
         :return: Transaction
         """
-        self._data[self._k_transaction_tax] = taxes
+        self.hit_data[self._k_transaction_tax] = taxes
         return self
 
     @param_types_validator(True, str)
@@ -419,7 +419,7 @@ class Transaction(Hit):
         :param currency: ISO 4217 currency code. Max length 10 Bytes.
         :return: Transaction
         """
-        self._data[self._k_transaction_currency] = currency
+        self.hit_data[self._k_transaction_currency] = currency
         return self
 
     @param_types_validator(True, str)
@@ -431,7 +431,7 @@ class Transaction(Hit):
         :param payment: payment method. Max 10 Bytes.
         :return: Transaction
         """
-        self._data[self._k_transaction_payment_method] = payment
+        self.hit_data[self._k_transaction_payment_method] = payment
         return self
 
     @param_types_validator(True, int)
@@ -442,7 +442,7 @@ class Transaction(Hit):
         :param item_nb: number of items.
         :return: Transaction
         """
-        self._data[self._k_transaction_item_count] = item_nb
+        self.hit_data[self._k_transaction_item_count] = item_nb
         return self
 
     @param_types_validator(True, str)
@@ -454,14 +454,14 @@ class Transaction(Hit):
         :param coupon: code. Max length 10 Bytes.
         :return: Transaction
         """
-        self._data[self._k_transaction_coupon] = coupon
+        self.hit_data[self._k_transaction_coupon] = coupon
         return self
 
     def check_data_validity(self):
-        if (Hit.check_data_validity(self) is False or
-                self._data[self._k_ds] != 'APP' or
-                not bool(self._data[self._k_transaction_id]) or
-                not bool(self._data[self._k_transaction_affiliation])):
+        if ((Hit.check_data_validity(self) is False) or
+                (self.hit_data[self._k_ds] != 'APP') or
+                (not bool(self.hit_data[self._k_transaction_id])) or
+                (not bool(self.hit_data[self._k_transaction_affiliation]))):
             return False
         return True
 
@@ -471,17 +471,17 @@ class _Activate(Hit):
     def __init__(self, variation_group_id, variation_id):
         # type: (str, str) -> None
         self.hit_type = HitType.ACTIVATE
-        self._data = {
+        self.hit_data = {
             self._k_variation_group_id: variation_group_id,
             self._k_variation_id: variation_id
         }
         # self._data.update(data)
 
     def check_data_validity(self):
-        if (Hit.check_data_validity(self) is False or
-                self._data[self._k_ds] != 'APP' or
-                not bool(self._data[self._k_variation_group_id]) or
-                not bool(self._data[self._k_variation_id])):
+        if ((Hit.check_data_validity(self) is False) or
+                (self.hit_data[self._k_ds] != 'APP') or
+                (not bool(self.hit_data[self._k_variation_group_id])) or
+                (not bool(self.hit_data[self._k_variation_id]))):
             return False
         return True
 
@@ -493,11 +493,11 @@ class _Consent(Event):
         data = {
             self._k_event_label: 'python:{}'.format(str(consent).lower())
         }
-        self._data.update(data)
+        self.hit_data.update(data)
 
     def check_data_validity(self):
-        if (Hit.check_data_validity(self) is False or
-                not bool(self._data[self._k_event_label])):
+        if ((Hit.check_data_validity(self) is False) or
+                (not bool(self.hit_data[self._k_event_label]))):
             return False
         return True
 
@@ -510,14 +510,14 @@ class _Segment(Hit):
             self._k_visitor_id: visitor_id,
             self._k_segment_list: context
         }
-        self._data.update(data)
+        self.hit_data.update(data)
 
     def check_data_validity(self):
-        if (Hit.check_data_validity(self) is False or
-                self._data[self._k_ds] != 'APP' or
-                not bool(self._data[self._k_visitor_id]) or
-                self._data[self._k_segment_list] is None or
-                len(self._data[self._k_segment_list]) < 0):
+        if ((Hit.check_data_validity(self) is False) or
+                (self.hit_data[self._k_ds] != 'APP') or
+                (not bool(self.hit_data[self._k_visitor_id])) or
+                (self.hit_data[self._k_segment_list] is None) or
+                (len(self.hit_data[self._k_segment_list]) < 0)):
             return False
         return True
 
@@ -526,25 +526,25 @@ class _Batch(Hit):
     def __init__(self):
         Hit.__init__(self, HitType.BATCH)
         self.hits = list()
-        self._data[self._k_batch] = []
+        self.hit_data[self._k_batch] = []
 
     def add_child(self, hit):
         from flagship.tracking_manager import TrackingManager
-        is_timestamp_valid = ((time.time() * 1000) - hit._timestamp) < TrackingManager.HIT_EXPIRATION
-        is_size_valid = (sys.getsizeof(self._data) + sys.getsizeof(hit._data)) < TrackingManager.BATCH_MAX_SIZE
+        is_timestamp_valid = ((int(time.time()) * 1000) - hit.timestamp) < TrackingManager.HIT_EXPIRATION
+        is_size_valid = (sys.getsizeof(self.hit_data) + sys.getsizeof(hit.hit_data)) < TrackingManager.BATCH_MAX_SIZE
         if isinstance(hit, Hit) and is_timestamp_valid and is_size_valid:
             self.hits.append(hit)
-            self._data[self._k_batch].append(hit._data)
+            self.hit_data[self._k_batch].append(hit.hit_data)
             return True
         return False
 
     def data(self):
         batch_data = []
         for h in self.hits:
-            h._data[self._k_queue_time] = ((time.time() * 1000) - h._timestamp)
-            batch_data.append(h._data)
-        self._data[self._k_batch] = batch_data
-        return self._data
+            h.hit_data[self._k_queue_time] = (int((time.time()) * 1000) - h.timestamp)
+            batch_data.append(h.hit_data)
+        self.hit_data[self._k_batch] = batch_data
+        return self.hit_data
 
     def check_data_validity(self):
         if Hit.check_data_validity(self) is False:
@@ -552,7 +552,7 @@ class _Batch(Hit):
         for h in self.hits:
             if h.check_data_validity is False:
                 return False
-            if h._data[self._k_queue_time] is None:
+            if h.hit_data[self._k_queue_time] is None:
                 return False
             if len(self.hits) == 0:
                 return False

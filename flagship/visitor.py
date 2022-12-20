@@ -43,14 +43,14 @@ class Visitor(IVisitorStrategy):
         super(Visitor, self).__init__(self)
         self._configuration_manager = configuration_manager
         self._config = configuration_manager.flagship_config
-        self._is_authenticated = self._get_arg(kwargs, 'authenticated', bool, False)
-        self._visitor_id = visitor_id
-        self._anonymous_id = str(uuid.uuid4()) if self._is_authenticated is True else None
+        self.is_authenticated = self._get_arg(kwargs, 'authenticated', bool, False)
+        self.visitor_id = visitor_id
+        self.anonymous_id = str(uuid.uuid4()) if self.is_authenticated is True else None
         from flagship.flagship_context import FlagshipContext
-        self._context = FlagshipContext.load()
+        self.context = FlagshipContext.load()
         self._modifications = dict()
-        self._has_consented = self._get_arg(kwargs, 'consent', bool, True)
-        self.set_consent(self._has_consented)
+        self.has_consented = self._get_arg(kwargs, 'consent', bool, True)
+        self.set_consent(self.has_consented)
         self.update_context(self._get_arg(kwargs, 'context', dict, {}))
 
     # @param_types_validator(True, str, [int, float, str])
@@ -59,23 +59,23 @@ class Visitor(IVisitorStrategy):
         existing_context = FlagshipContext.exists(key)
         if existing_context:
             if FlagshipContext.is_valid(self, existing_context, value, True):
-                self._context[existing_context.value[0]] = value
+                self.context[existing_context.value[0]] = value
         else:
             if key is None or len(str(key)) <= 0 or (not isinstance(key, str) and not isinstance(key, FlagshipContext)):
-                log(TAG_UPDATE_CONTEXT, LogLevel.ERROR, "[" + TAG_VISITOR.format(self._visitor_id) + "] " +
+                log(TAG_UPDATE_CONTEXT, LogLevel.ERROR, "[" + TAG_VISITOR.format(self.visitor_id) + "] " +
                     ERROR_UPDATE_CONTEXT_EMPTY_KEY)
             elif not isinstance(value, str) and not isinstance(value, int) and not isinstance(value, float) \
                     and not isinstance(value, bool):
-                log(TAG_UPDATE_CONTEXT, LogLevel.ERROR, "[" + TAG_VISITOR.format(self._visitor_id) + "] " +
+                log(TAG_UPDATE_CONTEXT, LogLevel.ERROR, "[" + TAG_VISITOR.format(self.visitor_id) + "] " +
                     ERROR_UPDATE_CONTEXT_TYPE.format(key, "str, int, float, bool"))
             else:
-                self._context[key] = value
+                self.context[key] = value
 
     def _expose_flag(self, key):
         try:
             modification = self._get_modification(key)
             if modification is None:
-                raise FlagExpositionNotFoundException(self._visitor_id, key)
+                raise FlagExpositionNotFoundException(self.visitor_id, key)
             HttpHelper.send_activate(self, _Activate(modification.variation_group_id, modification.variation_id))
         except Exception as e:
             log_exception(TAG_FLAG_USER_EXPOSITION, e, traceback.format_exc())
@@ -89,9 +89,9 @@ class Visitor(IVisitorStrategy):
         try:
             modification = self._get_modification(key)
             if modification is None:
-                raise FlagNotFoundException(self._visitor_id, key)
+                raise FlagNotFoundException(self.visitor_id, key)
             if not isinstance(default, type(modification.value)):
-                raise FlagTypeException(self._visitor_id, key)
+                raise FlagTypeException(self.visitor_id, key)
             value = modification.value if modification is not None else default
             return value
         except Exception as e:
@@ -104,7 +104,7 @@ class Visitor(IVisitorStrategy):
             return NotReadyStrategy(visitor=self)
         elif flagship.Flagship.status() == Status.PANIC:
             return PanicStrategy(visitor=self)
-        elif self._has_consented is False:
+        elif self.has_consented is False:
             return NoConsentStrategy(visitor=self)
         else:
             return DefaultStrategy(visitor=self)
@@ -114,11 +114,11 @@ class Visitor(IVisitorStrategy):
 
     def __str__(self):
         return pretty_dict({
-            "visitor_id": self._visitor_id,
-            "anonymous_id": self._anonymous_id,
-            "has_consented": self._has_consented,
-            "is_authenticated": self._is_authenticated,
-            "context": self._context,
+            "visitor_id": self.visitor_id,
+            "anonymous_id": self.anonymous_id,
+            "has_consented": self.has_consented,
+            "is_authenticated": self.is_authenticated,
+            "context": self.context,
             "flags": self._flags_to_dict()
         })
 

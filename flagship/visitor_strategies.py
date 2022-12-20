@@ -68,7 +68,7 @@ class DefaultStrategy(IVisitorStrategy):
         elif isinstance(context, dict):
             for k, v in context.items():
                 self.visitor._update_context(k, v)
-        log(TAG_UPDATE_CONTEXT, LogLevel.DEBUG, "[" + TAG_VISITOR.format(self.visitor._visitor_id) + "] " +
+        log(TAG_UPDATE_CONTEXT, LogLevel.DEBUG, "[" + TAG_VISITOR.format(self.visitor.visitor_id) + "] " +
             DEBUG_CONTEXT.format(self.visitor.__str__()))
 
     def fetch_flags(self):
@@ -79,7 +79,7 @@ class DefaultStrategy(IVisitorStrategy):
             from flagship import Flagship
             if result is True and Flagship.status() is not Status.PANIC:
                 self.visitor._modifications.update(modifications)
-                log(TAG_FETCH_FLAGS, LogLevel.DEBUG, "[" + TAG_VISITOR.format(self.visitor._visitor_id) + "] " +
+                log(TAG_FETCH_FLAGS, LogLevel.DEBUG, "[" + TAG_VISITOR.format(self.visitor.visitor_id) + "] " +
                     DEBUG_FETCH_FLAGS.format(self.visitor.__str__()))
 
     def get_flag(self, key, default):
@@ -88,7 +88,7 @@ class DefaultStrategy(IVisitorStrategy):
     # @param_types_validator(True, Hit)
     def send_hit(self, hit):
         if issubclass(type(hit), Hit):
-            hit._with_visitor_ids(self.visitor._visitor_id, self.visitor._anonymous_id)
+            hit._with_visitor_ids(self.visitor.visitor_id, self.visitor.anonymous_id)
             tracking_manager = self.visitor._configuration_manager.tracking_manager
             tracking_manager.add_hit(hit)
             #HttpHelper.send_hit(self.visitor, hit)
@@ -97,7 +97,7 @@ class DefaultStrategy(IVisitorStrategy):
 
 
     def set_consent(self, consent):
-        self.visitor._has_consented = consent
+        self.visitor.has_consented = consent
         # HttpHelper.send_hit(self.visitor, _Consent(consent))
         self.send_hit(_Consent(consent))
 
@@ -129,7 +129,7 @@ class PanicStrategy(DefaultStrategy):
             ERROR_METHOD_DEACTIVATED.format("send_hit()", ERROR_METHOD_DEACTIVATED_PANIC))
 
     def set_consent(self, consent):
-        self.visitor._has_consented = consent
+        self.visitor.has_consented = consent
 
     def authenticate(self, visitor_id):
         log(TAG_AUTHENTICATE, LogLevel.ERROR,
@@ -148,7 +148,7 @@ class NoConsentStrategy(DefaultStrategy):
     def send_hit(self, hit):
         log(TAG_TRACKING, LogLevel.ERROR,
             ERROR_METHOD_DEACTIVATED.format("send_hit()", ERROR_METHOD_DEACTIVATED_NO_CONSENT
-                                            .format(self.visitor._visitor_id)))
+                                            .format(self.visitor.visitor_id)))
 
 
 class NotReadyStrategy(DefaultStrategy):
@@ -159,36 +159,36 @@ class NotReadyStrategy(DefaultStrategy):
     def get_flag(self, key, default):
         log(TAG_TRACKING, LogLevel.ERROR,
             ERROR_METHOD_DEACTIVATED.format("get_flag()", ERROR_METHOD_DEACTIVATED_NOT_READY
-                                            .format(self.visitor._visitor_id)))
+                                            .format(self.visitor.visitor_id)))
         return super(NotReadyStrategy, self).get_flag(key, default)
 
     def send_hit(self, hit):
         log(TAG_TRACKING, LogLevel.ERROR,
             ERROR_METHOD_DEACTIVATED.format("send_hit()", ERROR_METHOD_DEACTIVATED_NOT_READY
-                                            .format(self.visitor._visitor_id)))
+                                            .format(self.visitor.visitor_id)))
 
     def update_context(self, context):
         log(TAG_TRACKING, LogLevel.ERROR,
             ERROR_METHOD_DEACTIVATED.format("update_context()", ERROR_METHOD_DEACTIVATED_NOT_READY
-                                            .format(self.visitor._visitor_id)))
+                                            .format(self.visitor.visitor_id)))
 
     def fetch_flags(self):
         log(TAG_TRACKING, LogLevel.ERROR,
             ERROR_METHOD_DEACTIVATED.format("fetch_flags()", ERROR_METHOD_DEACTIVATED_NOT_READY
-                                            .format(self.visitor._visitor_id)))
+                                            .format(self.visitor.visitor_id)))
 
     def set_consent(self, consent):
         log(TAG_TRACKING, LogLevel.ERROR,
             ERROR_METHOD_DEACTIVATED.format("set_consent()", ERROR_METHOD_DEACTIVATED_NOT_READY
-                                            .format(self.visitor._visitor_id)))
+                                            .format(self.visitor.visitor_id)))
 
     def authenticate(self, visitor_id):
         log(TAG_TRACKING, LogLevel.ERROR,
             ERROR_METHOD_DEACTIVATED.format("authenticate()", ERROR_METHOD_DEACTIVATED_NOT_READY
-                                            .format(self.visitor._visitor_id)))
+                                            .format(self.visitor.visitor_id)))
 
     def unauthenticate(self):
         log(TAG_TRACKING, LogLevel.ERROR,
             ERROR_METHOD_DEACTIVATED.format("unauthenticate()", ERROR_METHOD_DEACTIVATED_NOT_READY
-                                            .format(self.visitor._visitor_id)))
+                                            .format(self.visitor.visitor_id)))
 

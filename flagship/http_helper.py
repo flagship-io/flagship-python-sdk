@@ -37,7 +37,7 @@ class HttpHelper:
     def send_campaign_request(visitor):
         config = visitor._configuration_manager.flagship_config
         url = URL_DECISION_API + config.env_id + URL_CAMPAIGNS + \
-              (URL_CONTEXT_PARAM if visitor._has_consented is False else "")
+              (URL_CONTEXT_PARAM if visitor.has_consented is False else "")
         # url = URL_DECISION_API + config.env_id + URL_CAMPAIGNS
         import flagship
         headers = {
@@ -46,10 +46,10 @@ class HttpHelper:
             "x-sdk-version": flagship.__version__
         }
         content = {
-            "visitorId": visitor._visitor_id,
-            "anonymousId": visitor._anonymous_id,
+            "visitorId": visitor.visitor_id,
+            "anonymousId": visitor.anonymous_id,
             "trigger_hit": False,
-            "context": visitor._context
+            "context": visitor.context
 
         }
         success, response = HttpHelper.send_http_request(HttpHelper.RequestType.POST, url, headers, content,
@@ -111,13 +111,13 @@ class HttpHelper:
         body = {
             "cid": config.env_id,
         }
-        if visitor._anonymous_id is not None:
-            body['aid'] = visitor._anonymous_id
-            body['vid'] = visitor._visitor_id
+        if visitor.anonymous_id is not None:
+            body['aid'] = visitor.anonymous_id
+            body['vid'] = visitor.visitor_id
         else:
-            body['vid'] = visitor._visitor_id
+            body['vid'] = visitor.visitor_id
             body['aid'] = None
-        body.update(hit.get_data())
+        body.update(hit.data())
         response = requests.post(url=URL_ACTIVATE, headers=headers, json=body, timeout=config.timeout)
         HttpHelper.log_request(HttpHelper.RequestType.POST, URL_ACTIVATE, headers, body, response)
 
@@ -130,7 +130,7 @@ class HttpHelper:
             'x-sdk-client': 'android',
             'x-sdk-version': flagship.__version__
         }
-        body = hit.get_data()
+        body = hit.data()
         response = requests.post(url=endpoint, headers=headers, json=body, timeout=visitor._config.timeout)
         HttpHelper.log_request(HttpHelper.RequestType.POST, endpoint, headers, body, response)
     @staticmethod

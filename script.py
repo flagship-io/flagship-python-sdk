@@ -54,7 +54,7 @@ import flagship.utils
 from flagship import *
 from flagship.config import DecisionApi, Bucketing
 from flagship.flagship_context import FlagshipContext
-from flagship.hits import Hit, Screen
+from flagship.hits import Hit, Screen, Transaction, Event, EventCategory, Item, Page
 from flagship.log_manager import LogManager
 from flagship.status_listener import StatusListener
 from flagship.tracking_manager import TrackingManagerConfig
@@ -199,7 +199,7 @@ def init_bucketing():
         })
         visitor.fetch_flags()
         # time.sleep(5)
-        print(visitor.get_flag("slug_variation", 0).value())
+        print(visitor.get_flag("visitorIdColor", "default").value())
 
         time.sleep(1)
         visitor.send_hit(Screen("coucou 1"))
@@ -207,6 +207,19 @@ def init_bucketing():
         visitor.send_hit(Screen("coucou 3"))
         visitor.send_hit(Screen("coucou 4"))
         visitor.send_hit(Screen("coucou 5"))
+        time.sleep(1)
+        visitor.send_hit(Transaction("TID_92470", "AFFILIATION"))
+        visitor.send_hit(Transaction("TID_04444", "AFFILIATION2"))
+        time.sleep(1)
+        visitor.send_hit(Event(EventCategory.ACTION_TRACKING, "ACTION 1"))
+        visitor.send_hit(Event(EventCategory.ACTION_TRACKING, "ACTION 2"))
+        visitor.send_hit(Event(EventCategory.ACTION_TRACKING, "ACTION 3"))
+        visitor.send_hit(Event(EventCategory.ACTION_TRACKING, "ACTION 4"))
+        visitor.send_hit(Event(EventCategory.ACTION_TRACKING, "ACTION 5"))
+        time.sleep(4)
+        visitor.send_hit(Item("TID_92470", "NAME", "SKU"))
+        visitor.send_hit(Page("Not supposed to work"))
+        visitor.send_hit(Page("https://www.supposed.towork.com"))
 
 
     Flagship.start("bkk4s7gcmjcg07fke9dg", "Q6FDmj6F188nh75lhEato2MwoyXDS7y34VrAL4Aa",

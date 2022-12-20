@@ -55,8 +55,8 @@ class BucketingManager(DecisionManager, Thread):
     def run_task(self):
         try:
             self.update_bucketing_file()
-        except:
-            log_exception(TAG_BUCKETING, LogLevel.ERROR, traceback.format_exc())
+        except Exception as e:
+            log_exception(TAG_BUCKETING, e, traceback.format_exc())
 
     def stop_running(self):
         self.is_running = False
@@ -75,7 +75,7 @@ class BucketingManager(DecisionManager, Thread):
                 self.update_status()
         except Exception as e:
             # log(TAG_BUCKETING, LogLevel.ERROR, ERROR_BUCKETING_REQUEST)
-            log_exception(TAG_BUCKETING, LogLevel.ERROR, traceback.format_exc())
+            log_exception(TAG_BUCKETING, e, traceback.format_exc())
 
     def get_campaigns_modifications(self, visitor):
         campaign_modifications = dict()
@@ -83,7 +83,7 @@ class BucketingManager(DecisionManager, Thread):
             if self.campaigns is not None:
                 for campaign in self.campaigns:
                     for variation_group in campaign.variation_groups:
-                        if variation_group.is_targeting_valid(dict(visitor._context)):
+                        if variation_group.is_targeting_valid(dict(visitor.context)):
                             variation = variation_group.select_variation(visitor)
                             if variation is not None:
                                 visitor.add_new_assignment_to_history(variation.variation_group_id, variation.variation_id)
@@ -91,7 +91,7 @@ class BucketingManager(DecisionManager, Thread):
                                 if modification_values is not None:
                                     campaign_modifications.update(modification_values)
                                 break
-                HttpHelper.send_context(visitor, _Segment(visitor._visitor_id, visitor._context))
+                HttpHelper.send_context(visitor, _Segment(visitor.visitor_id, visitor.context))
             return True, campaign_modifications
         except Exception as e:
             log_exception(TAG_BUCKETING, e, traceback.format_exc())

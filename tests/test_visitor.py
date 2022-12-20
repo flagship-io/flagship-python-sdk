@@ -16,13 +16,13 @@ def test_visitor_creation_default():
     Flagship.start('_env_id_', '_api_key_', DecisionApi())
 
     _visitor_1 = Flagship.new_visitor('_visitor_1')
-    assert _visitor_1._visitor_id == '_visitor_1'
-    assert _visitor_1._anonymous_id is None
-    assert len(_visitor_1._context) == 2
-    assert _visitor_1._context['fs_version'] == get_version()
-    assert _visitor_1._context['fs_client'] == 'python'
-    assert _visitor_1._is_authenticated is False
-    assert _visitor_1._has_consented is True
+    assert _visitor_1.visitor_id == '_visitor_1'
+    assert _visitor_1.anonymous_id is None
+    assert len(_visitor_1.context) == 2
+    assert _visitor_1.context['fs_version'] == get_version()
+    assert _visitor_1.context['fs_client'] == 'python'
+    assert _visitor_1.is_authenticated is False
+    assert _visitor_1.has_consented is True
     assert _visitor_1._configuration_manager is not None
     assert _visitor_1._config is not None
     assert isinstance(_visitor_1._config, DecisionApi)
@@ -48,13 +48,13 @@ def test_visitor_creation_custom():
     assert Flagship.get_visitor() is None
     _visitor_2 = Flagship.new_visitor('_visitor_2', context=context, authenticated=True, consent=False,
                                       instance_type=Visitor.Instance.SINGLE_INSTANCE)
-    assert _visitor_2._visitor_id == '_visitor_2'
-    assert _visitor_2._anonymous_id is not None
-    assert len(_visitor_2._context) == 6
-    assert _visitor_2._context['fs_version'] == get_version()
-    assert _visitor_2._context['fs_client'] == 'python'
-    assert _visitor_2._is_authenticated is True
-    assert _visitor_2._has_consented is False
+    assert _visitor_2.visitor_id == '_visitor_2'
+    assert _visitor_2.anonymous_id is not None
+    assert len(_visitor_2.context) == 6
+    assert _visitor_2.context['fs_version'] == get_version()
+    assert _visitor_2.context['fs_client'] == 'python'
+    assert _visitor_2.is_authenticated is True
+    assert _visitor_2.has_consented is False
     assert _visitor_2._configuration_manager is not None
     assert _visitor_2._config is not None
     assert isinstance(_visitor_2._config, DecisionApi)
@@ -70,15 +70,15 @@ def test_visitor_creation_instance():
 
     _visitor_3 = Flagship.new_visitor('_visitor_3', instance_type=Visitor.Instance.SINGLE_INSTANCE)
 
-    assert Flagship.get_visitor()._visitor_id == '_visitor_3'
+    assert Flagship.get_visitor().visitor_id == '_visitor_3'
 
     _visitor_4 = Flagship.new_visitor('_visitor_4', instance_type=Visitor.Instance.SINGLE_INSTANCE)
 
-    assert Flagship.get_visitor()._visitor_id == '_visitor_4'
+    assert Flagship.get_visitor().visitor_id == '_visitor_4'
 
     _visitor_5 = Flagship.new_visitor('_visitor_5', instance_type=Visitor.Instance.NEW_INSTANCE)
 
-    assert Flagship.get_visitor()._visitor_id == '_visitor_4'
+    assert Flagship.get_visitor().visitor_id == '_visitor_4'
 
 
 def test_visitor_update_context():
@@ -107,12 +107,12 @@ def test_visitor_update_context():
     }
     _visitor_6.update_context(context1)
 
-    assert len(_visitor_6._context) == 8  # +2 from preset context
-    assert _visitor_6._context['fs_version'] == get_version()
-    assert 'sdk_osName' not in _visitor_6._context
-    assert _visitor_6._context['sdk_interfaceName'] == 'test_visitor.py'
-    assert _visitor_6._context['int'] == 12
-    assert _visitor_6._context[FlagshipContext.LOCATION_COUNTRY.value[0]] == 'France'
+    assert len(_visitor_6.context) == 8  # +2 from preset context
+    assert _visitor_6.context['fs_version'] == get_version()
+    assert 'sdk_osName' not in _visitor_6.context
+    assert _visitor_6.context['sdk_interfaceName'] == 'test_visitor.py'
+    assert _visitor_6.context['int'] == 12
+    assert _visitor_6.context[FlagshipContext.LOCATION_COUNTRY.value[0]] == 'France'
 
     _visitor_6.update_context(('sdk_interfaceName', 'test_visitor.py 2'))
     _visitor_6.update_context(('fs_client', 'not python'))
@@ -122,13 +122,13 @@ def test_visitor_update_context():
     _visitor_6.update_context((FlagshipContext.APP_VERSION_NAME, "unit_test"))
     _visitor_6.update_context((FlagshipContext.APP_VERSION_CODE, "wrong"))
 
-    assert len(_visitor_6._context) == 10
-    assert _visitor_6._context['fs_version'] == get_version()
-    assert _visitor_6._context['sdk_interfaceName'] == 'test_visitor.py 2'
-    assert _visitor_6._context['int'] == 31
-    assert _visitor_6._context['sdk_osName'] == 'Ubuntu'
-    assert FlagshipContext.APP_VERSION_CODE.value[0] not in _visitor_6._context
-    assert _visitor_6._context[FlagshipContext.APP_VERSION_NAME.value[0]] == 'unit_test'
+    assert len(_visitor_6.context) == 10
+    assert _visitor_6.context['fs_version'] == get_version()
+    assert _visitor_6.context['sdk_interfaceName'] == 'test_visitor.py 2'
+    assert _visitor_6.context['int'] == 31
+    assert _visitor_6.context['sdk_osName'] == 'Ubuntu'
+    assert FlagshipContext.APP_VERSION_CODE.value[0] not in _visitor_6.context
+    assert _visitor_6.context[FlagshipContext.APP_VERSION_NAME.value[0]] == 'unit_test'
 
 
 @responses.activate

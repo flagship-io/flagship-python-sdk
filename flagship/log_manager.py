@@ -108,6 +108,7 @@ class FlagshipLogManager:
             self.logger.log(self.log_level.value, template)
 
     @param_types_validator(True, str, Exception, str)
-    def exception(self, tag, exception, traceback):
-        # self.log(tag, LogLevel.CRITICAL, str(exception) + '\n' + traceback)
-        self.log(tag, LogLevel.CRITICAL, str(exception))
+    def exception(self, tag, exception, traceback, print_traceback=False):
+
+        self.log(tag, LogLevel.CRITICAL, str(exception) + ('\n' + traceback if print_traceback else ''))
+        # self.log(tag, LogLevel.CRITICAL, str(exception))

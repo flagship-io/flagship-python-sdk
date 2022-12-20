@@ -1,4 +1,9 @@
 import time
+
+from flagship.log_manager import LogLevel
+from flagship.utils import log
+from flagship.constants import TAG_TRACKING_MANAGER, ERROR_INVALID_HIT
+
 try:
     from Queue import Queue
 except ImportError:
@@ -95,7 +100,6 @@ class TrackingManager(TrackingManagerCacheStrategyInterface, Thread):
 
     def stop_running(self):
         self.is_running = False
-        # self.hitQueue.close()
 
     def add_hit(self, hit):
         return self.strategy.add_hit(hit)
@@ -135,6 +139,7 @@ class TrackingManagerCacheStrategyAbstract(TrackingManagerCacheStrategyInterface
             self.tracking_manager.hitQueue.put(hit)
             return True
         else:
+            log(TAG_TRACKING_MANAGER, LogLevel.ERROR, ERROR_INVALID_HIT.format(hit.type, hit.id))
             # delete hit
             self.delete_hits_by_id([hit.id])
             return False

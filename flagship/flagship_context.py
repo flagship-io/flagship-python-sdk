@@ -124,12 +124,12 @@ class FlagshipContext(Enum):
         try:
             if flagship_context.value[0].startswith("fs_"):
                 if visitor is not None:
-                    log(TAG_UPDATE_CONTEXT, LogLevel.ERROR, "[" + TAG_VISITOR.format(visitor._visitor_id) + "] " +
+                    log(TAG_UPDATE_CONTEXT, LogLevel.ERROR, "[" + TAG_VISITOR.format(visitor.visitor_id) + "] " +
                         ERROR_UPDATE_CONTEXT_RESERVED.format(flagship_context.value[0]))
                 return False
             if flagship_context is not None and check_type and not isinstance(value, flagship_context.value[2]):
                 if visitor is not None:
-                    log(TAG_UPDATE_CONTEXT, LogLevel.ERROR, "[" + TAG_VISITOR.format(visitor._visitor_id) + "] " +
+                    log(TAG_UPDATE_CONTEXT, LogLevel.ERROR, "[" + TAG_VISITOR.format(visitor.visitor_id) + "] " +
                         ERROR_UPDATE_CONTEXT_TYPE.format(flagship_context, str(flagship_context.value[2])))
                 return False
             return True

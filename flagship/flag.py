@@ -144,7 +144,7 @@ class _NoConsentStrategy(_DefaultFlagStrategy):
     def user_exposed(self):
         log(TAG_FLAG, LogLevel.ERROR,
             ERROR_FLAG_METHOD_DEACTIVATED.format(self.flag.key, "user_exposed()", ERROR_METHOD_DEACTIVATED_NO_CONSENT
-                                                 .format(self.flag._visitor._visitor_id)))
+                                                 .format(self.flag._visitor.visitor_id)))
 
 
 class _NotReadyStrategy(_DefaultFlagStrategy):

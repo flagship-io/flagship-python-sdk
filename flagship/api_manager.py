@@ -43,13 +43,13 @@ class ApiManager(DecisionManager):
         pass
 
     def authenticate(self, visitor, authenticated_id):
-        if visitor._anonymous_id is None:
-            visitor._anonymous_id = visitor._visitor_id
-        visitor._visitor_id = authenticated_id
-        visitor._is_authenticated = True
+        if visitor.anonymous_id is None:
+            visitor.anonymous_id = visitor.visitor_id
+        visitor.visitor_id = authenticated_id
+        visitor.is_authenticated = True
 
     def unauthenticate(self, visitor):
-        if visitor._anonymous_id is not None:
-            visitor._visitor_id = visitor._anonymous_id
-            visitor._anonymous_id = None
-            visitor._is_authenticated = False
+        if visitor.anonymous_id is not None:
+            visitor.visitor_id = visitor.anonymous_id
+            visitor.anonymous_id = None
+            visitor.is_authenticated = False
