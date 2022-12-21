@@ -91,11 +91,17 @@ class BucketingManager(DecisionManager, Thread):
                                 if modification_values is not None:
                                     campaign_modifications.update(modification_values)
                                 break
-                HttpHelper.send_context(visitor, _Segment(visitor.visitor_id, visitor.context))
+                self.send_context_hit(visitor)
+                # HttpHelper.send_context(visitor, _Segment(visitor.visitor_id, visitor.context))
             return True, campaign_modifications
         except Exception as e:
             log_exception(TAG_BUCKETING, e, traceback.format_exc())
         return False, None
+
+    def send_context_hit(self, visitor):
+        visitor.send_hit(_Segment(visitor.visitor_id, visitor.context))
+        # tracking_manager = visitor._configuration_manager.tracking_manager
+        # tracking_manager.add_hit(_Segment(visitor.visitor_id, visitor.context))
 
     def load_local_decision_file(self):
         file_name = self.local_decision_file_name.format(self.flagship_config.env_id)

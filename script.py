@@ -207,10 +207,11 @@ def init_bucketing():
         visitor.send_hit(Screen("coucou 3"))
         visitor.send_hit(Screen("coucou 4"))
         visitor.send_hit(Screen("coucou 5"))
-        time.sleep(1)
+        visitor.set_consent(False)
+        # time.sleep(1)
         visitor.send_hit(Transaction("TID_92470", "AFFILIATION"))
         visitor.send_hit(Transaction("TID_04444", "AFFILIATION2"))
-        time.sleep(1)
+        # time.sleep(1)
         visitor.send_hit(Event(EventCategory.ACTION_TRACKING, "ACTION 1"))
         visitor.send_hit(Event(EventCategory.ACTION_TRACKING, "ACTION 2"))
         visitor.send_hit(Event(EventCategory.ACTION_TRACKING, "ACTION 3"))
@@ -224,7 +225,7 @@ def init_bucketing():
 
     Flagship.start("bkk4s7gcmjcg07fke9dg", "Q6FDmj6F188nh75lhEato2MwoyXDS7y34VrAL4Aa",
                    Bucketing(timeout=3000, status_listener=CustomStatusListener(create_visitor), polling_interval=10000,
-                             tracking_manager_config=TrackingManagerConfig(pool_max_size=10, time_interval=5000)))
+                             tracking_manager_config=TrackingManagerConfig(max_pool_size=10, time_interval=5000)))
 #
     time.sleep(20000)
 

@@ -53,6 +53,7 @@ class TrackingManagerStrategy(Enum):
 
 
 class TrackingManagerConfig:
+
     DEFAULT_MAX_POOL_SIZE = 20
     DEFAULT_TIME_INTERVAL = 10000  # time in ms
 
@@ -60,7 +61,7 @@ class TrackingManagerConfig:
         self.strategy = kwargs['strategy'] if 'strategy' in kwargs \
             else TrackingManagerStrategy.BATCHING_WITH_CONTINUOUS_CACHING_STRATEGY
         self.time_interval = kwargs['time_interval'] if 'time_interval' in kwargs else self.DEFAULT_TIME_INTERVAL
-        self.pool_max_size = kwargs['pool_max_size'] if 'pool_max_size' in kwargs else self.DEFAULT_MAX_POOL_SIZE
+        self.max_pool_size = kwargs['max_pool_size'] if 'max_pool_size' in kwargs else self.DEFAULT_MAX_POOL_SIZE
 
 
 class TrackingManager(TrackingManagerCacheStrategyInterface, Thread):
@@ -108,10 +109,10 @@ class TrackingManager(TrackingManagerCacheStrategyInterface, Thread):
         return self.strategy.add_hits(hits)
 
     def delete_hits_by_id(self, ids, delete_consent_hits=True):
-        return self.strategy.delete_hits_by_id(ids)
+        return self.strategy.delete_hits_by_id(ids, delete_consent_hits)
 
     def delete_hits_by_visitor_id(self, visitor_id, delete_consent_hits=True):
-        return self.strategy.delete_hits_by_visitor_id(visitor_id)
+        return self.strategy.delete_hits_by_visitor_id(visitor_id, delete_consent_hits)
 
     def lookup_pool(self):
         return self.strategy.lookup_pool()
@@ -134,9 +135,16 @@ class TrackingManagerCacheStrategyAbstract(TrackingManagerCacheStrategyInterface
         TrackingManagerCacheStrategyInterface.__init__(self)
         self.tracking_manager = tracking_manager
 
-    def add_hit(self, hit):
+    def add_hit(self, hit, new=True):
         if hit.check_data_validity():
-            self.tracking_manager.hitQueue.put(hit)
+            if new and isinstance(hit, _Consent) and hit.consent is False:
+                self.delete_hits_by_visitor_id(hit.visitor_id, False)
+            self.tracking_manager.hitQueue.put(hit, block=False)
+            log("DEBUG", LogLevel.WARNING, '#DB1 put hit: ' + str(hit.data()))
+            log("DEBUG", LogLevel.WARNING, '#DB1 Queue size: ' + str(self.tracking_manager.hitQueue.qsize()))
+            if self.tracking_manager.hitQueue.qsize() >= self.tracking_manager.tracking_manager_config.max_pool_size:
+                log("DEBUG", LogLevel.WARNING, '#DB2 MAX LIMIT REACHED: ')
+                self.send_batch()
             return True
         else:
             log(TAG_TRACKING_MANAGER, LogLevel.ERROR, ERROR_INVALID_HIT.format(hit.type, hit.id))
@@ -153,9 +161,9 @@ class TrackingManagerCacheStrategyAbstract(TrackingManagerCacheStrategyInterface
 
     def delete_hits_by_id(self, ids, delete_consent_hits=True):
         removed_ids = list()
-        for item in self.tracking_manager.hitQueue.queue:
+        for item in list(self.tracking_manager.hitQueue.queue):
             if item.id in ids:
-                if item is _Consent and delete_consent_hits is False:
+                if isinstance(item, _Consent) and delete_consent_hits is False:
                     break
                 else:
                     removed_ids.append(item.id)
@@ -164,13 +172,25 @@ class TrackingManagerCacheStrategyAbstract(TrackingManagerCacheStrategyInterface
 
     def delete_hits_by_visitor_id(self, visitor_id, delete_consent_hits=True):
         removed_ids = list()
-        for item in self.tracking_manager.hitQueue.queue:
+        log("DEBUG", LogLevel.WARNING, '#DB3 delete queue: ' + str(self.tracking_manager.hitQueue.qsize()))
+        log("DEBUG", LogLevel.WARNING, '#DB3.1 delete queue: ' + str(list(self.tracking_manager.hitQueue.queue)))
+        for item in list(self.tracking_manager.hitQueue.queue):
+            if item.visitor_id != visitor_id:
+                log("DEBUG", LogLevel.WARNING,
+                    '#DB3.1.1 delete: ' + str(item.visitor_id))
             if item.visitor_id == visitor_id:
-                if item is _Consent and delete_consent_hits is False:
-                    break
-                else:
+                log("DEBUG", LogLevel.WARNING,
+                    '#DB3.2 visitor_id: ' + str(visitor_id))
+                # if isinstance(item, _Consent) and delete_consent_hits is False:
+                #     break
+                # else:
+                if delete_consent_hits is not True and not isinstance(item, _Consent):
+                    log("DEBUG", LogLevel.WARNING,
+                        '#DB3.3 to delete: ' + str(item))
                     removed_ids.append(item.id)
                     self.tracking_manager.hitQueue.queue.remove(item)
+                    log("DEBUG", LogLevel.WARNING,
+                        '#DB3.4 delete queue: ' + str(list(self.tracking_manager.hitQueue.queue)))
         return removed_ids
 
     def lookup_pool(self):
@@ -184,10 +204,12 @@ class TrackingManagerCacheStrategyAbstract(TrackingManagerCacheStrategyInterface
     def send_batch(self):
         batch = _Batch()
         while not self.tracking_manager.hitQueue.empty():
-            h = self.tracking_manager.hitQueue.get(block=True)
-            batch.add_child(h)
+            h = self.tracking_manager.hitQueue.get(block=False)
+            if h:
+                batch.add_child(h)
             self.tracking_manager.hitQueue.task_done()
         if batch.size() > 0:
+            log("DEBUG", LogLevel.WARNING, '#DB2 Send batch: ' + str(len(batch.hits)))
             HttpHelper.send_batch(self.tracking_manager.config, batch)
 
 
@@ -198,7 +220,7 @@ class ContinuousCacheStrategy(TrackingManagerCacheStrategyAbstract):
         self.tracking_manager = tracking_manager
 
     def add_hit(self, hit):
-        TrackingManagerCacheStrategyAbstract.add_hit(self, hit)
+        return TrackingManagerCacheStrategyAbstract.add_hit(self, hit)
 
     def add_hits(self, hits):
         pass
@@ -207,7 +229,7 @@ class ContinuousCacheStrategy(TrackingManagerCacheStrategyAbstract):
         pass
 
     def delete_hits_by_visitor_id(self, visitor_id, delete_consent_hits=True):
-        pass
+        return TrackingManagerCacheStrategyAbstract.delete_hits_by_visitor_id(self, visitor_id, delete_consent_hits)
 
     def lookup_pool(self):
         pass
@@ -216,4 +238,4 @@ class ContinuousCacheStrategy(TrackingManagerCacheStrategyAbstract):
         pass
 
     def send_batch(self):
-        TrackingManagerCacheStrategyAbstract.send_batch(self)
+        return TrackingManagerCacheStrategyAbstract.send_batch(self)

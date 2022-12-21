@@ -489,6 +489,7 @@ class _Activate(Hit):
 class _Consent(Event):
     @param_types_validator(True, bool)
     def __init__(self, consent):
+        self.consent = consent
         Event.__init__(self, EventCategory.USER_ENGAGEMENT, 'fs_consent')
         data = {
             self._k_event_label: 'python:{}'.format(str(consent).lower())
