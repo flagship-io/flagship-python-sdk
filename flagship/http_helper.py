@@ -5,10 +5,10 @@ import traceback
 
 import requests
 from enum import Enum
+
 from flagship.constants import TAG_HTTP_REQUEST, DEBUG_REQUEST, URL_TRACKING, URL_BUCKETING, TAG_BUCKETING, \
-    ERROR_BUCKETING_REQUEST, URL_ACTIVATE, URL_CONTEXT, URL_DECISION_API, URL_CAMPAIGNS, URL_CONTEXT_PARAM
+    URL_ACTIVATE, URL_CONTEXT, URL_DECISION_API, URL_CAMPAIGNS, URL_CONTEXT_PARAM
 from flagship.decorators import param_types_validator
-from flagship.hits import _Activate
 from flagship.log_manager import LogLevel
 from flagship.utils import pretty_dict, log, log_exception
 
@@ -85,6 +85,8 @@ class HttpHelper:
     #         response = requests.post(url=URL_TRACKING, headers=headers, json=body, timeout=config.timeout)
     #         HttpHelper.log_request(HttpHelper.RequestType.POST, URL_TRACKING, headers, body, response)
 
+    #todo remove mock
+    mock = True
     @staticmethod
     def send_batch(config, batch):
         import flagship
@@ -96,30 +98,55 @@ class HttpHelper:
             "cid": config.env_id
         }
         body.update(batch.data())
+        # if HttpHelper.mock:
+        #     HttpHelper.mock = False
+        #     response = requests.post(url="https://run.mocky.io/v3/74408c0a-7b2a-483d-87cf-6a18229da56a", headers=headers, json=body, timeout=config.timeout)
+        # else:
+        #     response = requests.post(url=URL_TRACKING, headers=headers, json=body, timeout=config.timeout)
         response = requests.post(url=URL_TRACKING, headers=headers, json=body, timeout=config.timeout)
         HttpHelper.log_request(HttpHelper.RequestType.POST, URL_TRACKING, headers, body, response)
+        return response
+
+    # @staticmethod
+    # def send_activate(visitor, hit):
+    #     config = visitor._config
+    #     import flagship
+    #     headers = {
+    #         "x-api-key": config.api_key,
+    #         "x-sdk-client": "python",
+    #         "x-sdk-version": flagship.__version__
+    #     }
+    #     body = {
+    #         "cid": config.env_id,
+    #     }
+    #     if visitor.anonymous_id is not None:
+    #         body['aid'] = visitor.anonymous_id
+    #         body['vid'] = visitor.visitor_id
+    #     else:
+    #         body['vid'] = visitor.visitor_id
+    #         body['aid'] = None
+    #     body.update(hit.data())
+    #     response = requests.post(url=URL_ACTIVATE, headers=headers, json=body, timeout=config.timeout)
+    #     HttpHelper.log_request(HttpHelper.RequestType.POST, URL_ACTIVATE, headers, body, response)
+    #     return response
 
     @staticmethod
-    def send_activate(visitor, hit):
-        config = visitor._config
+    def send_activates(config, hits):
         import flagship
         headers = {
             "x-api-key": config.api_key,
             "x-sdk-client": "python",
             "x-sdk-version": flagship.__version__
         }
+        batch = list()
+        for h in hits:
+            batch.append(h.data())
         body = {
-            "cid": config.env_id,
+            "batch": batch
         }
-        if visitor.anonymous_id is not None:
-            body['aid'] = visitor.anonymous_id
-            body['vid'] = visitor.visitor_id
-        else:
-            body['vid'] = visitor.visitor_id
-            body['aid'] = None
-        body.update(hit.data())
         response = requests.post(url=URL_ACTIVATE, headers=headers, json=body, timeout=config.timeout)
         HttpHelper.log_request(HttpHelper.RequestType.POST, URL_ACTIVATE, headers, body, response)
+        return response
 
     @staticmethod
     def send_context(visitor, hit):
@@ -133,6 +160,7 @@ class HttpHelper:
         body = hit.data()
         response = requests.post(url=endpoint, headers=headers, json=body, timeout=visitor._config.timeout)
         HttpHelper.log_request(HttpHelper.RequestType.POST, endpoint, headers, body, response)
+
     @staticmethod
     def send_bucketing_request(config, last_modified=""):
         try:

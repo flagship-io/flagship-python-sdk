@@ -26,6 +26,7 @@ class Hit(object):
     _k_origin = 'dl'  # origin
     _k_env_id = 'cid'  # env_id
     _k_visitor_id = 'vid'  # visitor id
+    _k_anonymous_id = 'aid'  # anonymous id / activate
     _k_customer_visitor_id = 'cuid'
     _k_type = 't'
     _k_ds = 'ds'
@@ -468,13 +469,19 @@ class Transaction(Hit):
 
 class _Activate(Hit):
     # @param_types_validator(True, [str, bytes], [str, bytes])
-    def __init__(self, variation_group_id, variation_id):
-        # type: (str, str) -> None
+    def __init__(self, config, visitor, variation_group_id, variation_id):
         self.hit_type = HitType.ACTIVATE
         self.hit_data = {
+            self._k_env_id: config.env_id,
             self._k_variation_group_id: variation_group_id,
             self._k_variation_id: variation_id
         }
+        if visitor.anonymous_id is not None:
+            self.hit_data[self._k_anonymous_id] = visitor.anonymous_id
+            self.hit_data[self._k_visitor_id] = visitor.visitor_id
+        else:
+            self.hit_data[self._k_visitor_id] = visitor.visitor_id
+            self.hit_data[self._k_anonymous_id] = None
         # self._data.update(data)
 
     def check_data_validity(self):

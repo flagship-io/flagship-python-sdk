@@ -100,8 +100,6 @@ class BucketingManager(DecisionManager, Thread):
 
     def send_context_hit(self, visitor):
         visitor.send_hit(_Segment(visitor.visitor_id, visitor.context))
-        # tracking_manager = visitor._configuration_manager.tracking_manager
-        # tracking_manager.add_hit(_Segment(visitor.visitor_id, visitor.context))
 
     def load_local_decision_file(self):
         file_name = self.local_decision_file_name.format(self.flagship_config.env_id)

@@ -146,9 +146,11 @@ class NoConsentStrategy(DefaultStrategy):
         super(NoConsentStrategy, self).__init__(strategy, visitor)
 
     def send_hit(self, hit):
-        log(TAG_TRACKING, LogLevel.ERROR,
-            ERROR_METHOD_DEACTIVATED.format("send_hit()", ERROR_METHOD_DEACTIVATED_NO_CONSENT
-                                            .format(self.visitor.visitor_id)))
+        if isinstance(hit, _Consent):
+            return super(NoConsentStrategy, self).send_hit(hit)
+        else:
+            log(TAG_TRACKING, LogLevel.ERROR, ERROR_METHOD_DEACTIVATED.format("send_hit()", (
+                        ERROR_METHOD_DEACTIVATED_NO_CONSENT + "\n {}").format(self.visitor.visitor_id, str(hit))))
 
 
 class NotReadyStrategy(DefaultStrategy):

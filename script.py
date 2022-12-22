@@ -189,6 +189,7 @@ def init_bucketing():
 
     def create_visitor():
         visitor = Flagship.new_visitor("111", instance_type=Visitor.Instance.SINGLE_INSTANCE)
+        visitor2 = Flagship.new_visitor("222", instance_type=Visitor.Instance.SINGLE_INSTANCE)
         visitor.update_context({
             "coucou": 3,
             "coucou2": 2,
@@ -211,7 +212,9 @@ def init_bucketing():
         # time.sleep(1)
         visitor.send_hit(Transaction("TID_92470", "AFFILIATION"))
         visitor.send_hit(Transaction("TID_04444", "AFFILIATION2"))
+        visitor2.send_hit(Screen("2222"))
         # time.sleep(1)
+        visitor.set_consent(True)
         visitor.send_hit(Event(EventCategory.ACTION_TRACKING, "ACTION 1"))
         visitor.send_hit(Event(EventCategory.ACTION_TRACKING, "ACTION 2"))
         visitor.send_hit(Event(EventCategory.ACTION_TRACKING, "ACTION 3"))
