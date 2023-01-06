@@ -85,8 +85,9 @@ class HttpHelper:
     #         response = requests.post(url=URL_TRACKING, headers=headers, json=body, timeout=config.timeout)
     #         HttpHelper.log_request(HttpHelper.RequestType.POST, URL_TRACKING, headers, body, response)
 
-    #todo remove mock
-    mock = True
+    # todo remove mock
+    mock = 0
+
     @staticmethod
     def send_batch(config, batch):
         import flagship
@@ -101,8 +102,10 @@ class HttpHelper:
         # if HttpHelper.mock:
         #     HttpHelper.mock = False
         #     response = requests.post(url="https://run.mocky.io/v3/74408c0a-7b2a-483d-87cf-6a18229da56a", headers=headers, json=body, timeout=config.timeout)
+        #     HttpHelper.log_request(HttpHelper.RequestType.POST, "https://run.mocky.io/v3/74408c0a-7b2a-483d-87cf-6a18229da56a", headers, body, response)
         # else:
         #     response = requests.post(url=URL_TRACKING, headers=headers, json=body, timeout=config.timeout)
+        #     HttpHelper.log_request(HttpHelper.RequestType.POST, URL_TRACKING, headers, body, response)
         response = requests.post(url=URL_TRACKING, headers=headers, json=body, timeout=config.timeout)
         HttpHelper.log_request(HttpHelper.RequestType.POST, URL_TRACKING, headers, body, response)
         return response
@@ -134,19 +137,33 @@ class HttpHelper:
     def send_activates(config, hits):
         import flagship
         headers = {
-            "x-api-key": config.api_key,
-            "x-sdk-client": "python",
-            "x-sdk-version": flagship.__version__
+            # 'x-api-key': config.api_key,
+            'x-sdk-client': 'python',
+            'x-sdk-version': flagship.__version__
         }
         batch = list()
-        for h in hits:
-            batch.append(h.data())
-        body = {
-            "batch": batch
-        }
-        response = requests.post(url=URL_ACTIVATE, headers=headers, json=body, timeout=config.timeout)
-        HttpHelper.log_request(HttpHelper.RequestType.POST, URL_ACTIVATE, headers, body, response)
-        return response
+        if isinstance(hits, list):
+            for h in hits:
+                batch.append(h.data())
+        else:
+            batch.append(hits.data())
+        if len(batch) > 0:
+            body = {
+                "cid": config.env_id,
+                "batch": batch
+            }
+            if HttpHelper.mock <= 1:
+                HttpHelper.mock += 1
+                print(str("Mock " + str(HttpHelper.mock)))
+                response = requests.post(url="https://run.mocky.io/v3/74408c0a-7b2a-483d-87cf-6a18229da56a", headers=headers, json=body, timeout=config.timeout)
+                HttpHelper.log_request(HttpHelper.RequestType.POST, "https://run.mocky.io/v3/74408c0a-7b2a-483d-87cf-6a18229da56a", headers, body, response)
+            else:
+                response = requests.post(url=URL_TRACKING, headers=headers, json=body, timeout=config.timeout)
+                HttpHelper.log_request(HttpHelper.RequestType.POST, URL_ACTIVATE, headers, body, response)
+            # response = requests.post(url=URL_ACTIVATE, headers=headers, json=body, timeout=config.timeout)
+            # HttpHelper.log_request(HttpHelper.RequestType.POST, URL_ACTIVATE, headers, body, response)
+            return response
+        return None
 
     @staticmethod
     def send_context(visitor, hit):

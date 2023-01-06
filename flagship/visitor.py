@@ -76,7 +76,12 @@ class Visitor(IVisitorStrategy):
             modification = self._get_modification(key)
             if modification is None:
                 raise FlagExpositionNotFoundException(self.visitor_id, key)
-            HttpHelper.send_activate(self, _Activate(modification.variation_group_id, modification.variation_id))
+            # HttpHelper.send_activates(self._config, _Activate(self.visitor_id, self.anonymous_id,
+            #                                                   modification.variation_group_id,
+            #                                                   modification.variation_id))
+            self.send_hit(_Activate(self.visitor_id, self.anonymous_id,
+                                    modification.variation_group_id,
+                                    modification.variation_id))
         except Exception as e:
             log_exception(TAG_FLAG_USER_EXPOSITION, e, traceback.format_exc())
 

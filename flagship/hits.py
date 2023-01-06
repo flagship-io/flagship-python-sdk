@@ -7,6 +7,7 @@ import uuid
 
 from enum import Enum
 
+
 from flagship.decorators import param_types_validator
 
 
@@ -151,8 +152,7 @@ class Hit(object):
 
     def check_data_validity(self):
         if (not bool(self.hit_data[self._k_type]) or
-                not bool(self.hit_data[self._k_type]) or
-                not bool(self.hit_data[self._k_type])):
+                (self.hit_data[self._k_ds] != 'APP')):
             return False
         return True
 
@@ -176,9 +176,9 @@ class Page(Hit):
         self.hit_data.update(data)
 
     def check_data_validity(self):
-        from urlparse import urlparse
+
+        from urllib.parse import urlparse
         if ((Hit.check_data_validity(self) is False) or
-                (self.hit_data[self._k_ds] != 'APP') or
                 (not bool(self.hit_data[self._k_origin])) or
                 (bool(urlparse(self.hit_data[self._k_origin]).scheme) is False) or
                 (bool(urlparse(self.hit_data[self._k_origin]).netloc) is False)):
@@ -261,7 +261,6 @@ class Event(Hit):
 
     def check_data_validity(self):
         if ((Hit.check_data_validity(self) is False) or
-                (self.hit_data[self._k_ds] != 'APP') or
                 (not bool(self.hit_data[self._k_event_category])) or
                 (not bool(self.hit_data[self._k_event_action]))):
             return False
@@ -337,7 +336,6 @@ class Item(Hit):
 
     def check_data_validity(self):
         if ((Hit.check_data_validity(self) is False) or
-                (self.hit_data[self._k_ds] != 'APP') or
                 (not bool(self.hit_data[self._k_transaction_id])) or
                 (not bool(self.hit_data[self._k_item_name])) or
                 (not bool(self.hit_data[self._k_item_code]))):
@@ -460,7 +458,6 @@ class Transaction(Hit):
 
     def check_data_validity(self):
         if ((Hit.check_data_validity(self) is False) or
-                (self.hit_data[self._k_ds] != 'APP') or
                 (not bool(self.hit_data[self._k_transaction_id])) or
                 (not bool(self.hit_data[self._k_transaction_affiliation]))):
             return False
@@ -469,24 +466,23 @@ class Transaction(Hit):
 
 class _Activate(Hit):
     # @param_types_validator(True, [str, bytes], [str, bytes])
-    def __init__(self, config, visitor, variation_group_id, variation_id):
+    def __init__(self, visitor_id, anonymous_id, variation_group_id, variation_id):
         self.hit_type = HitType.ACTIVATE
         self.hit_data = {
-            self._k_env_id: config.env_id,
+            # self._k_env_id: env_id,
             self._k_variation_group_id: variation_group_id,
             self._k_variation_id: variation_id
         }
-        if visitor.anonymous_id is not None:
-            self.hit_data[self._k_anonymous_id] = visitor.anonymous_id
-            self.hit_data[self._k_visitor_id] = visitor.visitor_id
+        if anonymous_id is not None:
+            self.hit_data[self._k_anonymous_id] = anonymous_id
+            self.hit_data[self._k_visitor_id] = visitor_id
         else:
-            self.hit_data[self._k_visitor_id] = visitor.visitor_id
+            self.hit_data[self._k_visitor_id] = visitor_id
             self.hit_data[self._k_anonymous_id] = None
         # self._data.update(data)
 
     def check_data_validity(self):
-        if ((Hit.check_data_validity(self) is False) or
-                (self.hit_data[self._k_ds] != 'APP') or
+        if ((not bool(self.hit_data[self._k_visitor_id])) or
                 (not bool(self.hit_data[self._k_variation_group_id])) or
                 (not bool(self.hit_data[self._k_variation_id]))):
             return False
@@ -522,7 +518,6 @@ class _Segment(Hit):
 
     def check_data_validity(self):
         if ((Hit.check_data_validity(self) is False) or
-                (self.hit_data[self._k_ds] != 'APP') or
                 (not bool(self.hit_data[self._k_visitor_id])) or
                 (self.hit_data[self._k_segment_list] is None) or
                 (len(self.hit_data[self._k_segment_list]) < 0)):

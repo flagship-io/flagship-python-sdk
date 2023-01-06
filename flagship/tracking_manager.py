@@ -47,6 +47,14 @@ class TrackingManagerCacheStrategyInterface(object):
     def polling(self):
         pass
 
+    @abstractmethod
+    def send_hits_batch(self):
+        pass
+
+    @abstractmethod
+    def send_activates_batch(self, hit=None):
+        pass
+
 
 class TrackingManagerStrategy(Enum):
     BATCHING_WITH_CONTINUOUS_CACHING_STRATEGY = 'BATCHING_WITH_CONTINUOUS_CACHING_STRATEGY'
@@ -96,7 +104,7 @@ class TrackingManager(TrackingManagerCacheStrategyInterface, Thread):
 
     def run(self):
         while self.is_running:
-            self.send_batch()
+            self.polling()
             time.sleep(self.time_interval / 1000.0)
 
     def stop_running(self):
@@ -123,6 +131,12 @@ class TrackingManager(TrackingManagerCacheStrategyInterface, Thread):
     def polling(self):
         return self.strategy.polling()
 
+    def send_hits_batch(self):
+        return self.strategy.send_hits_batch()
+
+    def send_activates_batch(self, hit=None):
+        return self.strategy.send_activates_batch(hit)
+
     def get_strategy(self):
         if self.tracking_manager_config.strategy == TrackingManagerStrategy.BATCHING_WITH_CONTINUOUS_CACHING_STRATEGY:
             return ContinuousCacheStrategy(self)
@@ -138,13 +152,14 @@ class TrackingManagerCacheStrategyAbstract(TrackingManagerCacheStrategyInterface
     def add_hit(self, hit, new=True):
         if hit.check_data_validity():
             if isinstance(hit, _Activate):
-                Thread(target=lambda: self.send_batch_activates(list(hit))).start()
-            if new and isinstance(hit, _Consent) and hit.consent is False:
-                self.delete_hits_by_visitor_id(hit.visitor_id, False)
-            self.tracking_manager.hitQueue.put(hit, block=False)
-            if self.tracking_manager.hitQueue.qsize() >= self.tracking_manager.tracking_manager_config.max_pool_size:
-                Thread(target=lambda: self.send_batch()).start()
-                # self.send_batch()
+                Thread(target=lambda: self.send_activates_batch(hit)).start()
+            else:
+                if new and isinstance(hit, _Consent) and hit.consent is False:
+                    self.delete_hits_by_visitor_id(hit.visitor_id, False)
+                self.tracking_manager.hitQueue.put(hit, block=False)
+                if self.tracking_manager.hitQueue.qsize() >= self.tracking_manager.tracking_manager_config.max_pool_size:
+                    Thread(target=lambda: self.send_hits_batch()).start()
+                    # self.send_batch()
             return True
         else:
             log(TAG_TRACKING_MANAGER, LogLevel.ERROR, ERROR_INVALID_HIT.format(hit.type, hit.id))
@@ -186,11 +201,12 @@ class TrackingManagerCacheStrategyAbstract(TrackingManagerCacheStrategyInterface
 
     @abstractmethod
     def polling(self):
-        self.send_batch()
-        self.send_batch_activates()
+        self.send_hits_batch()
+        self.send_activates_batch()
 
-    def send_batch(self):
-        # log("DEBUG", LogLevel.WARNING, '#DB 1 Send batch: ' + str(self.tracking_manager.hitQueue.qsize()))
+    @abstractmethod
+    def send_hits_batch(self):
+        # log("DEBUG", LogLevel.WARNING, '#DB 1 Send batch: ' + str(self.tracking_manager.Queue.qsize()))
         batch = _Batch()
         while not self.tracking_manager.hitQueue.empty():
             h = self.tracking_manager.hitQueue.get(block=False)
@@ -198,23 +214,26 @@ class TrackingManagerCacheStrategyAbstract(TrackingManagerCacheStrategyInterface
                 batch.add_child(h)
         if batch.size() > 0:
             response = HttpHelper.send_batch(self.tracking_manager.config, batch)
-            if response.status_code >= 400:
+            if response is not None and response.status_code >= 400:
                 for h in batch.hits:
                     self.tracking_manager.hitQueue.put(h, block=False)
 
-    def send_batch_activates(self, hit=None):
+    @abstractmethod
+    def send_activates_batch(self, hit=None):
 
         activates = list()
         if hit:
             activates.append(hit)
+        print("DB activate size : " + str(self.tracking_manager.activateQueue.qsize()))
         while not self.tracking_manager.activateQueue.empty():
-            activate = self.tracking_manager.hitQueue.get(block=False)
+            activate = self.tracking_manager.activateQueue.get(block=False)
             if activate:
                 activates.append(activate)
-        response = HttpHelper.send_activates(self.tracking_manager.config, activates)
-        if response.status_code >= 400:
-            for h in activates:
-                self.tracking_manager.activateQueue.put(h, block=False)
+        if len(activates) > 0:
+            response = HttpHelper.send_activates(self.tracking_manager.config, activates)
+            if response is not None and response.status_code >= 400:
+                for h in activates:
+                    self.tracking_manager.activateQueue.put(h, block=False)
 
 
 class ContinuousCacheStrategy(TrackingManagerCacheStrategyAbstract):
@@ -240,6 +259,12 @@ class ContinuousCacheStrategy(TrackingManagerCacheStrategyAbstract):
 
     def cache_pool(self):
         pass
+
+    def send_hits_batch(self):
+        return TrackingManagerCacheStrategyAbstract.send_hits_batch(self)
+
+    def send_activates_batch(self, hit=None):
+        return TrackingManagerCacheStrategyAbstract.send_activates_batch(self, hit)
 
     def polling(self):
         return TrackingManagerCacheStrategyAbstract.polling(self)
