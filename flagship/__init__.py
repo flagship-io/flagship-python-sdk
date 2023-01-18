@@ -109,10 +109,11 @@ class Flagship:
 
         @param_types_validator(True, str, str, [_FlagshipConfig, None])
         def start(self, env_id, api_key, flagship_config):
-            self.update_status(flagship_config, Status.STARTING)
+            # self.update_status(flagship_config, Status.STARTING)
             if not env_id or not api_key:
                 raise InitializationParamError()
             self.configuration_manager.init(env_id, api_key, flagship_config, self.update_status)
+            self.update_status(flagship_config, Status.STARTING)
             if self.configuration_manager.is_set() is False:
                 self.update_status(self.configuration_manager.flagship_config, Status.NOT_INITIALIZED)
                 self.__log(TAG_INITIALIZATION, LogLevel.ERROR, ERROR_CONFIGURATION)

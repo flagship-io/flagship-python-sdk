@@ -11,9 +11,11 @@ from flagship.tracking_manager import TrackingManager
 class ConfigManager:
 
     def __init__(self):
-        self.flagship_config = DecisionApi()
+        # self.flagship_config = DecisionApi()
+        self.flagship_config = None
         self.decision_manager = None
-        self.tracking_manager = TrackingManager(self.flagship_config)
+        # self.tracking_manager = TrackingManager(self.flagship_config)
+        self.tracking_manager = None
 
     def init(self, env_id, api_key, config=None, update_status=None):
         if config is not None:
@@ -27,9 +29,13 @@ class ConfigManager:
             self.decision_manager = ApiManager(self.flagship_config, update_status)
         else:
             self.decision_manager = BucketingManager(self.flagship_config, update_status)
+        if self.tracking_manager is None:
+            self.tracking_manager = TrackingManager(self.flagship_config)
         self.tracking_manager.init(self.flagship_config)
         self.tracking_manager.start_running()
         self.decision_manager.start_running()
+        if self.flagship_config.cache_manager is not None:
+            self.flagship_config.cache_manager.create(env_id)
 
     def is_set(self):
         return self.flagship_config.is_set() and self.decision_manager is not None
@@ -40,4 +46,6 @@ class ConfigManager:
         if self.tracking_manager is not None:
             self.tracking_manager.stop_running()
         self.flagship_config = DecisionApi()
+        if self.flagship_config.cache_manager is not None:
+            self.flagship_config.cache_manager.close()
 

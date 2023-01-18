@@ -7,7 +7,7 @@ import requests
 from enum import Enum
 
 from flagship.constants import TAG_HTTP_REQUEST, DEBUG_REQUEST, URL_TRACKING, URL_BUCKETING, TAG_BUCKETING, \
-    URL_ACTIVATE, URL_CONTEXT, URL_DECISION_API, URL_CAMPAIGNS, URL_CONTEXT_PARAM
+    URL_ACTIVATE, URL_CONTEXT, URL_DECISION_API, URL_CAMPAIGNS
 from flagship.decorators import param_types_validator
 from flagship.log_manager import LogLevel
 from flagship.utils import pretty_dict, log, log_exception
@@ -36,9 +36,7 @@ class HttpHelper:
     @staticmethod
     def send_campaign_request(visitor):
         config = visitor._configuration_manager.flagship_config
-        url = URL_DECISION_API + config.env_id + URL_CAMPAIGNS + \
-              (URL_CONTEXT_PARAM if visitor.has_consented is False else "")
-        # url = URL_DECISION_API + config.env_id + URL_CAMPAIGNS
+        url = URL_DECISION_API + config.env_id + URL_CAMPAIGNS
         import flagship
         headers = {
             "x-api-key": config.api_key,
@@ -48,6 +46,7 @@ class HttpHelper:
         content = {
             "visitorId": visitor.visitor_id,
             "anonymousId": visitor.anonymous_id,
+            "visitor_consent": visitor.has_consented,
             "trigger_hit": False,
             "context": visitor.context
 

@@ -109,6 +109,7 @@ class TrackingManager(TrackingManagerCacheStrategyInterface, Thread):
 
     def stop_running(self):
         self.is_running = False
+        self.polling()
 
     def add_hit(self, hit, new=True):
         return self.strategy.add_hit(hit, new)
@@ -224,7 +225,6 @@ class TrackingManagerCacheStrategyAbstract(TrackingManagerCacheStrategyInterface
         activates = list()
         if hit:
             activates.append(hit)
-        print("DB activate size : " + str(self.tracking_manager.activateQueue.qsize()))
         while not self.tracking_manager.activateQueue.empty():
             activate = self.tracking_manager.activateQueue.get(block=False)
             if activate:

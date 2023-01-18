@@ -2,6 +2,7 @@ from __future__ import absolute_import
 
 import json
 
+from flagship.cache_manager import CacheManager, DefaultCacheManager
 from flagship.decision_mode import DecisionMode
 from flagship.status import Status
 from flagship.status_listener import StatusListener
@@ -22,20 +23,20 @@ class _FlagshipConfig:
 
     def __init__(self, mode, **kwargs):
         self.decision_mode = mode if mode is not None else DecisionMode.DECISION_API
-        self.env_id = self.__get_arg('env_id', str, self.__env_id, kwargs)
-        self.api_key = self.__get_arg('api_key', str, self.__api_key, kwargs)
-        self.log_level = self.__get_arg('log_level', LogLevel, LogLevel.ALL, kwargs)
-        self.log_manager = self.__get_arg('log_manager', LogManager, FlagshipLogManager(LogLevel.ALL), kwargs)
-        self.polling_interval = self.__get_arg('polling_interval', type(1), 60000, kwargs)
-        self.timeout = self.__get_arg('timeout', type(1), 2000, kwargs)
-        self.status_listener = self.__get_arg('status_listener', StatusListener, None, kwargs)
-        self.tracking_manager_config = self.__get_arg('tracking_manager_config', TrackingManagerConfig,
-                                                      TrackingManagerConfig(), kwargs)
-        # self.cache_manager = self.__get_arg('cache_manager', CacheManager , None, kwargs)
+        self.env_id = self.__get_arg(kwargs, 'env_id', str) or self.__env_id
+        self.api_key = self.__get_arg(kwargs, 'api_key', str) or self.__api_key
+        self.log_level = self.__get_arg(kwargs, 'log_level', LogLevel) or LogLevel.ALL
+        self.log_manager = self.__get_arg(kwargs, 'log_manager', LogManager) or FlagshipLogManager(LogLevel.ALL)
+        self.polling_interval = self.__get_arg(kwargs, 'polling_interval', type(1)) or 60000
+        self.timeout = self.__get_arg(kwargs, 'timeout', type(1)) or 2000
+        self.status_listener = self.__get_arg(kwargs, 'status_listener', StatusListener) or None
+        self.tracking_manager_config = self.__get_arg(kwargs, 'tracking_manager_config',
+                                                      TrackingManagerConfig) or TrackingManagerConfig()
+        self.cache_manager = self.__get_arg(kwargs, 'cache_manager', CacheManager) or DefaultCacheManager()
         # self.__update_flagship_status()
 
-    def __get_arg(self, name, c_type, default, kwargs):
-        return kwargs[name] if name in kwargs and isinstance(kwargs[name], c_type) else default
+    def __get_arg(self, kwargs, name, c_type):
+        return kwargs[name] if name in kwargs and isinstance(kwargs[name], c_type) else None
 
     # def __update_flagship_status(self):
     #     if self.status_listener is not None:
