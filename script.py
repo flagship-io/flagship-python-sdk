@@ -188,7 +188,7 @@ def init_bucketing():
                 self.function()
 
     def create_visitor():
-        visitor = Flagship.new_visitor("111", instance_type=Visitor.Instance.SINGLE_INSTANCE)
+        visitor = Flagship.new_visitor("aaaaaaa", instance_type=Visitor.Instance.SINGLE_INSTANCE)
         visitor2 = Flagship.new_visitor("222", instance_type=Visitor.Instance.SINGLE_INSTANCE)
         visitor.update_context({
             "coucou": 3,

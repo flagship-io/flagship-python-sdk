@@ -57,6 +57,11 @@ class IVisitorStrategy:
     def unauthenticate(self):
         pass
 
+    @abstractmethod
+    def cache_visitor(self):
+        pass
+
+
 class DefaultStrategy(IVisitorStrategy):
 
     def __init__(self, strategy=VisitorStrategies.DEFAULT_STRATEGY, visitor=None):
@@ -81,6 +86,7 @@ class DefaultStrategy(IVisitorStrategy):
                 self.visitor._modifications.update(modifications)
                 log(TAG_FETCH_FLAGS, LogLevel.DEBUG, "[" + TAG_VISITOR.format(self.visitor.visitor_id) + "] " +
                     DEBUG_FETCH_FLAGS.format(self.visitor.__str__()))
+                self.visitor.cache_visitor()
 
     def get_flag(self, key, default):
         return Flag(self.visitor, key, default)
@@ -92,10 +98,9 @@ class DefaultStrategy(IVisitorStrategy):
                 hit._with_visitor_ids(self.visitor.visitor_id, self.visitor.anonymous_id)
             tracking_manager = self.visitor._configuration_manager.tracking_manager
             tracking_manager.add_hit(hit)
-            #HttpHelper.send_hit(self.visitor, hit)
+            # HttpHelper.send_hit(self.visitor, hit)
         else:
             log(TAG_TRACKING, LogLevel.ERROR, ERROR_TRACKING_HIT_SUBCLASS)
-
 
     def set_consent(self, consent):
         self.visitor.has_consented = consent
@@ -107,6 +112,12 @@ class DefaultStrategy(IVisitorStrategy):
 
     def unauthenticate(self):
         self.visitor._configuration_manager.decision_manager.unauthenticate(self.visitor)
+
+    def cache_visitor(self):
+        cache_manager = self.visitor._configuration_manager.flagship_config.cache_manager
+        if cache_manager is not None:
+            from flagship.cache_helper import visitor_to_cache_json
+            cache_manager.cache_visitor(self.visitor.visitor_id, visitor_to_cache_json(self.visitor))
 
 
 class PanicStrategy(DefaultStrategy):
@@ -151,7 +162,7 @@ class NoConsentStrategy(DefaultStrategy):
             return super(NoConsentStrategy, self).send_hit(hit)
         else:
             log(TAG_TRACKING, LogLevel.ERROR, ERROR_METHOD_DEACTIVATED.format("send_hit()", (
-                        ERROR_METHOD_DEACTIVATED_NO_CONSENT + "\n {}").format(self.visitor.visitor_id, str(hit))))
+                    ERROR_METHOD_DEACTIVATED_NO_CONSENT + "\n {}").format(self.visitor.visitor_id, str(hit))))
 
 
 class NotReadyStrategy(DefaultStrategy):
@@ -194,4 +205,3 @@ class NotReadyStrategy(DefaultStrategy):
         log(TAG_TRACKING, LogLevel.ERROR,
             ERROR_METHOD_DEACTIVATED.format("unauthenticate()", ERROR_METHOD_DEACTIVATED_NOT_READY
                                             .format(self.visitor.visitor_id)))
-

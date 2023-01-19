@@ -1,13 +1,12 @@
 import traceback
 import uuid
-
 from enum import Enum
-from flagship import param_types_validator, Status, LogLevel
+
+from flagship import Status, LogLevel
 from flagship.constants import TAG_GET_FLAG, TAG_FLAG_USER_EXPOSITION, TAG_UPDATE_CONTEXT, TAG_VISITOR, \
     ERROR_UPDATE_CONTEXT_TYPE, ERROR_UPDATE_CONTEXT_EMPTY_KEY
 from flagship.errors import FlagNotFoundException, FlagExpositionNotFoundException, FlagTypeException
-from flagship.hits import _Activate, _Segment
-from flagship.http_helper import HttpHelper
+from flagship.hits import _Activate
 from flagship.utils import pretty_dict, log_exception, log
 from flagship.visitor_strategies import IVisitorStrategy, PanicStrategy, DefaultStrategy, NoConsentStrategy, \
     NotReadyStrategy
@@ -52,6 +51,8 @@ class Visitor(IVisitorStrategy):
         self.has_consented = self._get_arg(kwargs, 'consent', bool, True)
         self.set_consent(self.has_consented)
         self.update_context(self._get_arg(kwargs, 'context', dict, {}))
+        self.exposed_variations = []
+        self.assignations = {}
 
     # @param_types_validator(True, str, [int, float, str])
     def _update_context(self, key, value):
@@ -211,3 +212,8 @@ class Visitor(IVisitorStrategy):
         @return:
         """
         self._get_strategy().unauthenticate()
+
+    def cache_visitor(self):
+        self._get_strategy().cache_visitor()
+
+

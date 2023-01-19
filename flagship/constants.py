@@ -29,6 +29,7 @@ TAG_BUCKETING = "Bucketing"
 TAG_AUTHENTICATE = "Authenticate"
 TAG_UNAUTHENTICATE = "Unauthenticate"
 TAG_TRACKING_MANAGER = 'Tracking Manager'
+TAG_CACHE_MANAGER = 'Cache Manager'
 
 # INFO
 INFO_STATUS_CHANGED = "SDK status has changed ({})"
@@ -73,3 +74,5 @@ ERROR_BUCKETING_XPC_DISABLED = "The '{}' method is disabled in Bucketing configu
 
 ERROR_TRACKING_HIT_SUBCLASS = "send_hit() param must be a subclass of Hit."
 ERROR_INVALID_HIT = "Hit {} {} has invalid data and wont be sent."
+
+ERROR_CACHE_VISITOR = "An error occurred during {}: {}"

@@ -1,9 +1,14 @@
 # try:
 #     from abc import ABC, abstractmethod
 # except ImportError:
+import json
+import time
+import traceback
 from abc import abstractmethod, ABCMeta
 import sqlite3 as sl
 
+from flagship.constants import TAG_CACHE_MANAGER
+from flagship.utils import log_exception
 
 
 class VisitorCacheImplementation:
@@ -66,6 +71,7 @@ class CacheManager(object):
 
 class DefaultCacheManager(CacheManager, VisitorCacheImplementation, HitCacheImplementation):
 
+    full_db_path = None
     db_version = 1
     con = None
 
@@ -77,37 +83,44 @@ class DefaultCacheManager(CacheManager, VisitorCacheImplementation, HitCacheImpl
         import os
         if not os.path.exists(self.db_path):
             os.makedirs(self.db_path)
-        self.con = sl.connect(self.db_path + '/' + self.env_id + "-cache.db")
-        self.create_db_info_table()
-        self.create_visitor_table()
+        self.full_db_path = self.db_path + '/' + self.env_id + "-cache.db"
+        con = sl.connect(self.full_db_path)
+        self.create_db_info_table(con)
+        self.create_visitor_table(con)
+        con.close()
 
-    def create_visitor_table(self):
-        with self.con:
-            self.con.execute("""
+    def create_visitor_table(self, con):
+
+        with con:
+            con.execute("""
                 CREATE TABLE IF NOT EXISTS VISITORS (
-                    id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-                    last_update INT,
-                    visitor_id TEXT,
-                    data TEXT
+                    visitor_id TEXT UNIQUE PRIMARY KEY,
+                    data TEXT,
+                    last_update INTEGER
                 );
             """)
+    def create_db_info_table(self, con):
+        with con:
+            con.execute("""
+                            CREATE TABLE IF NOT EXISTS DB_INFO (
+                                id INTEGER UNIQUE,
+                                creation_date INTEGER,
+                                version INTEGER
+                            );
+                        """)
+            sql = """INSERT OR REPLACE INTO DB_INFO (id, creation_date, version) values(?, ?, ?)"""
+            data = [0, int(time.time()*1000), self.db_version]
+            con.execute(sql, data)
 
-    def create_db_info_table(self):
-        import time
-        self.con.execute("""
-                        CREATE TABLE IF NOT EXISTS DB_INFO (
-                            creation_date INT,
-                            version INT
-                        );
-                    """)
-        add_info_sql = """INSERT INTO DB_INFO (creation_date, version) values(?, ?)"""
-        data = [
-            int(time.time()*1000), self.db_version
-        ]
-        self.con.execute(add_info_sql, data)
-
-    def cache_visitor(self, visitor_id, data):
-        print("__ cache visitor __ = " + visitor_id)
+    def cache_visitor(self, visitor_id, visitor_data):
+        try:
+            con = sl.connect(self.full_db_path)
+            with con:
+                sql = """INSERT OR REPLACE INTO VISITORS (visitor_id, data, last_update) values(?, ?, ?)"""
+                data = [visitor_id, json.dumps(visitor_data), int(time.time() * 1000)]
+                con.execute(sql, data)
+        except Exception as e:
+            log_exception(TAG_CACHE_MANAGER, e, traceback.format_exc())
 
     def lookup_visitor(self, visitor_id):
         pass
