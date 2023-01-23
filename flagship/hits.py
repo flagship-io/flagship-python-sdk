@@ -7,7 +7,6 @@ import uuid
 
 from enum import Enum
 
-
 from flagship.decorators import param_types_validator
 
 
@@ -176,8 +175,10 @@ class Page(Hit):
         self.hit_data.update(data)
 
     def check_data_validity(self):
-
-        from urllib.parse import urlparse
+        try:
+            import urlparse
+        except:
+            from urllib.parse import urlparse
         if ((Hit.check_data_validity(self) is False) or
                 (not bool(self.hit_data[self._k_origin])) or
                 (bool(urlparse(self.hit_data[self._k_origin]).scheme) is False) or
@@ -524,6 +525,7 @@ class _Segment(Hit):
             return False
         return True
 
+
 class _Batch(Hit):
 
     def __init__(self):
@@ -563,5 +565,3 @@ class _Batch(Hit):
 
     def size(self):
         return len(self.hits)
-
-

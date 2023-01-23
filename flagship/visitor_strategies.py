@@ -1,12 +1,15 @@
+import traceback
 from abc import ABCMeta, abstractmethod
 from enum import Enum
 from flagship import param_types_validator, log, LogLevel
 from flagship.constants import TAG_UPDATE_CONTEXT, TAG_VISITOR, DEBUG_CONTEXT, TAG_FETCH_FLAGS, DEBUG_FETCH_FLAGS, \
     ERROR_METHOD_DEACTIVATED, ERROR_METHOD_DEACTIVATED_PANIC, TAG_TRACKING, ERROR_METHOD_DEACTIVATED_NO_CONSENT, \
-    ERROR_METHOD_DEACTIVATED_NOT_READY, TAG_AUTHENTICATE, TAG_UNAUTHENTICATE, ERROR_TRACKING_HIT_SUBCLASS
+    ERROR_METHOD_DEACTIVATED_NOT_READY, TAG_AUTHENTICATE, TAG_UNAUTHENTICATE, ERROR_TRACKING_HIT_SUBCLASS, \
+    TAG_CACHE_MANAGER
 from flagship.flag import Flag
 from flagship.hits import Hit, _Consent, _Activate
 from flagship.http_helper import HttpHelper
+from flagship.utils import log_exception
 
 
 class VisitorStrategies(Enum):
@@ -61,6 +64,9 @@ class IVisitorStrategy:
     def cache_visitor(self):
         pass
 
+    @abstractmethod
+    def lookup_visitor(self):
+        pass
 
 class DefaultStrategy(IVisitorStrategy):
 
@@ -84,6 +90,8 @@ class DefaultStrategy(IVisitorStrategy):
             from flagship import Flagship
             if result is True and Flagship.status() is not Status.PANIC:
                 self.visitor._modifications.update(modifications)
+                for k, v in modifications.items():
+                    self.visitor.assignations[v.variation_group_id] = v.variation_id
                 log(TAG_FETCH_FLAGS, LogLevel.DEBUG, "[" + TAG_VISITOR.format(self.visitor.visitor_id) + "] " +
                     DEBUG_FETCH_FLAGS.format(self.visitor.__str__()))
                 self.visitor.cache_visitor()
@@ -114,10 +122,25 @@ class DefaultStrategy(IVisitorStrategy):
         self.visitor._configuration_manager.decision_manager.unauthenticate(self.visitor)
 
     def cache_visitor(self):
-        cache_manager = self.visitor._configuration_manager.flagship_config.cache_manager
-        if cache_manager is not None:
-            from flagship.cache_helper import visitor_to_cache_json
-            cache_manager.cache_visitor(self.visitor.visitor_id, visitor_to_cache_json(self.visitor))
+        try:
+            cache_manager = self.visitor._configuration_manager.flagship_config.cache_manager
+            if cache_manager is not None:
+                from flagship.cache_helper import visitor_to_cache_json
+                cache_manager.cache_visitor(self.visitor.visitor_id, visitor_to_cache_json(self.visitor))
+        except Exception as e:
+            log_exception(TAG_CACHE_MANAGER, e, traceback.format_exc())
+
+    def lookup_visitor(self):
+        try:
+            cache_manager = self.visitor._configuration_manager.flagship_config.cache_manager
+            if cache_manager is not None:
+                from flagship.cache_helper import load_visitor_from_json
+                visitor_data = cache_manager.lookup_visitor(self.visitor.visitor_id)
+                if visitor_data:
+                    load_visitor_from_json(self.visitor, visitor_data)
+        except Exception as e:
+            log_exception(TAG_CACHE_MANAGER, e, traceback.format_exc())
+
 
 
 class PanicStrategy(DefaultStrategy):

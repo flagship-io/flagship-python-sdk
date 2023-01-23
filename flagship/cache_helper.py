@@ -66,7 +66,7 @@ def load_visitor_from_json(visitor, visitor_data):
             exposed = campaign['exposed']
             if exposed is True and variation_id not in visitor_m.exposed_variations:
                 visitor_m.exposed_variations.append(variation_id)
-            for key, value in campaign['flags']:
+            for key, value in campaign['flags'].items():
                 visitor_m._modifications[key] = Modification(key, campaign_id, campaign_type, campaign_slug,
                                                              variation_group_id, variation_id, is_reference, value)
         visitor_m.assignations.update(data_m['assignations'])

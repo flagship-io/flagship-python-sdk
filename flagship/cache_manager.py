@@ -114,6 +114,7 @@ class DefaultCacheManager(CacheManager, VisitorCacheImplementation, HitCacheImpl
 
     def cache_visitor(self, visitor_id, visitor_data):
         try:
+            print("== cache visitor {} ==".format(visitor_id))
             con = sl.connect(self.full_db_path)
             with con:
                 sql = """INSERT OR REPLACE INTO VISITORS (visitor_id, data, last_update) values(?, ?, ?)"""
@@ -123,8 +124,20 @@ class DefaultCacheManager(CacheManager, VisitorCacheImplementation, HitCacheImpl
             log_exception(TAG_CACHE_MANAGER, e, traceback.format_exc())
 
     def lookup_visitor(self, visitor_id):
-        pass
-
+        try:
+            print("== lookup visitor {} ==".format(visitor_id))
+            con = sl.connect(self.full_db_path)
+            with con:
+                cursor = con.cursor()
+                cursor.execute("SELECT * FROM VISITORS WHERE visitor_id=?", (visitor_id,))
+                result = cursor.fetchone()
+                if result:
+                    cursor.close()
+                    print("== lookup visitor {} == \n {}".format(visitor_id, result[1]))
+                    return result[1]
+        except Exception as e:
+            log_exception(TAG_CACHE_MANAGER, e, traceback.format_exc())
+        return None
     def flush_visitor(self, visitor_id):
         pass
 

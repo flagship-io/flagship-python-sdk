@@ -42,6 +42,7 @@ class Visitor(IVisitorStrategy):
         super(Visitor, self).__init__(self)
         self._configuration_manager = configuration_manager
         self._config = configuration_manager.flagship_config
+
         self.is_authenticated = self._get_arg(kwargs, 'authenticated', bool, False)
         self.visitor_id = visitor_id
         self.anonymous_id = str(uuid.uuid4()) if self.is_authenticated is True else None
@@ -53,6 +54,8 @@ class Visitor(IVisitorStrategy):
         self.update_context(self._get_arg(kwargs, 'context', dict, {}))
         self.exposed_variations = []
         self.assignations = {}
+        self.lookup_visitor()
+        print('d')
 
     # @param_types_validator(True, str, [int, float, str])
     def _update_context(self, key, value):
@@ -83,6 +86,8 @@ class Visitor(IVisitorStrategy):
             self.send_hit(_Activate(self.visitor_id, self.anonymous_id,
                                     modification.variation_group_id,
                                     modification.variation_id))
+            if modification.variation_id not in self.exposed_variations:
+                self.exposed_variations.append(modification.variation_id)
         except Exception as e:
             log_exception(TAG_FLAG_USER_EXPOSITION, e, traceback.format_exc())
 
@@ -215,5 +220,8 @@ class Visitor(IVisitorStrategy):
 
     def cache_visitor(self):
         self._get_strategy().cache_visitor()
+
+    def lookup_visitor(self):
+        self._get_strategy().lookup_visitor()
 
 
