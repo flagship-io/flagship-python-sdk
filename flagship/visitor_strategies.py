@@ -68,6 +68,14 @@ class IVisitorStrategy:
     def lookup_visitor(self):
         pass
 
+    @abstractmethod
+    def flush_visitor(self):
+        pass
+
+    @abstractmethod
+    def flush_hits(self):
+        pass
+
 class DefaultStrategy(IVisitorStrategy):
 
     def __init__(self, strategy=VisitorStrategies.DEFAULT_STRATEGY, visitor=None):
@@ -141,6 +149,23 @@ class DefaultStrategy(IVisitorStrategy):
         except Exception as e:
             log_exception(TAG_CACHE_MANAGER, e, traceback.format_exc())
 
+    def flush_visitor(self):
+        try:
+            cache_manager = self.visitor._configuration_manager.flagship_config.cache_manager
+            if cache_manager is not None:
+                cache_manager.flush_visitor(self.visitor.visitor_id)
+        except Exception as e:
+            log_exception(TAG_CACHE_MANAGER, e, traceback.format_exc())
+
+    def flush_hits(self):
+        try:
+            tracking_manager = self.visitor._configuration_manager.tracking_manager
+            hits_ids = tracking_manager.delete_hits_by_visitor_id(self.visitor.visitor_id)
+            cache_manager = self.visitor._configuration_manager.flagship_config.cache_manager
+            if cache_manager is not None:
+                cache_manager.cache_hit(hits_ids)
+        except Exception as e:
+            log_exception(TAG_CACHE_MANAGER, e, traceback.format_exc())
 
 
 class PanicStrategy(DefaultStrategy):
@@ -228,3 +253,4 @@ class NotReadyStrategy(DefaultStrategy):
         log(TAG_TRACKING, LogLevel.ERROR,
             ERROR_METHOD_DEACTIVATED.format("unauthenticate()", ERROR_METHOD_DEACTIVATED_NOT_READY
                                             .format(self.visitor.visitor_id)))
+

@@ -88,6 +88,7 @@ class Visitor(IVisitorStrategy):
                                     modification.variation_id))
             if modification.variation_id not in self.exposed_variations:
                 self.exposed_variations.append(modification.variation_id)
+                self.cache_visitor()
         except Exception as e:
             log_exception(TAG_FLAG_USER_EXPOSITION, e, traceback.format_exc())
 
@@ -195,6 +196,9 @@ class Visitor(IVisitorStrategy):
         @return:
         """
         self._get_strategy().set_consent(consent)
+        if not consent:
+            self.flush_visitor()
+            self.flush_hits()
 
     def authenticate(self, visitor_id):
         """
@@ -223,5 +227,11 @@ class Visitor(IVisitorStrategy):
 
     def lookup_visitor(self):
         self._get_strategy().lookup_visitor()
+
+    def flush_visitor(self):
+        self._get_strategy().flush_visitor()
+
+    def flush_hits(self):
+        self._get_strategy().flush_hits()
 
 

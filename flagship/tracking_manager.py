@@ -155,8 +155,9 @@ class TrackingManagerCacheStrategyAbstract(TrackingManagerCacheStrategyInterface
             if isinstance(hit, _Activate):
                 Thread(target=lambda: self.send_activates_batch(hit)).start()
             else:
-                if new and isinstance(hit, _Consent) and hit.consent is False:
-                    self.delete_hits_by_visitor_id(hit.visitor_id, False)
+                # todo specific method
+                # if new and isinstance(hit, _Consent) and hit.consent is False:
+                #     self.delete_hits_by_visitor_id(hit.visitor_id, False)
                 self.tracking_manager.hitQueue.put(hit, block=False)
                 if self.tracking_manager.hitQueue.qsize() >= self.tracking_manager.tracking_manager_config.max_pool_size:
                     Thread(target=lambda: self.send_hits_batch()).start()
@@ -204,6 +205,16 @@ class TrackingManagerCacheStrategyAbstract(TrackingManagerCacheStrategyInterface
     def polling(self):
         self.send_hits_batch()
         self.send_activates_batch()
+
+    def cache_batch(self):
+        try:
+
+            cache_manager = self.config.cache_manager
+            if cache_manager is not None:
+                cache_manager.cache_hit(hits_ids)
+        except Exception as e:
+            log_exception(TAG_CACHE_MANAGER, e, traceback.format_exc())
+
 
     @abstractmethod
     def send_hits_batch(self):

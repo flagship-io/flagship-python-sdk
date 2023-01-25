@@ -232,6 +232,10 @@ def init_bucketing():
 
         print(" === " + visitor.get_flag("troll", 'nooooooooooooo').value(True))
 
+        # visitor.fetch_flags()
+
+        visitor.set_consent(False)
+        visitor.set_consent(True)
         visitor.fetch_flags()
 
         print(" === " + visitor.get_flag("troll", 'nooooooooooooo').value(True))

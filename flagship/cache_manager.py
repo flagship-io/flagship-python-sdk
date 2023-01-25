@@ -37,7 +37,7 @@ class HitCacheImplementation:
         pass
 
     @abstractmethod
-    def flush_hits(self, hits):
+    def flush_hits(self, hits_ids):
         pass
 
     @abstractmethod
@@ -70,7 +70,6 @@ class CacheManager(object):
 
 
 class DefaultCacheManager(CacheManager, VisitorCacheImplementation, HitCacheImplementation):
-
     full_db_path = None
     db_version = 1
     con = None
@@ -99,6 +98,7 @@ class DefaultCacheManager(CacheManager, VisitorCacheImplementation, HitCacheImpl
                     last_update INTEGER
                 );
             """)
+
     def create_db_info_table(self, con):
         with con:
             con.execute("""
@@ -109,8 +109,9 @@ class DefaultCacheManager(CacheManager, VisitorCacheImplementation, HitCacheImpl
                             );
                         """)
             sql = """INSERT OR REPLACE INTO DB_INFO (id, creation_date, version) values(?, ?, ?)"""
-            data = [0, int(time.time()*1000), self.db_version]
+            data = [0, int(time.time() * 1000), self.db_version]
             con.execute(sql, data)
+            con.commit()
 
     def cache_visitor(self, visitor_id, visitor_data):
         try:
@@ -120,12 +121,12 @@ class DefaultCacheManager(CacheManager, VisitorCacheImplementation, HitCacheImpl
                 sql = """INSERT OR REPLACE INTO VISITORS (visitor_id, data, last_update) values(?, ?, ?)"""
                 data = [visitor_id, json.dumps(visitor_data), int(time.time() * 1000)]
                 con.execute(sql, data)
+                con.commit()
         except Exception as e:
             log_exception(TAG_CACHE_MANAGER, e, traceback.format_exc())
 
     def lookup_visitor(self, visitor_id):
         try:
-            print("== lookup visitor {} ==".format(visitor_id))
             con = sl.connect(self.full_db_path)
             with con:
                 cursor = con.cursor()
@@ -133,13 +134,20 @@ class DefaultCacheManager(CacheManager, VisitorCacheImplementation, HitCacheImpl
                 result = cursor.fetchone()
                 if result:
                     cursor.close()
-                    print("== lookup visitor {} == \n {}".format(visitor_id, result[1]))
                     return result[1]
         except Exception as e:
             log_exception(TAG_CACHE_MANAGER, e, traceback.format_exc())
         return None
+
     def flush_visitor(self, visitor_id):
-        pass
+        try:
+            con = sl.connect(self.full_db_path)
+            with con:
+                cursor = con.cursor()
+                cursor.execute("DELETE FROM VISITORS WHERE visitor_id=?", (visitor_id,))
+                con.commit()
+        except Exception as e:
+            log_exception(TAG_CACHE_MANAGER, e, traceback.format_exc())
 
     def cache_hits(self, hits):
         pass
@@ -147,7 +155,7 @@ class DefaultCacheManager(CacheManager, VisitorCacheImplementation, HitCacheImpl
     def lookup_hits(self):
         pass
 
-    def flush_hits(self, hits):
+    def flush_hits(self, hits_ids):
         pass
 
     def flush_all_hits(self):
