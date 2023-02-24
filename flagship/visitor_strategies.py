@@ -160,10 +160,10 @@ class DefaultStrategy(IVisitorStrategy):
     def flush_hits(self):
         try:
             tracking_manager = self.visitor._configuration_manager.tracking_manager
-            hits_ids = tracking_manager.delete_hits_by_visitor_id(self.visitor.visitor_id)
-            cache_manager = self.visitor._configuration_manager.flagship_config.cache_manager
-            if cache_manager is not None:
-                cache_manager.cache_hit(hits_ids)
+            tracking_manager.delete_hits_by_visitor_id(self.visitor.visitor_id, False)
+            # cache_manager = self.visitor._configuration_manager.flagship_config.cache_manager
+            # if cache_manager is not None:
+            #     cache_manager.cache_hits(hits_ids)
         except Exception as e:
             log_exception(TAG_CACHE_MANAGER, e, traceback.format_exc())
 

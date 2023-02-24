@@ -29,13 +29,13 @@ class ConfigManager:
             self.decision_manager = ApiManager(self.flagship_config, update_status)
         else:
             self.decision_manager = BucketingManager(self.flagship_config, update_status)
-        if self.tracking_manager is None:
-            self.tracking_manager = TrackingManager(self.flagship_config)
-        self.tracking_manager.init(self.flagship_config)
-        self.tracking_manager.start_running()
-        self.decision_manager.start_running()
         if self.flagship_config.cache_manager is not None:
             self.flagship_config.cache_manager.create(env_id)
+        if self.tracking_manager is None:
+            self.tracking_manager = TrackingManager(self.flagship_config)
+            self.tracking_manager.init(self.flagship_config)
+            self.tracking_manager.start_running()
+            self.decision_manager.start_running()
 
     def is_set(self):
         return self.flagship_config.is_set() and self.decision_manager is not None

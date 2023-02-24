@@ -55,7 +55,6 @@ class Visitor(IVisitorStrategy):
         self.exposed_variations = []
         self.assignations = {}
         self.lookup_visitor()
-        print('d')
 
     # @param_types_validator(True, str, [int, float, str])
     def _update_context(self, key, value):

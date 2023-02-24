@@ -1,9 +1,11 @@
 __VISITOR_CACHE_VERSION__ = 1
+__HIT_CACHE_VERSION__ = 1
 
 import json
 import traceback
 from collections import OrderedDict
 
+from flagship import hits
 from flagship.constants import TAG_CACHE_MANAGER
 from flagship.modification import Modification
 from flagship.utils import log_exception
@@ -53,7 +55,6 @@ def visitor_campaigns_to_json(visitor):
 
 
 def load_visitor_from_json(visitor, visitor_data):
-
     def migration_1(visitor_m, data_m):
         campaigns = data_m['campaigns']
         for campaign in campaigns:
@@ -79,3 +80,49 @@ def load_visitor_from_json(visitor, visitor_data):
         migrations[version - 1](visitor, data)
     except Exception as e:
         log_exception(TAG_CACHE_MANAGER, e, traceback.format_exc())
+
+
+def hit_to_cache_json(hit):
+    return {
+        'version': __HIT_CACHE_VERSION__,
+        'data': {
+            'id': hit.id,
+            'type': str(hit.type.value),
+            'timestamp': hit.timestamp,
+            'visitorId': hit.visitor_id,
+            'anonymousId': hit.anonymous_id,
+            'content': hit.hit_data
+        }
+    }
+
+def load_hit_from_json(cached_hit):
+    def migration_1(hit_json):
+        from flagship.hits import HitFactory
+        return HitFactory.from_json(hit_json)
+
+
+    try:
+        migrations = [migration_1, ]
+        version = cached_hit['version']
+        data = cached_hit['data']
+        return migrations[version - 1](data)
+    except Exception as e:
+        log_exception(TAG_CACHE_MANAGER, e, traceback.format_exc())
+    return None
+
+
+def hits_to_cache_json(hits_to_cache):
+    result = {}
+    for h in hits_to_cache:
+        result[h.id] = hit_to_cache_json(h)
+    return result
+
+
+def hits_from_cache_json(cached_hits):
+    hits = list()
+    for k, v in cached_hits.items():
+        hit = load_hit_from_json(v)
+        if hit:
+            hits.append(hit)
+    return hits
+

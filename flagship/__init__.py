@@ -112,8 +112,9 @@ class Flagship:
             # self.update_status(flagship_config, Status.STARTING)
             if not env_id or not api_key:
                 raise InitializationParamError()
-            self.configuration_manager.init(env_id, api_key, flagship_config, self.update_status)
             self.update_status(flagship_config, Status.STARTING)
+            self.configuration_manager.init(env_id, api_key, flagship_config, self.update_status)
+            # self.update_status(flagship_config, Status.STARTING)
             if self.configuration_manager.is_set() is False:
                 self.update_status(self.configuration_manager.flagship_config, Status.NOT_INITIALIZED)
                 self.__log(TAG_INITIALIZATION, LogLevel.ERROR, ERROR_CONFIGURATION)
@@ -121,7 +122,7 @@ class Flagship:
         def update_status(self, flagship_config, new_status):
             if flagship_config is not None and new_status is not None and new_status != self.status:
                 self.status = new_status
-                log(TAG_STATUS, LogLevel.DEBUG, INFO_STATUS_CHANGED.format(str(new_status)))
+                log(TAG_STATUS, LogLevel.DEBUG, INFO_STATUS_CHANGED.format(str(new_status)), flagship_config)
                 if new_status is Status.READY:
                     log(TAG_INITIALIZATION, LogLevel.INFO,
                         INFO_READY.format(str(__version__), str(flagship_config)))

@@ -1,5 +1,6 @@
 
 DECISION_API_URL = 'https://decision.flagship.io/v2/_env_id_/campaigns/?exposeAllKeys=true'
+DECISION_API_URL = 'https://decision.flagship.io/v2/_env_id_/campaigns/?exposeAllKeys=true'
 # NO_CONSENT_PARAM = '&sendContextEvent=false'
 ARIANE_URL = 'https://ariane.abtasty.com'
 ACTIVATE_URL = 'https://decision.flagship.io/v2/activate'

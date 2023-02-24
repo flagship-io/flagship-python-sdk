@@ -98,13 +98,6 @@ class HttpHelper:
             "cid": config.env_id
         }
         body.update(batch.data())
-        # if HttpHelper.mock:
-        #     HttpHelper.mock = False
-        #     response = requests.post(url="https://run.mocky.io/v3/74408c0a-7b2a-483d-87cf-6a18229da56a", headers=headers, json=body, timeout=config.timeout)
-        #     HttpHelper.log_request(HttpHelper.RequestType.POST, "https://run.mocky.io/v3/74408c0a-7b2a-483d-87cf-6a18229da56a", headers, body, response)
-        # else:
-        #     response = requests.post(url=URL_TRACKING, headers=headers, json=body, timeout=config.timeout)
-        #     HttpHelper.log_request(HttpHelper.RequestType.POST, URL_TRACKING, headers, body, response)
         response = requests.post(url=URL_TRACKING, headers=headers, json=body, timeout=config.timeout)
         HttpHelper.log_request(HttpHelper.RequestType.POST, URL_TRACKING, headers, body, response)
         return response
@@ -151,16 +144,8 @@ class HttpHelper:
                 "cid": config.env_id,
                 "batch": batch
             }
-            if HttpHelper.mock <= 1:
-                HttpHelper.mock += 1
-                print(str("Mock " + str(HttpHelper.mock)))
-                response = requests.post(url="https://run.mocky.io/v3/74408c0a-7b2a-483d-87cf-6a18229da56a", headers=headers, json=body, timeout=config.timeout)
-                HttpHelper.log_request(HttpHelper.RequestType.POST, "https://run.mocky.io/v3/74408c0a-7b2a-483d-87cf-6a18229da56a", headers, body, response)
-            else:
-                response = requests.post(url=URL_TRACKING, headers=headers, json=body, timeout=config.timeout)
-                HttpHelper.log_request(HttpHelper.RequestType.POST, URL_ACTIVATE, headers, body, response)
-            # response = requests.post(url=URL_ACTIVATE, headers=headers, json=body, timeout=config.timeout)
-            # HttpHelper.log_request(HttpHelper.RequestType.POST, URL_ACTIVATE, headers, body, response)
+            response = requests.post(url=URL_ACTIVATE, headers=headers, json=body, timeout=config.timeout)
+            HttpHelper.log_request(HttpHelper.RequestType.POST, URL_ACTIVATE, headers, body, response)
             return response
         return None
 

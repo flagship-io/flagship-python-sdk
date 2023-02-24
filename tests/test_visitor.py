@@ -9,7 +9,7 @@ import responses
 from flagship.hits import Screen
 from flagship.log_manager import LogManager
 from test_constants_res import API_RESPONSE_1, DECISION_API_URL, ARIANE_URL, API_RESPONSE_2, ACTIVATE_URL, \
-    API_RESPONSE_3, NO_CONSENT_PARAM
+    API_RESPONSE_3
 
 
 def test_visitor_creation_default():
@@ -354,7 +354,7 @@ def test_visitor_strategy_no_consent():
     Flagship.stop()
 
     responses.add(responses.POST, DECISION_API_URL, json=json.loads(API_RESPONSE_1), status=200)
-    responses.add(responses.POST, DECISION_API_URL+NO_CONSENT_PARAM, json=json.loads(API_RESPONSE_1), status=200)
+    responses.add(responses.POST, DECISION_API_URL, json=json.loads(API_RESPONSE_1), status=200)
     responses.add(responses.POST, ARIANE_URL, body="", status=200)
     responses.add(responses.POST, ACTIVATE_URL, body="", status=200)
 

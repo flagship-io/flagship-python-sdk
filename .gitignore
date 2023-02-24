@@ -33,3 +33,5 @@ flagship.egg-info/requires.txt
 flagship.egg-info/SOURCES.txt
 flagship.egg-info/top_level.txt
 *.decision
+tests/cache/
+cache/

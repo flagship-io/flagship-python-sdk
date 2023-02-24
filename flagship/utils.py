@@ -23,8 +23,11 @@ def log_exception(tag, exception, traceback):
         configured_log_manager.exception(tag, exception, traceback)
 
 
-def pretty_dict(node, indent=2, string="", first=True):
+def get_kwargs_param(key, expected_type, default_value, kwargs):
+    return kwargs[key] if key in kwargs and isinstance(kwargs[key], expected_type) else default_value
 
+
+def pretty_dict(node, indent=2, string="", first=True):
     if isinstance(node, dict):
         if first:
             string += '{\n'
@@ -41,9 +44,11 @@ def pretty_dict(node, indent=2, string="", first=True):
             string += '[\n'
         for i in range(0, len(node)):
             if isinstance(node[i], dict):
-                string += (' ' * indent) + "{\n" + pretty_dict(node[i], indent + 2, "", False) + "\n" + (' ' * indent) + "},\n"
+                string += (' ' * indent) + "{\n" + pretty_dict(node[i], indent + 2, "", False) + "\n" + (
+                            ' ' * indent) + "},\n"
             elif isinstance(node[i], list):
-                string += (' ' * indent) + "[\n" + pretty_dict(node[i], indent + 2, "", False) + "\n" + (' ' * indent) + "],\n"
+                string += (' ' * indent) + "[\n" + pretty_dict(node[i], indent + 2, "", False) + "\n" + (
+                            ' ' * indent) + "],\n"
             else:
                 string += (' ' * indent) + pretty_dict(node[i], indent + 2, "", False) + ",\n"
     else:

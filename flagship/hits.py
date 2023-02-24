@@ -3,11 +3,14 @@ from __future__ import unicode_literals
 import json
 import sys
 import time
+import traceback
 import uuid
 
 from enum import Enum
 
+from flagship.constants import TAG_CACHE_MANAGER
 from flagship.decorators import param_types_validator
+from flagship.utils import log_exception
 
 
 class HitType(Enum):
@@ -21,58 +24,59 @@ class HitType(Enum):
     SEGMENT = 'SEGMENT'
     BATCH = 'BATCH'
 
+class HitFields:
+    origin = 'dl'  # origin
+    env_id = 'cid'  # env_id
+    visitor_id = 'vid'  # visitor id
+    anonymous_id = 'aid'  # anonymous id / activate
+    customer_visitor_id = 'cuid'
+    type = 't'
+    ds = 'ds'
+    # timestamp = 'cst'
+    ip = 'uip'
+    resolution = 'sr'
+    locale = 'ul'
+    session = 'sn'
+    event_category = 'ec'
+    event_action = 'ea'
+    event_label = 'el'
+    event_value = 'ev'
+    item_name = 'in'
+    item_price = 'ip'
+    item_quantity = 'iq'
+    item_code = 'ic'
+    item_category = 'iv'
+    transaction_id = 'tid'
+    transaction_affiliation = 'ta'
+    transaction_revenue = 'tr'
+    transaction_shipping = 'ts'
+    transaction_tax = 'tt'
+    transaction_currency = 'tc'
+    transaction_payment_method = 'pm'
+    transaction_shipping_method = 'sm'
+    transaction_item_count = 'icn'
+    transaction_coupon = 'tcc'
+    variation_group_id = 'caid'
+    # variation_group_id = 'vgid'
+    variation_id = 'vaid'
+    consent = 'vc'
+    segment_list = 's'
+    queue_time = 'qt'
+    batch = 'h'
+
 
 class Hit(object):
-    _k_origin = 'dl'  # origin
-    _k_env_id = 'cid'  # env_id
-    _k_visitor_id = 'vid'  # visitor id
-    _k_anonymous_id = 'aid'  # anonymous id / activate
-    _k_customer_visitor_id = 'cuid'
-    _k_type = 't'
-    _k_ds = 'ds'
-    # _k_timestamp = 'cst'
-    _k_ip = 'uip'
-    _k_resolution = 'sr'
-    _k_locale = 'ul'
-    _k_session = 'sn'
-    _k_event_category = 'ec'
-    _k_event_action = 'ea'
-    _k_event_label = 'el'
-    _k_event_value = 'ev'
-    _k_item_name = 'in'
-    _k_item_price = 'ip'
-    _k_item_quantity = 'iq'
-    _k_item_code = 'ic'
-    _k_item_category = 'iv'
-    _k_transaction_id = 'tid'
-    _k_transaction_affiliation = 'ta'
-    _k_transaction_revenue = 'tr'
-    _k_transaction_shipping = 'ts'
-    _k_transaction_tax = 'tt'
-    _k_transaction_currency = 'tc'
-    _k_transaction_payment_method = 'pm'
-    _k_transaction_shipping_method = 'sm'
-    _k_transaction_item_count = 'icn'
-    _k_transaction_coupon = 'tcc'
-    _k_variation_group_id = 'caid'
-    # _k_variation_group_id = 'vgid'
-    _k_variation_id = 'vaid'
-    _k_consent = 'vc'
-    _k_segment_list = 's'
-    _k_queue_time = 'qt'
-    _k_batch = 'h'
-
     @param_types_validator(True, HitType)
     def __init__(self, hit_type):
         self.type = hit_type
-        self.id = uuid.uuid4()
+        self.id = str(uuid.uuid4())
         self.visitor_id = None
         self.anonymous_id = None
         self.timestamp = int(time.time()) * 1000
         self.hit_data = {
-            self._k_type: hit_type.value,
-            self._k_ds: 'APP',
-            # self._k_timestamp: int(round(time.time() * 1000))
+            HitFields.type: hit_type.value,
+            HitFields.ds: 'APP',
+            # self.timestamp: int(round(time.time() * 1000))
         }
 
     @param_types_validator(True, str)
@@ -85,7 +89,7 @@ class Hit(object):
         :param ip: ip
         :return: Hit
         """
-        self.hit_data[self._k_ip] = ip
+        self.hit_data[HitFields.ip] = ip
         return self
 
     @param_types_validator(True, int, int)
@@ -98,7 +102,7 @@ class Hit(object):
         :return: Hit
         """
         if width > 0 and height > 0:
-            self.hit_data[self._k_resolution] = '{}x{}'.format(width, height)
+            self.hit_data[HitFields.resolution] = '{}x{}'.format(width, height)
         return self
 
     @param_types_validator(True, int)
@@ -110,7 +114,7 @@ class Hit(object):
         :param number: session number.
         :return: Hit
         """
-        self.hit_data[self._k_session] = number
+        self.hit_data[HitFields.session] = number
         return self
 
     @param_types_validator(True, str)
@@ -121,7 +125,7 @@ class Hit(object):
         :param locale: locale of the user's device. Max length 20 Bytes.
         :return: Hit
         """
-        self.hit_data[self._k_locale] = locale
+        self.hit_data[HitFields.locale] = locale
         return self
 
     def _with_hit_id(self, hit_id):
@@ -132,11 +136,11 @@ class Hit(object):
         self.visitor_id = visitor_id
         self.anonymous_id = anonymous_id
         if anonymous_id is not None:
-            self.hit_data[self._k_customer_visitor_id] = visitor_id
-            self.hit_data[self._k_visitor_id] = anonymous_id
+            self.hit_data[HitFields.customer_visitor_id] = visitor_id
+            self.hit_data[HitFields.visitor_id] = anonymous_id
         else:
-            self.hit_data[self._k_visitor_id] = visitor_id
-            self.hit_data[self._k_customer_visitor_id] = None
+            self.hit_data[HitFields.visitor_id] = visitor_id
+            self.hit_data[HitFields.customer_visitor_id] = None
         return self
 
     def _with_timestamp(self, timestamp):
@@ -150,8 +154,8 @@ class Hit(object):
         return sys.getsizeof(self.hit_data)
 
     def check_data_validity(self):
-        if (not bool(self.hit_data[self._k_type]) or
-                (self.hit_data[self._k_ds] != 'APP')):
+        if (not bool(self.hit_data[HitFields.type]) or
+                (self.hit_data[HitFields.ds] != 'APP')):
             return False
         return True
 
@@ -170,7 +174,7 @@ class Page(Hit):
         """
         Hit.__init__(self, HitType.PAGEVIEW)
         data = {
-            self._k_origin: origin
+            HitFields.origin: origin
         }
         self.hit_data.update(data)
 
@@ -180,11 +184,15 @@ class Page(Hit):
         except:
             from urllib.parse import urlparse
         if ((Hit.check_data_validity(self) is False) or
-                (not bool(self.hit_data[self._k_origin])) or
-                (bool(urlparse(self.hit_data[self._k_origin]).scheme) is False) or
-                (bool(urlparse(self.hit_data[self._k_origin]).netloc) is False)):
+                (not bool(self.hit_data[HitFields.origin])) or
+                (bool(urlparse(self.hit_data[HitFields.origin]).scheme) is False) or
+                (bool(urlparse(self.hit_data[HitFields.origin]).netloc) is False)):
             return False
         return True
+
+    @staticmethod
+    def from_json(content):
+        return Page(content[HitFields.origin])
 
 
 class Screen(Hit):
@@ -197,16 +205,20 @@ class Screen(Hit):
         """
         Hit.__init__(self, HitType.SCREENVIEW)
         data = {
-            self._k_origin: origin
+            HitFields.origin: origin
         }
         self.hit_data.update(data)
 
     def check_data_validity(self):
         if ((Hit.check_data_validity(self) is False) or
-                (self.hit_data[self._k_ds] != 'APP') or
-                (not bool(self.hit_data[self._k_origin]))):
+                (self.hit_data[HitFields.ds] != 'APP') or
+                (not bool(self.hit_data[HitFields.origin]))):
             return False
         return True
+
+    @staticmethod
+    def from_json(content):
+        return Screen(content[HitFields.origin])
 
 
 class EventCategory(Enum):
@@ -228,8 +240,8 @@ class Event(Hit):
         Hit.__init__(self, HitType.EVENT)
         if isinstance(category, EventCategory):
             data = {
-                self._k_event_category: category.value,
-                self._k_event_action: action
+                HitFields.event_category: category.value,
+                HitFields.event_action: action
             }
             self.hit_data.update(data)
         else:
@@ -244,7 +256,7 @@ class Event(Hit):
         :param label: event description. Max length 500 Bytes.
         :return: Page
         """
-        self.hit_data[self._k_event_label] = label
+        self.hit_data[HitFields.event_label] = label
         return self
 
     @param_types_validator(True, int)
@@ -257,15 +269,25 @@ class Event(Hit):
         """
         t = type(value)
         if t == int or t == str or t == float or t == bool:
-            self.hit_data[self._k_event_value] = value
+            self.hit_data[HitFields.event_value] = value
         return self
 
     def check_data_validity(self):
         if ((Hit.check_data_validity(self) is False) or
-                (not bool(self.hit_data[self._k_event_category])) or
-                (not bool(self.hit_data[self._k_event_action]))):
+                (not bool(self.hit_data[HitFields.event_category])) or
+                (not bool(self.hit_data[HitFields.event_action]))):
             return False
         return True
+
+    @staticmethod
+    def from_json(content):
+        import re
+        if HitFields.event_label in content:
+            matching = re.match("(python:(true|false))",  content[HitFields.event_label])
+            if matching:
+                consent = True if (matching.groups()[1] in ['True', 'true']) else True
+                return _Consent(consent)
+        return Event(content[HitFields.event_category], content[HitFields.event_category])
 
 
 class Item(Hit):
@@ -280,9 +302,9 @@ class Item(Hit):
         """
         Hit.__init__(self, HitType.ITEM)
         data = {
-            self._k_transaction_id: transaction_id,
-            self._k_item_name: product_name,
-            self._k_item_code: product_sku
+            HitFields.transaction_id: transaction_id,
+            HitFields.item_name: product_name,
+            HitFields.item_code: product_sku
         }
         self.hit_data.update(data)
 
@@ -295,7 +317,7 @@ class Item(Hit):
         :param price: item price.
         :return: Item
         """
-        self.hit_data[self._k_item_price] = price
+        self.hit_data[HitFields.item_price] = price
         return self
 
     @param_types_validator(True, int)
@@ -307,7 +329,7 @@ class Item(Hit):
         :param item_quantity:
         :return: Item
         """
-        self.hit_data[self._k_item_quantity] = item_quantity
+        self.hit_data[HitFields.item_quantity] = item_quantity
         return self
 
     # @exception_handler()
@@ -320,7 +342,7 @@ class Item(Hit):
     #     :param item_code: item sku. Max length 500 Bytes.
     #     :return: Item
     #     """
-    #     self._data[self._k_item_code] = item_code
+    #     self._data[self.item_code] = item_code
     #     return self
 
     @param_types_validator(True, str)
@@ -332,16 +354,21 @@ class Item(Hit):
         :param category: category name. Max length 500 Bytes.
         :return: Item
         """
-        self.hit_data[self._k_item_category] = category
+        self.hit_data[HitFields.item_category] = category
         return self
 
     def check_data_validity(self):
         if ((Hit.check_data_validity(self) is False) or
-                (not bool(self.hit_data[self._k_transaction_id])) or
-                (not bool(self.hit_data[self._k_item_name])) or
-                (not bool(self.hit_data[self._k_item_code]))):
+                (not bool(self.hit_data[HitFields.transaction_id])) or
+                (not bool(self.hit_data[HitFields.item_name])) or
+                (not bool(self.hit_data[HitFields.item_code]))):
             return False
         return True
+
+    @staticmethod
+    def from_json(content):
+        return Item(content[HitFields.transaction_id], content[HitFields.item_name], content[HitFields.item_code])
+
 
 
 class Transaction(Hit):
@@ -356,8 +383,8 @@ class Transaction(Hit):
         """
         Hit.__init__(self, HitType.TRANSACTION)
         data = {
-            self._k_transaction_id: transaction_id,
-            self._k_transaction_affiliation: affiliation
+            HitFields.transaction_id: transaction_id,
+            HitFields.transaction_affiliation: affiliation
         }
         self.hit_data.update(data)
 
@@ -371,7 +398,7 @@ class Transaction(Hit):
         :param revenue: total revenue.
         :return: Transaction
         """
-        self.hit_data[self._k_transaction_revenue] = revenue
+        self.hit_data[HitFields.transaction_revenue] = revenue
         return self
 
     @param_types_validator(True, [int, float])
@@ -383,7 +410,7 @@ class Transaction(Hit):
         :param shipping: total.
         :return: Transaction
         """
-        self.hit_data[self._k_transaction_shipping] = shipping
+        self.hit_data[HitFields.transaction_shipping] = shipping
         return self
 
     @param_types_validator(True, str)
@@ -395,7 +422,7 @@ class Transaction(Hit):
         :param shipping_method: shipping method. Max length 10 Bytes.
         :return: Transaction
         """
-        self.hit_data[self._k_transaction_shipping_method] = shipping_method
+        self.hit_data[HitFields.transaction_shipping_method] = shipping_method
         return self
 
     @param_types_validator(True, [int, float])
@@ -407,7 +434,7 @@ class Transaction(Hit):
         :param taxes: total taxes.
         :return: Transaction
         """
-        self.hit_data[self._k_transaction_tax] = taxes
+        self.hit_data[HitFields.transaction_tax] = taxes
         return self
 
     @param_types_validator(True, str)
@@ -419,7 +446,7 @@ class Transaction(Hit):
         :param currency: ISO 4217 currency code. Max length 10 Bytes.
         :return: Transaction
         """
-        self.hit_data[self._k_transaction_currency] = currency
+        self.hit_data[HitFields.transaction_currency] = currency
         return self
 
     @param_types_validator(True, str)
@@ -431,7 +458,7 @@ class Transaction(Hit):
         :param payment: payment method. Max 10 Bytes.
         :return: Transaction
         """
-        self.hit_data[self._k_transaction_payment_method] = payment
+        self.hit_data[HitFields.transaction_payment_method] = payment
         return self
 
     @param_types_validator(True, int)
@@ -442,7 +469,7 @@ class Transaction(Hit):
         :param item_nb: number of items.
         :return: Transaction
         """
-        self.hit_data[self._k_transaction_item_count] = item_nb
+        self.hit_data[HitFields.transaction_item_count] = item_nb
         return self
 
     @param_types_validator(True, str)
@@ -454,40 +481,55 @@ class Transaction(Hit):
         :param coupon: code. Max length 10 Bytes.
         :return: Transaction
         """
-        self.hit_data[self._k_transaction_coupon] = coupon
+        self.hit_data[HitFields.transaction_coupon] = coupon
         return self
 
     def check_data_validity(self):
         if ((Hit.check_data_validity(self) is False) or
-                (not bool(self.hit_data[self._k_transaction_id])) or
-                (not bool(self.hit_data[self._k_transaction_affiliation]))):
+                (not bool(self.hit_data[HitFields.transaction_id])) or
+                (not bool(self.hit_data[HitFields.transaction_affiliation]))):
             return False
         return True
+
+    @staticmethod
+    def from_json(content):
+        return Transaction(content[HitFields.transaction_id], content[HitFields.transaction_affiliation])
 
 
 class _Activate(Hit):
     # @param_types_validator(True, [str, bytes], [str, bytes])
     def __init__(self, visitor_id, anonymous_id, variation_group_id, variation_id):
-        self.hit_type = HitType.ACTIVATE
+        Hit.__init__(self, HitType.ACTIVATE)
+        self.visitor_id = visitor_id
+        self.anonymous_id = anonymous_id
+        # self.hit_type = HitType.ACTIVATE
         self.hit_data = {
-            # self._k_env_id: env_id,
-            self._k_variation_group_id: variation_group_id,
-            self._k_variation_id: variation_id
+            # self.env_id: env_id,
+            HitFields.variation_group_id: variation_group_id,
+            HitFields.variation_id: variation_id
         }
         if anonymous_id is not None:
-            self.hit_data[self._k_anonymous_id] = anonymous_id
-            self.hit_data[self._k_visitor_id] = visitor_id
+            self.hit_data[HitFields.anonymous_id] = anonymous_id
+            self.hit_data[HitFields.visitor_id] = visitor_id
         else:
-            self.hit_data[self._k_visitor_id] = visitor_id
-            self.hit_data[self._k_anonymous_id] = None
+            self.hit_data[HitFields.visitor_id] = visitor_id
+            self.hit_data[HitFields.anonymous_id] = None
         # self._data.update(data)
 
     def check_data_validity(self):
-        if ((not bool(self.hit_data[self._k_visitor_id])) or
-                (not bool(self.hit_data[self._k_variation_group_id])) or
-                (not bool(self.hit_data[self._k_variation_id]))):
+        if ((not bool(self.hit_data[HitFields.visitor_id])) or
+                (not bool(self.hit_data[HitFields.variation_group_id])) or
+                (not bool(self.hit_data[HitFields.variation_id]))):
             return False
         return True
+
+    @staticmethod
+    def from_json(content):
+        anonymous_id = content[HitFields.anonymous_id] if HitFields.anonymous_id in content else None
+        visitor_id = content[HitFields.visitor_id]
+        variation_group_id = content[HitFields.variation_group_id]
+        variation_id = content[HitFields.variation_id]
+        return _Activate(visitor_id, anonymous_id, variation_group_id, variation_id)
 
 
 class _Consent(Event):
@@ -496,13 +538,13 @@ class _Consent(Event):
         self.consent = consent
         Event.__init__(self, EventCategory.USER_ENGAGEMENT, 'fs_consent')
         data = {
-            self._k_event_label: 'python:{}'.format(str(consent).lower())
+            HitFields.event_label: 'python:{}'.format(str(consent).lower())
         }
         self.hit_data.update(data)
 
     def check_data_validity(self):
         if ((Hit.check_data_validity(self) is False) or
-                (not bool(self.hit_data[self._k_event_label]))):
+                (not bool(self.hit_data[HitFields.event_label]))):
             return False
         return True
 
@@ -512,18 +554,22 @@ class _Segment(Hit):
     def __init__(self, visitor_id, context):
         Hit.__init__(self, HitType.SEGMENT)
         data = {
-            self._k_visitor_id: visitor_id,
-            self._k_segment_list: context
+            HitFields.visitor_id: visitor_id,
+            HitFields.segment_list: context
         }
         self.hit_data.update(data)
 
     def check_data_validity(self):
         if ((Hit.check_data_validity(self) is False) or
-                (not bool(self.hit_data[self._k_visitor_id])) or
-                (self.hit_data[self._k_segment_list] is None) or
-                (len(self.hit_data[self._k_segment_list]) < 0)):
+                (not bool(self.hit_data[HitFields.visitor_id])) or
+                (self.hit_data[HitFields.segment_list] is None) or
+                (len(self.hit_data[HitFields.segment_list]) < 0)):
             return False
         return True
+
+    @staticmethod
+    def from_json(content):
+        return _Segment(content[HitFields.visitor_id], content[HitFields.segment_list])
 
 
 class _Batch(Hit):
@@ -531,7 +577,7 @@ class _Batch(Hit):
     def __init__(self):
         Hit.__init__(self, HitType.BATCH)
         self.hits = list()
-        self.hit_data[self._k_batch] = []
+        self.hit_data[HitFields.batch] = []
 
     def add_child(self, hit):
         from flagship.tracking_manager import TrackingManager
@@ -539,16 +585,16 @@ class _Batch(Hit):
         is_size_valid = (sys.getsizeof(self.hit_data) + sys.getsizeof(hit.hit_data)) < TrackingManager.BATCH_MAX_SIZE
         if isinstance(hit, Hit) and is_timestamp_valid and is_size_valid:
             self.hits.append(hit)
-            self.hit_data[self._k_batch].append(hit.hit_data)
+            self.hit_data[HitFields.batch].append(hit.hit_data)
             return True
         return False
 
     def data(self):
         batch_data = []
         for h in self.hits:
-            h.hit_data[self._k_queue_time] = (int((time.time()) * 1000) - h.timestamp)
+            h.hit_data[HitFields.queue_time] = (int((time.time()) * 1000) - h.timestamp)
             batch_data.append(h.hit_data)
-        self.hit_data[self._k_batch] = batch_data
+        self.hit_data[HitFields.batch] = batch_data
         return self.hit_data
 
     def check_data_validity(self):
@@ -557,7 +603,7 @@ class _Batch(Hit):
         for h in self.hits:
             if h.check_data_validity is False:
                 return False
-            if h.hit_data[self._k_queue_time] is None:
+            if h.hit_data[HitFields.queue_time] is None:
                 return False
             if len(self.hits) == 0:
                 return False
@@ -565,3 +611,67 @@ class _Batch(Hit):
 
     def size(self):
         return len(self.hits)
+
+
+# def from_json(hit_json):
+#     try:
+#
+#         # type = HitType(json['type'])
+#         # content = json['content']
+#         # if type == HitType.PAGEVIEW:
+#         #     return Page.from_json(content)
+#         # if type == HitType.PAGEVIEW:
+#         #     hit = Page(content[HitFields.origin])
+#         # elif type == HitType.SCREENVIEW:
+#         #     hit = Screen(content[HitFields.origin])
+#         # elif type == HitType.EVENT:
+#         #     import re
+#         #     matching = re.match("(python:(true|false))",  content[HitFields.event_label])
+#         #     if matching:
+#         #         consent = True if (matching.groups()[1] in ['True', 'true']) else True
+#         #         hit = _Consent(consent)
+#         #     else:
+#         #         hit = Event(content[HitFields.event_category], content[HitFields.event_category])
+#         # elif type == HitType.ITEM:
+#         #     hit = Item(content[HitFields.transaction_id], content[HitFields.item_name], content[HitFields.item_code])
+#         # elif type == HitType.TRANSACTION:
+#         #     hit = Transaction(content[HitFields.transaction_id], content[HitFields.transaction_affiliation])
+#         # elif type == HitType.ACTIVATE:
+#         #     anonymous_id = content[HitFields.anonymous_id] if HitFields.anonymous_id in content else None
+#         #     visitor_id = content[HitFields.visitor_id]
+#         #     variation_group_id = content[HitFields.variation_group_id]
+#         #     variation_id = content[HitFields.variation_id]
+#         #     hit = _Activate(visitor_id, anonymous_id, variation_group_id, variation_id)
+#         # elif type == HitType.SEGMENT:
+#         #     visitor_id = content[HitFields.visitor_id]
+#         #     hit = _Segment(visitor_id, )
+#
+#         hit = HitFactory(HitType(hit_json['type']).value).value(hit_json['content'])
+#     except Exception as e:
+#         log_exception(TAG_CACHE_MANAGER, e, traceback.format_exc())
+
+
+class HitFactory:
+    @staticmethod
+    def from_json(hit_json):
+        try:
+            hit_type = hit_json['type']
+            content = hit_json['content']
+            hit = {
+                'SCREENVIEW': Screen.from_json,
+                'PAGEVIEW': Page.from_json,
+                'EVENT': Event.from_json,
+                'TRANSACTION': Transaction.from_json,
+                'ITEM': Item.from_json,
+                'ACTIVATE': _Activate.from_json,
+                'SEGMENT': _Segment.from_json
+            }[hit_type](content)
+            hit.id = hit_json['id']
+            hit.timestamp = hit_json['timestamp']
+            hit.visitor_id = hit_json['visitorId']
+            hit.anonymous_id = hit_json['anonymousId']
+            hit.hit_data = content
+            return hit
+        except Exception as e:
+            log_exception(TAG_CACHE_MANAGER, e, traceback.format_exc())
+        return None

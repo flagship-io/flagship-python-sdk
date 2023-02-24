@@ -2,7 +2,7 @@ from __future__ import absolute_import
 
 import json
 
-from flagship.cache_manager import CacheManager, DefaultCacheManager
+from flagship.cache_manager import CacheManager, SqliteCacheManager
 from flagship.decision_mode import DecisionMode
 from flagship.status import Status
 from flagship.status_listener import StatusListener
@@ -32,7 +32,7 @@ class _FlagshipConfig:
         self.status_listener = self.__get_arg(kwargs, 'status_listener', StatusListener) or None
         self.tracking_manager_config = self.__get_arg(kwargs, 'tracking_manager_config',
                                                       TrackingManagerConfig) or TrackingManagerConfig()
-        self.cache_manager = self.__get_arg(kwargs, 'cache_manager', CacheManager) or DefaultCacheManager()
+        self.cache_manager = self.__get_arg(kwargs, 'cache_manager', CacheManager) or SqliteCacheManager()
         # self.__update_flagship_status()
 
     def __get_arg(self, kwargs, name, c_type):

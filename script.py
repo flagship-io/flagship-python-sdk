@@ -188,8 +188,8 @@ def init_bucketing():
                 self.function()
 
     def create_visitor():
-        visitor = Flagship.new_visitor("aaaaaaa", instance_type=Visitor.Instance.SINGLE_INSTANCE)
-        visitor2 = Flagship.new_visitor("222", instance_type=Visitor.Instance.SINGLE_INSTANCE)
+        visitor = Flagship.new_visitor("aaaaaaa", instance_type=Visitor.Instance.SINGLE_INSTANCE) #1 Consent
+        # visitor2 = Flagship.new_visitor("222", instance_type=Visitor.Instance.SINGLE_INSTANCE)
         visitor.update_context({
             "coucou": 3,
             "coucou2": 2,
@@ -198,35 +198,35 @@ def init_bucketing():
             "slug": True,
             "daysSinceLastLaunch": 3
         })
-        visitor.fetch_flags()
+        visitor.fetch_flags() #1 Segment
         # time.sleep(5)
-        print(visitor.get_flag("visitorIdColor", "default").value())
-        print(visitor.get_flag("visitorIdColor", "default").value())
+        print(visitor.get_flag("visitorIdColor", "default").value()) #1 Activate
+        print(visitor.get_flag("visitorIdColor", "default").value()) #1 Activate
         time.sleep(1)
-        print(visitor.get_flag("visitorIdColor", "default").value())
+        print(visitor.get_flag("visitorIdColor", "default").value()) #1 Activate
 
         time.sleep(1)
-        visitor.send_hit(Screen("coucou 1"))
-        visitor.send_hit(Screen("coucou 2"))
-        visitor.send_hit(Screen("coucou 3"))
-        visitor.send_hit(Screen("coucou 4"))
-        visitor.send_hit(Screen("coucou 5"))
-        visitor.set_consent(False)
+        visitor.send_hit(Screen("coucou 1")) #1 Screen
+        visitor.send_hit(Screen("coucou 2")) #1 Screen
+        visitor.send_hit(Screen("coucou 3")) #1 Screen
+        visitor.send_hit(Screen("coucou 4")) #1 Screen
+        visitor.send_hit(Screen("coucou 5")) #1 Screen
+        visitor.set_consent(False) # 1 Consent
         # time.sleep(1)
-        visitor.send_hit(Transaction("TID_92470", "AFFILIATION"))
-        visitor.send_hit(Transaction("TID_04444", "AFFILIATION2"))
-        visitor2.send_hit(Screen("2222"))
+        visitor.send_hit(Transaction("TID_92470", "AFFILIATION")) #0
+        visitor.send_hit(Transaction("TID_04444", "AFFILIATION2")) #0
+        # visitor2.send_hit(Screen("2222"))
         # time.sleep(1)
-        visitor.set_consent(True)
-        visitor.send_hit(Event(EventCategory.ACTION_TRACKING, "ACTION 1"))
-        visitor.send_hit(Event(EventCategory.ACTION_TRACKING, "ACTION 2"))
-        visitor.send_hit(Event(EventCategory.ACTION_TRACKING, "ACTION 3"))
-        visitor.send_hit(Event(EventCategory.ACTION_TRACKING, "ACTION 4"))
-        visitor.send_hit(Event(EventCategory.ACTION_TRACKING, "ACTION 5"))
+        visitor.set_consent(True) #1 Consent
+        visitor.send_hit(Event(EventCategory.ACTION_TRACKING, "ACTION 1")) #1 Event
+        visitor.send_hit(Event(EventCategory.ACTION_TRACKING, "ACTION 2")) #1 Event
+        visitor.send_hit(Event(EventCategory.ACTION_TRACKING, "ACTION 3")) #1 Event
+        visitor.send_hit(Event(EventCategory.ACTION_TRACKING, "ACTION 4")) #1 Event
+        visitor.send_hit(Event(EventCategory.ACTION_TRACKING, "ACTION 5")) #1 Event
         time.sleep(4)
-        visitor.send_hit(Item("TID_92470", "NAME", "SKU"))
+        visitor.send_hit(Item("TID_92470", "NAME", "SKU")) #1 Iem
         visitor.send_hit(Page("Not supposed to work"))
-        visitor.send_hit(Page("https://www.supposed.towork.com"))
+        visitor.send_hit(Page("https://www.supposed.towork.com")) # 1 Page
 
         print(" === " + visitor.get_flag("troll", 'nooooooooooooo').value(True))
 
@@ -234,9 +234,9 @@ def init_bucketing():
 
         # visitor.fetch_flags()
 
-        visitor.set_consent(False)
-        visitor.set_consent(True)
-        visitor.fetch_flags()
+        # visitor.set_consent(False) # 1 Consent
+        visitor.set_consent(True) # 1 Consent
+        visitor.fetch_flags() # 1 Segment
 
         print(" === " + visitor.get_flag("troll", 'nooooooooooooo').value(True))
 
