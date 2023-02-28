@@ -111,8 +111,8 @@ class TrackingManager(TrackingManagerCacheStrategyInterface, Thread):
 
     def run(self):
         while self.is_running:
-            self.polling()
             time.sleep(self.time_interval / 1000.0)
+            self.polling()
 
     def stop_running(self):
         self.is_running = False

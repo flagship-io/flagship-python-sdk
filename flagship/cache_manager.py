@@ -211,5 +211,6 @@ class SqliteCacheManager(CacheManager, VisitorCacheImplementation, HitCacheImple
 
     def close(self):
         CacheManager.close(self)
-        with self.con:
-            self.con.close()
+        if self.con is not None:
+            with self.con:
+                self.con.close()

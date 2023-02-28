@@ -8,9 +8,9 @@ import responses
 from flagship import Flagship, Visitor
 from flagship.cache_manager import SqliteCacheManager
 from flagship.config import DecisionApi
-from flagship.hits import Screen
+from flagship.hits import Screen, Event, EventCategory
 from flagship.tracking_manager import TrackingManagerConfig
-from test_constants_res import DECISION_API_URL, API_RESPONSE_1, ARIANE_URL, ACTIVATE_URL
+from test_constants_res import DECISION_API_URL, API_RESPONSE_1, ARIANE_URL, ACTIVATE_URL, EVENTS_URL
 
 db_name = "test_db"
 db_path = "./cache/"
@@ -25,20 +25,23 @@ def get_db_hits():
         with con:
             cursor = con.cursor()
             cursor.execute("SELECT id, data FROM HITS")
+            result_as_dict = {}
             result = cursor.fetchall()
             if result:
                 cursor.close()
-                result_as_dict = {}
                 for k, v in result:
                     result_as_dict[k] = json.loads(v)
-                return result_as_dict
+            return result_as_dict
     except:
         print(traceback.format_exc())
         return None
 
 def remove_db():
     import shutil
-    shutil.rmtree(db_path)
+    try:
+        shutil.rmtree(db_path)
+    except:
+        pass
 
 
 @responses.activate
@@ -46,11 +49,13 @@ def test_hit_continuous_strategy():
     remove_db()
     responses.add(responses.POST, DECISION_API_URL, json=json.loads(API_RESPONSE_1), status=200)
     responses.add(responses.POST, ARIANE_URL, body="", status=200)
+    responses.add(responses.POST, EVENTS_URL, body="", status=200)
     responses.add(responses.POST, ACTIVATE_URL, body="", status=500)
 
     assert get_db_hits() is None
+    Flagship.stop()
     Flagship.start(env_id, api_key, DecisionApi(timeout=3000,
-                                                tracking_manager_config=TrackingManagerConfig(max_pool_size=10, time_interval=500000),
+                                                tracking_manager_config=TrackingManagerConfig(max_pool_size=10, time_interval=2000),
                                                 cache_manager=SqliteCacheManager(local_db_path=db_path)))
     visitor = Flagship.new_visitor("test_visitor_1", instance_type=Visitor.Instance.SINGLE_INSTANCE)  # 1 consent
     visitor.fetch_flags()
@@ -63,3 +68,28 @@ def test_hit_continuous_strategy():
     visitor.set_consent(True)  # 1 Consent
     visitor.send_hit(Screen("test_hit_continuous_strategy"))  # 1 Screen
     assert len(get_db_hits()) == 4
+    visitor.send_hit(Event(EventCategory.ACTION_TRACKING, "action1"))
+    visitor.send_hit(Event(EventCategory.ACTION_TRACKING, "action2"))
+    visitor.send_hit(Event(EventCategory.ACTION_TRACKING, "action3"))
+    visitor.send_hit(Event(EventCategory.ACTION_TRACKING, "action4"))
+    assert len(get_db_hits()) == 8
+    time.sleep(2)  ## Batch event (time)
+    assert len(get_db_hits()) == 0
+    visitor.send_hit(Event(EventCategory.ACTION_TRACKING, "action1"))
+    visitor.send_hit(Event(EventCategory.ACTION_TRACKING, "action2"))
+    visitor.send_hit(Event(EventCategory.ACTION_TRACKING, "action3"))
+    visitor.send_hit(Event(EventCategory.ACTION_TRACKING, "action4"))
+    visitor.send_hit(Event(EventCategory.ACTION_TRACKING, "action5"))
+    visitor.send_hit(Event(EventCategory.ACTION_TRACKING, "action6"))
+    visitor.send_hit(Event(EventCategory.ACTION_TRACKING, "action7"))
+    visitor.send_hit(Event(EventCategory.ACTION_TRACKING, "action8"))
+    visitor.send_hit(Event(EventCategory.ACTION_TRACKING, "action9"))
+    visitor.send_hit(Event(EventCategory.ACTION_TRACKING, "action10"))
+    visitor.send_hit(Event(EventCategory.ACTION_TRACKING, "action11"))
+    visitor.send_hit(Event(EventCategory.ACTION_TRACKING, "action12"))
+    time.sleep(0.1)  ## Batch event (max)
+    assert len(get_db_hits()) == 2
+
+
+
+
