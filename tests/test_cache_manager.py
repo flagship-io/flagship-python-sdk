@@ -10,6 +10,7 @@ from flagship.cache_manager import SqliteCacheManager
 from flagship.config import DecisionApi
 from flagship.hits import Screen, Event, EventCategory
 from flagship.tracking_manager import TrackingManagerConfig
+from flagship.utils import pretty_dict
 from test_constants_res import DECISION_API_URL, API_RESPONSE_1, ARIANE_URL, ACTIVATE_URL, EVENTS_URL
 
 db_name = "test_db"
@@ -75,10 +76,6 @@ def test_hit_continuous_strategy():
     assert len(get_db_hits()) == 8
     time.sleep(2)  ## Batch event (time)
     assert len(get_db_hits()) == 0
-    visitor.send_hit(Event(EventCategory.ACTION_TRACKING, "action1"))
-    visitor.send_hit(Event(EventCategory.ACTION_TRACKING, "action2"))
-    visitor.send_hit(Event(EventCategory.ACTION_TRACKING, "action3"))
-    visitor.send_hit(Event(EventCategory.ACTION_TRACKING, "action4"))
     visitor.send_hit(Event(EventCategory.ACTION_TRACKING, "action5"))
     visitor.send_hit(Event(EventCategory.ACTION_TRACKING, "action6"))
     visitor.send_hit(Event(EventCategory.ACTION_TRACKING, "action7"))
@@ -87,7 +84,12 @@ def test_hit_continuous_strategy():
     visitor.send_hit(Event(EventCategory.ACTION_TRACKING, "action10"))
     visitor.send_hit(Event(EventCategory.ACTION_TRACKING, "action11"))
     visitor.send_hit(Event(EventCategory.ACTION_TRACKING, "action12"))
-    time.sleep(0.1)  ## Batch event (max)
+    visitor.send_hit(Event(EventCategory.ACTION_TRACKING, "action13"))
+    visitor.send_hit(Event(EventCategory.ACTION_TRACKING, "action14"))
+    visitor.send_hit(Event(EventCategory.ACTION_TRACKING, "action15"))
+    visitor.send_hit(Event(EventCategory.ACTION_TRACKING, "action16"))
+    time.sleep(1)  ## Batch event (max)
+    print(pretty_dict(get_db_hits()))
     assert len(get_db_hits()) == 2
 
 

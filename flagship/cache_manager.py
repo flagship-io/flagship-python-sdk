@@ -164,6 +164,24 @@ class SqliteCacheManager(CacheManager, VisitorCacheImplementation, HitCacheImple
         except Exception as e:
             log_exception(TAG_CACHE_MANAGER, e, traceback.format_exc())
 
+    def __print_hits__(self, tag=""):
+        try:
+            con = sl.connect(self.full_db_path)
+            with con:
+                cursor = con.cursor()
+                cursor.execute("SELECT id, data FROM HITS")
+                result_as_dict = {}
+                result = cursor.fetchall()
+                if result:
+                    cursor.close()
+                    for k, v in result:
+                        print(tag + " / " + str(v))
+                        result_as_dict[k] = json.loads(v)
+                return result_as_dict
+        except:
+            print(traceback.format_exc())
+            return None
+
     def cache_hits(self, hits):
         try:
             con = sl.connect(self.full_db_path)
