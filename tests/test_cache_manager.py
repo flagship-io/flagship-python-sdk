@@ -37,6 +37,7 @@ def get_db_hits():
         print(traceback.format_exc())
         return None
 
+
 def remove_db():
     import shutil
     try:
@@ -56,42 +57,64 @@ def test_hit_continuous_strategy():
     assert get_db_hits() is None
     Flagship.stop()
     Flagship.start(env_id, api_key, DecisionApi(timeout=3000,
-                                                tracking_manager_config=TrackingManagerConfig(max_pool_size=10, time_interval=2000),
+                                                tracking_manager_config=TrackingManagerConfig(max_pool_size=10,
+                                                                                              time_interval=2000),
                                                 cache_manager=SqliteCacheManager(local_db_path=db_path)))
-    visitor = Flagship.new_visitor("test_visitor_1", instance_type=Visitor.Instance.SINGLE_INSTANCE)  # 1 consent
-    visitor.fetch_flags()
-    visitor.send_hit(Screen("test_hit_continuous_strategy"))  # 1 Screen
-    assert visitor.get_flag('string', "default").value() == 'default'  # 1 activate
+    visitor = Flagship.new_visitor("test_visitor_1", instance_type=Visitor.Instance.SINGLE_INSTANCE)  # +1 consent
+    visitor.fetch_flags()  # call /campaign
+    visitor.send_hit(Screen("test_hit_continuous_strategy"))  # +1 Screen
+    assert visitor.get_flag('string', "default").value() == 'default'  # +1 activate
     assert len(get_db_hits()) == 3
-    visitor.set_consent(False)  # 1 Consent - 1 screen - 1 Activate
+    visitor.set_consent(False)  # +1 Consent -1 screen -1 Activate # /activate
     assert len(get_db_hits()) == 2
     # time.sleep(100000000)
-    visitor.set_consent(True)  # 1 Consent
-    visitor.send_hit(Screen("test_hit_continuous_strategy"))  # 1 Screen
+    visitor.set_consent(True)  # +1 Consent
+    visitor.send_hit(Screen("test_hit_continuous_strategy"))  # +1 Screen
     assert len(get_db_hits()) == 4
-    visitor.send_hit(Event(EventCategory.ACTION_TRACKING, "action1"))
-    visitor.send_hit(Event(EventCategory.ACTION_TRACKING, "action2"))
-    visitor.send_hit(Event(EventCategory.ACTION_TRACKING, "action3"))
-    visitor.send_hit(Event(EventCategory.ACTION_TRACKING, "action4"))
+    visitor.send_hit(Event(EventCategory.ACTION_TRACKING, "action1"))  # +1 Event
+    visitor.send_hit(Event(EventCategory.ACTION_TRACKING, "action2"))  # +1 Event
+    visitor.send_hit(Event(EventCategory.ACTION_TRACKING, "action3"))  # +1 Event
+    visitor.send_hit(Event(EventCategory.ACTION_TRACKING, "action4"))  # +1 Event
     assert len(get_db_hits()) == 8
-    time.sleep(2)  ## Batch event (time)
+    time.sleep(2)  # Batch event (timer)
+    #  --
+    calls = responses.calls._calls
+    body = json.loads(calls[2].request.body)
+    assert body['t'] == 'BATCH'
+    assert len(body['h']) == 8
+    # --
     assert len(get_db_hits()) == 0
-    visitor.send_hit(Event(EventCategory.ACTION_TRACKING, "action5"))
-    visitor.send_hit(Event(EventCategory.ACTION_TRACKING, "action6"))
-    visitor.send_hit(Event(EventCategory.ACTION_TRACKING, "action7"))
-    visitor.send_hit(Event(EventCategory.ACTION_TRACKING, "action8"))
-    visitor.send_hit(Event(EventCategory.ACTION_TRACKING, "action9"))
-    visitor.send_hit(Event(EventCategory.ACTION_TRACKING, "action10"))
-    visitor.send_hit(Event(EventCategory.ACTION_TRACKING, "action11"))
-    visitor.send_hit(Event(EventCategory.ACTION_TRACKING, "action12"))
-    visitor.send_hit(Event(EventCategory.ACTION_TRACKING, "action13"))
-    visitor.send_hit(Event(EventCategory.ACTION_TRACKING, "action14"))
-    visitor.send_hit(Event(EventCategory.ACTION_TRACKING, "action15"))
-    visitor.send_hit(Event(EventCategory.ACTION_TRACKING, "action16"))
-    time.sleep(1)  ## Batch event (max)
-    print(pretty_dict(get_db_hits()))
+    visitor.send_hit(Event(EventCategory.ACTION_TRACKING, "action5"))  # +1 Event
+    visitor.send_hit(Event(EventCategory.ACTION_TRACKING, "action6"))  # +1 Event
+    visitor.send_hit(Event(EventCategory.ACTION_TRACKING, "action7"))  # +1 Event
+    visitor.send_hit(Event(EventCategory.ACTION_TRACKING, "action8"))  # +1 Event
+    visitor.send_hit(Event(EventCategory.ACTION_TRACKING, "action9"))  # +1 Event
+    visitor.send_hit(Event(EventCategory.ACTION_TRACKING, "action10"))  # +1 Event
+    visitor.send_hit(Event(EventCategory.ACTION_TRACKING, "action11"))  # +1 Event
+    visitor.send_hit(Event(EventCategory.ACTION_TRACKING, "action12"))  # +1 Event
+    visitor.send_hit(Event(EventCategory.ACTION_TRACKING, "action13"))  # +1 Event
+    visitor.send_hit(Event(EventCategory.ACTION_TRACKING, "action14"))  # +1 Event # Batch event (max)
+    visitor.send_hit(Event(EventCategory.ACTION_TRACKING, "action15"))  # +1 Event
+    visitor.send_hit(Event(EventCategory.ACTION_TRACKING, "action16"))  # +1 Event
+    # time.sleep(1)  ## Batch event (max)
+    # --
+    calls = responses.calls._calls
+    body = json.loads(calls[3].request.body)
+    assert body['t'] == 'BATCH'
+    assert len(body['h']) == 10
+    # --
     assert len(get_db_hits()) == 2
-
-
-
-
+    Flagship.start(env_id, api_key, DecisionApi(timeout=3000,
+                                                tracking_manager_config=TrackingManagerConfig(
+                                                    max_pool_size=10,
+                                                    time_interval=2000),
+                                                cache_manager=SqliteCacheManager(
+                                                    local_db_path=db_path)))
+    time.sleep(2)  # Batch event (timer)
+    # --
+    calls = responses.calls._calls
+    body = json.loads(calls[4].request.body)
+    assert body['t'] == 'BATCH'
+    assert len(body['h']) == 2
+    # --
+    assert len(get_db_hits()) == 0

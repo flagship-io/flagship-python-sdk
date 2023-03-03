@@ -82,6 +82,7 @@ class TrackingManager(TrackingManagerCacheStrategyInterface, Thread):
     BATCH_MAX_SIZE = 2500000
     HIT_EXPIRATION = 14400000
 
+    first_round = True
     is_running = False
     hitQueue = Queue()
     activateQueue = Queue()
@@ -100,7 +101,7 @@ class TrackingManager(TrackingManagerCacheStrategyInterface, Thread):
         self.tracking_manager_config = config.tracking_manager_config
         self.time_interval = config.tracking_manager_config.time_interval
         self.strategy = self.get_strategy()
-        self.lookup_pool()
+        # self.lookup_pool()
         if self.time_interval > 0:
             self.start_running()
 
@@ -110,6 +111,9 @@ class TrackingManager(TrackingManagerCacheStrategyInterface, Thread):
             self.start()
 
     def run(self):
+        if self.first_round:  # LookupHits from DB only once at init time.
+            self.first_round = False
+            self.lookup_pool()
         while self.is_running:
             time.sleep(self.time_interval / 1000.0)
             self.polling()
