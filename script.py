@@ -242,7 +242,7 @@ def init_bucketing():
 
     Flagship.start("bkk4s7gcmjcg07fke9dg", "Q6FDmj6F188nh75lhEato2MwoyXDS7y34VrAL4Aa",
                    Bucketing(timeout=3000, status_listener=CustomStatusListener(create_visitor), polling_interval=10000,
-                             tracking_manager_config=TrackingManagerConfig(max_pool_size=10, time_interval=50000)))
+                             tracking_manager_config=TrackingManagerConfig(max_pool_size=10, time_interval=5000)))
 #
     time.sleep(20000)
 

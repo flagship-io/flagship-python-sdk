@@ -76,6 +76,7 @@ class IVisitorStrategy:
     def flush_hits(self):
         pass
 
+
 class DefaultStrategy(IVisitorStrategy):
 
     def __init__(self, strategy=VisitorStrategies.DEFAULT_STRATEGY, visitor=None):
@@ -199,6 +200,18 @@ class PanicStrategy(DefaultStrategy):
         log(TAG_UNAUTHENTICATE, LogLevel.ERROR,
             ERROR_METHOD_DEACTIVATED.format("unauthenticate()", ERROR_METHOD_DEACTIVATED_PANIC))
 
+    def cache_visitor(self):
+        pass  # do nothing
+
+    def lookup_visitor(self):
+        pass  # do nothing
+
+    def flush_visitor(self):
+        pass  # do nothing
+
+    def flush_hits(self):
+        pass  # do nothing
+
 
 class NoConsentStrategy(DefaultStrategy):
 
@@ -211,6 +224,12 @@ class NoConsentStrategy(DefaultStrategy):
         else:
             log(TAG_TRACKING, LogLevel.ERROR, ERROR_METHOD_DEACTIVATED.format("send_hit()", (
                     ERROR_METHOD_DEACTIVATED_NO_CONSENT + "\n {}").format(self.visitor.visitor_id, str(hit))))
+
+    def cache_visitor(self):
+        pass  # do nothing
+
+    def lookup_visitor(self):
+        pass  # do nothing
 
 
 class NotReadyStrategy(DefaultStrategy):
@@ -254,3 +273,11 @@ class NotReadyStrategy(DefaultStrategy):
             ERROR_METHOD_DEACTIVATED.format("unauthenticate()", ERROR_METHOD_DEACTIVATED_NOT_READY
                                             .format(self.visitor.visitor_id)))
 
+    def cache_visitor(self):
+        pass  # do nothing
+
+    def flush_visitor(self):
+        pass  # do nothing
+
+    def flush_hits(self):
+        pass  # do nothing

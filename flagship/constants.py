@@ -35,11 +35,14 @@ TAG_CACHE_MANAGER = 'Cache Manager'
 INFO_STATUS_CHANGED = "SDK status has changed ({})"
 INFO_READY = "Flagship version {} has started successfully.\nConfiguration: {}"
 INFO_BUCKETING_POLLING = "Polling event."
+INFO_TRACKING_MANAGER = "Polling event."
 
 # DEBUG
 DEBUG_CONTEXT = "Context have been updated with success.\n{}"
 DEBUG_REQUEST = "{} {} {} {}ms\n"
 DEBUG_FETCH_FLAGS = "Flags have been updated.\n{}"
+DEBUG_TRACKING_MANAGER_STARTED = "Started."
+DEBUG_TRACKING_MANAGER_STOPPED = "Stopped."
 
 # WARNING
 WARNING_PANIC = "Panic mode is enabled : all features are disabled except 'fetchFlags()'."

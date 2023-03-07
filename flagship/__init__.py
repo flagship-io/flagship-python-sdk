@@ -121,11 +121,13 @@ class Flagship:
 
         def update_status(self, flagship_config, new_status):
             if flagship_config is not None and new_status is not None and new_status != self.status:
+                old_status = self.status
                 self.status = new_status
                 log(TAG_STATUS, LogLevel.DEBUG, INFO_STATUS_CHANGED.format(str(new_status)), flagship_config)
                 if new_status is Status.READY:
                     log(TAG_INITIALIZATION, LogLevel.INFO,
                         INFO_READY.format(str(__version__), str(flagship_config)))
+                self.configuration_manager.flagship_status_update(new_status, old_status)
                 if flagship_config.status_listener is not None:
                     flagship_config.status_listener.on_status_changed(new_status)
 

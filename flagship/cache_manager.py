@@ -45,30 +45,30 @@ class HitCacheImplementation:
         pass
 
 
-class CacheManager(object):
-    __metaclass__ = ABCMeta
+class CacheManager:
     env_id = None
 
     def __init__(self, **kwargs):
-
         self.timeout = kwargs['timeout'] if 'timeout' in kwargs and isinstance(kwargs['timeout'], int) else 50
 
-        self.visitor_cache_interface = kwargs[
-            'visitor_cache_implementation'] if 'visitor_cache_implementation' in kwargs and isinstance(
-            kwargs['visitor_cache_implementation'], VisitorCacheImplementation) else None
+        # self.visitor_cache_interface = kwargs[
+        #     'visitor_cache_implementation'] if 'visitor_cache_implementation' in kwargs and isinstance(
+        #     kwargs['visitor_cache_implementation'], VisitorCacheImplementation) else None
+        #
+        # self.hit_cache_interface = kwargs[
+        #     'hit_cache_implementation'] if 'hit_cache_implementation' in kwargs and isinstance(
+        #     kwargs['hit_cache_implementation'], HitCacheImplementation) else None
 
-        self.hit_cache_interface = kwargs[
-            'hit_cache_implementation'] if 'hit_cache_implementation' in kwargs and isinstance(
-            kwargs['hit_cache_implementation'], HitCacheImplementation) else None
-
-        self.db_path = kwargs[
-            'local_db_path'] if 'local_db_path' in kwargs and isinstance(
-            kwargs['local_db_path'], str) else "./cache/"
-
-    def create(self, env_id):
+    def init(self, env_id):
         self.env_id = env_id
+        self.open_database(env_id)
 
-    def close(self):
+    @abstractmethod
+    def open_database(self, env_id):
+        pass
+
+    @abstractmethod
+    def close_database(self):
         pass
 
 
@@ -78,10 +78,13 @@ class SqliteCacheManager(CacheManager, VisitorCacheImplementation, HitCacheImple
     con = None
 
     def __init__(self, **kwargs):
-        CacheManager.__init__(self, visitor_cache_implementation=self, hit_cache_implementation=self, **kwargs)
+        self.db_path = kwargs[
+            'local_db_path'] if 'local_db_path' in kwargs and isinstance(
+            kwargs['local_db_path'], str) else "./cache/"
+        CacheManager.__init__(self, **kwargs)
 
-    def create(self, env_id):
-        CacheManager.create(self, env_id)
+    def open_database(self, env_id):
+        CacheManager.open_database(self, env_id)
         import os
         if not os.path.exists(self.db_path):
             os.makedirs(self.db_path)
@@ -130,7 +133,6 @@ class SqliteCacheManager(CacheManager, VisitorCacheImplementation, HitCacheImple
 
     def cache_visitor(self, visitor_id, visitor_data):
         try:
-            print("== cache visitor {} ==".format(visitor_id))
             con = sl.connect(self.full_db_path)
             with con:
                 sql = """INSERT OR REPLACE INTO VISITORS (visitor_id, data, last_update) values(?, ?, ?)"""
@@ -227,8 +229,8 @@ class SqliteCacheManager(CacheManager, VisitorCacheImplementation, HitCacheImple
     def flush_all_hits(self):
         pass
 
-    def close(self):
-        CacheManager.close(self)
+    def close_database(self):
+        CacheManager.close_database(self)
         if self.con is not None:
             with self.con:
                 self.con.close()

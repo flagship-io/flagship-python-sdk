@@ -2,9 +2,11 @@ import time
 import traceback
 
 from flagship import cache_helper
+from flagship.status import Status
 from flagship.log_manager import LogLevel
 from flagship.utils import log, log_exception, get_kwargs_param
-from flagship.constants import TAG_TRACKING_MANAGER, ERROR_INVALID_HIT, TAG_CACHE_MANAGER
+from flagship.constants import TAG_TRACKING_MANAGER, ERROR_INVALID_HIT, TAG_CACHE_MANAGER, INFO_TRACKING_MANAGER, \
+    DEBUG_TRACKING_MANAGER_STOPPED, DEBUG_TRACKING_MANAGER_STARTED
 
 try:
     from Queue import Queue
@@ -60,6 +62,7 @@ class TrackingManagerCacheStrategyInterface(object):
 
 class TrackingManagerStrategy(Enum):
     BATCHING_WITH_CONTINUOUS_CACHING_STRATEGY = 'BATCHING_WITH_CONTINUOUS_CACHING_STRATEGY'
+    BATCHING_WITH_PERIODIC_CACHING_STRATEGY = 'BATCHING_WITH_PERIODIC_CACHING_STRATEGY'
 
 
 class TrackingManagerConfig:
@@ -83,7 +86,7 @@ class TrackingManager(TrackingManagerCacheStrategyInterface, Thread):
     HIT_EXPIRATION = 14400000
 
     first_round = True
-    is_running = False
+    running = False
     hitQueue = Queue()
     activateQueue = Queue()
 
@@ -106,21 +109,26 @@ class TrackingManager(TrackingManagerCacheStrategyInterface, Thread):
             self.start_running()
 
     def start_running(self):
-        if self.is_running is False:
-            self.is_running = True
+        if self.running is False:
+            log(TAG_TRACKING_MANAGER, LogLevel.DEBUG, DEBUG_TRACKING_MANAGER_STARTED)
+            self.running = True
             self.start()
 
     def run(self):
         if self.first_round:  # LookupHits from DB only once at init time.
             self.first_round = False
             self.lookup_pool()
-        while self.is_running:
+        while self.running:
             time.sleep(self.time_interval / 1000.0)
             self.polling()
 
-    def stop_running(self):
-        self.is_running = False
-        self.polling()
+    def stop_running(self, do_last_polling=True):
+        if self.running is True:
+            self.running = False
+            if do_last_polling:
+                # self.polling()
+                self.cache_pool()
+            log(TAG_TRACKING_MANAGER, LogLevel.DEBUG, DEBUG_TRACKING_MANAGER_STOPPED)
 
     def add_hit(self, hit, new=True):
         return self.strategy.add_hit(hit, new)
@@ -152,6 +160,17 @@ class TrackingManager(TrackingManagerCacheStrategyInterface, Thread):
     def get_strategy(self):
         if self.tracking_manager_config.strategy == TrackingManagerStrategy.BATCHING_WITH_CONTINUOUS_CACHING_STRATEGY:
             return ContinuousCacheStrategy(self)
+        elif self.tracking_manager_config.strategy == TrackingManagerStrategy.BATCHING_WITH_PERIODIC_CACHING_STRATEGY:
+            return PeriodicCacheStrategy(self)
+
+    def is_running(self):
+        return self.running
+
+    # def flagship_status_update(self, new_status):
+    #     if new_status is Status.PANIC:
+    #         self.stop_running(False)
+    #     else:
+    #         self.start_running()
 
 
 class TrackingManagerCacheStrategyAbstract(TrackingManagerCacheStrategyInterface):
@@ -225,11 +244,16 @@ class TrackingManagerCacheStrategyAbstract(TrackingManagerCacheStrategyInterface
                 self.add_hits(cache_helper.hits_from_cache_json(cached_hits))
 
     def cache_pool(self):
-        # do nothing
-        pass
+        cache_manager = self.tracking_manager.config.cache_manager
+        if cache_manager:
+            hits = list()
+            hits.append(list(self.tracking_manager.hitQueue.queue))
+            hits.append(list(self.tracking_manager.activateQueue.queue))
+            self.cache_hits(hits)
 
     @abstractmethod
     def polling(self):
+        log(TAG_TRACKING_MANAGER, LogLevel.DEBUG, INFO_TRACKING_MANAGER)
         self.send_hits_batch()
         self.send_activates_batch()
 
@@ -338,3 +362,10 @@ class ContinuousCacheStrategy(TrackingManagerCacheStrategyAbstract):
 
     def polling(self):
         return TrackingManagerCacheStrategyAbstract.polling(self)
+
+class PeriodicCacheStrategy(TrackingManagerCacheStrategyAbstract):
+
+    def __init__(self, tracking_manager):
+        TrackingManagerCacheStrategyAbstract.__init__(self, tracking_manager)
+        self.tracking_manager = tracking_manager
+        self.cache_manager = self.tracking_manager.config.cache_manager
