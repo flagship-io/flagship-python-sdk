@@ -38,14 +38,17 @@ class ConfigManager:
             self.decision_manager = BucketingManager(self.flagship_config, update_status)
 
     def init_cache_manager(self, env_id):
-        if self.flagship_config.cache_manager is not None:
-            self.flagship_config.cache_manager.init(env_id)
+        try:
+            if self.flagship_config.cache_manager is not None:
+                self.flagship_config.cache_manager.init(env_id)
+        except Exception as e:
+            print(e)
 
     def init_tracking_manager(self):
         if self.tracking_manager is None:
             self.tracking_manager = TrackingManager(self.flagship_config)
-            self.tracking_manager.init(self.flagship_config)
-            self.tracking_manager.start_running()
+        self.tracking_manager.init(self.flagship_config)
+        self.tracking_manager.start_running()
 
     def is_set(self):
         return self.flagship_config.is_set() and self.decision_manager is not None
@@ -55,6 +58,7 @@ class ConfigManager:
             self.decision_manager.stop_running()
         if self.tracking_manager is not None:
             self.tracking_manager.stop_running()
+            self.tracking_manager = None
         self.flagship_config = DecisionApi()
         if self.flagship_config.cache_manager is not None:
             self.flagship_config.cache_manager.close_database()
@@ -62,7 +66,7 @@ class ConfigManager:
     def flagship_status_update(self, new_status, old_status):
         if new_status is Status.PANIC and old_status is Status.READY:
             if self.tracking_manager is not None and self.tracking_manager.is_running():
-                self.tracking_manager.stop_running(new_status)
+                self.tracking_manager.stop_running(True)
                 self.tracking_manager = None
         elif new_status is Status.READY and old_status is Status.PANIC:
             self.init_tracking_manager()

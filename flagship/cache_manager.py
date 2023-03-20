@@ -196,7 +196,7 @@ class SqliteCacheManager(CacheManager, VisitorCacheImplementation, HitCacheImple
                     cursor.executemany("INSERT OR REPLACE INTO HITS VALUES (?, ?, ?)", records)
                     con.commit()
         except Exception as e:
-            log_exception(TAG_CACHE_MANAGER, e, traceback.format_exc())
+            log_exception(TAG_CACHE_MANAGER + " _1", e, traceback.format_exc())
 
     def lookup_hits(self):
         try:
@@ -227,7 +227,14 @@ class SqliteCacheManager(CacheManager, VisitorCacheImplementation, HitCacheImple
             log_exception(TAG_CACHE_MANAGER, e, traceback.format_exc())
 
     def flush_all_hits(self):
-        pass
+        try:
+            con = sl.connect(self.full_db_path)
+            with con:
+                cursor = con.cursor()
+                cursor.execute("DELETE FROM HITS")
+                con.commit()
+        except Exception as e:
+            log_exception(TAG_CACHE_MANAGER, e, traceback.format_exc())
 
     def close_database(self):
         CacheManager.close_database(self)

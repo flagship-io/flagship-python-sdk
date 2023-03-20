@@ -13,7 +13,7 @@ __metaclass__ = type
 from flagship.tracking_manager import TrackingManagerConfig
 
 
-class _FlagshipConfig:
+class _FlagshipConfig(object):
     """
      FlagshipConfig configuration.
     """
@@ -23,19 +23,19 @@ class _FlagshipConfig:
 
     def __init__(self, mode, **kwargs):
         self.decision_mode = mode if mode is not None else DecisionMode.DECISION_API
-        self.env_id = self.__get_arg(kwargs, 'env_id', str) or self.__env_id
-        self.api_key = self.__get_arg(kwargs, 'api_key', str) or self.__api_key
-        self.log_level = self.__get_arg(kwargs, 'log_level', LogLevel) or LogLevel.ALL
-        self.log_manager = self.__get_arg(kwargs, 'log_manager', LogManager) or FlagshipLogManager(LogLevel.ALL)
-        self.polling_interval = self.__get_arg(kwargs, 'polling_interval', type(1)) or 60000
-        self.timeout = self.__get_arg(kwargs, 'timeout', type(1)) or 2000
-        self.status_listener = self.__get_arg(kwargs, 'status_listener', StatusListener) or None
-        self.tracking_manager_config = self.__get_arg(kwargs, 'tracking_manager_config',
+        self.env_id = self.get_arg(kwargs, 'env_id', str) or self.__env_id
+        self.api_key = self.get_arg(kwargs, 'api_key', str) or self.__api_key
+        self.log_level = self.get_arg(kwargs, 'log_level', LogLevel) or LogLevel.ALL
+        self.log_manager = self.get_arg(kwargs, 'log_manager', LogManager) or FlagshipLogManager(LogLevel.ALL)
+        self.polling_interval = self.get_arg(kwargs, 'polling_interval', type(1)) or 60000
+        self.timeout = self.get_arg(kwargs, 'timeout', type(1)) or 2000
+        self.status_listener = self.get_arg(kwargs, 'status_listener', StatusListener) or None
+        self.tracking_manager_config = self.get_arg(kwargs, 'tracking_manager_config',
                                                       TrackingManagerConfig) or TrackingManagerConfig()
-        self.cache_manager = self.__get_arg(kwargs, 'cache_manager', CacheManager) or SqliteCacheManager()
+        self.cache_manager = self.get_arg(kwargs, 'cache_manager', CacheManager) or SqliteCacheManager()
         # self.__update_flagship_status()
 
-    def __get_arg(self, kwargs, name, c_type):
+    def get_arg(self, kwargs, name, c_type):
         return kwargs[name] if name in kwargs and isinstance(kwargs[name], c_type) else None
 
     # def __update_flagship_status(self):
@@ -56,8 +56,8 @@ class _FlagshipConfig:
             'polling_interval': self.polling_interval,
             'timeout': self.timeout,
             'status_listener': None if self.status_listener is None else str(self.status_listener.__class__.__name__),
-            'tracking_manager_config': str(self.tracking_manager_config.__class__.__name__)
-            # 'cache_manager': None if self.cache_manager is None else str(self.cache_manager.__class__.__name__)
+            'tracking_manager_config': str(self.tracking_manager_config.__class__.__name__),
+            'cache_manager': None if self.cache_manager is None else str(self.cache_manager.__class__.__name__)
         }
         return json.dumps(config, indent=4)
 
@@ -78,6 +78,8 @@ class DecisionApi(_FlagshipConfig):
         @keyword tracking_manager_config: Define a custom tracking manager configuration.
        """
         super(DecisionApi, self).__init__(DecisionMode.DECISION_API, **kwargs)
+        # super(_FlagshipConfig, self).__init__(DecisionMode.DECISION_API, **kwargs)
+        # _FlagshipConfig.__init__(self, DecisionMode.DECISION_API, **kwargs)
 
     def __str__(self):
         config = {
@@ -89,10 +91,13 @@ class DecisionApi(_FlagshipConfig):
             # 'polling_interval': self.polling_interval,
             'timeout': self.timeout,
             'status_listener': None if self.status_listener is None else str(self.status_listener.__class__.__name__),
-            'tracking_manager_config': str(self.tracking_manager_config.__class__.__name__)
-            # 'cache_manager': None if self.cache_manager is None else str(self.cache_manager.__class__.__name__)
+            'tracking_manager_config': str(self.tracking_manager_config.__class__.__name__),
+            'cache_manager': None if self.cache_manager is None else str(self.cache_manager.__class__.__name__)
         }
         return json.dumps(config, indent=4)
+
+
+
 
 
 class Bucketing(_FlagshipConfig):
@@ -126,7 +131,7 @@ class Bucketing(_FlagshipConfig):
             'polling_interval': self.polling_interval,
             'timeout': self.timeout,
             'status_listener': None if self.status_listener is None else str(self.status_listener.__class__.__name__),
-            'tracking_manager_config': str(self.tracking_manager_config.__class__.__name__)
-            # 'cache_manager': None if self.cache_manager is None else str(self.cache_manager.__class__.__name__)
+            'tracking_manager_config': str(self.tracking_manager_config.__class__.__name__),
+            'cache_manager': None if self.cache_manager is None else str(self.cache_manager.__class__.__name__)
         }
         return json.dumps(config, indent=4)

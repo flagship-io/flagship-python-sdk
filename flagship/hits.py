@@ -160,7 +160,7 @@ class Hit(object):
         return True
 
     def __str__(self):
-        return 'Hit : ' + json.dumps(self.hit_data)
+        return ''+json.dumps(self.hit_data)
 
 
 class Page(Hit):

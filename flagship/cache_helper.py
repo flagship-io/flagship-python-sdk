@@ -95,11 +95,11 @@ def hit_to_cache_json(hit):
         }
     }
 
+
 def load_hit_from_json(cached_hit):
     def migration_1(hit_json):
         from flagship.hits import HitFactory
         return HitFactory.from_json(hit_json)
-
 
     try:
         migrations = [migration_1, ]
@@ -125,4 +125,3 @@ def hits_from_cache_json(cached_hits):
         if hit:
             hits.append(hit)
     return hits
-
