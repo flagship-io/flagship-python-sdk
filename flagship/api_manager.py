@@ -30,6 +30,7 @@ class ApiManager(DecisionManager):
                             for k, v in variations.items():
                                 modification_values = v.get_modification_values()
                                 modifications.update(modification_values)
+                                visitor.assignations[variation_group.variation_group_id] = v.variation_id
                 self.update_status()
         except Exception as e:
             log_exception(TAG_FETCH_FLAGS, e, traceback.format_exc())

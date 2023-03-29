@@ -88,7 +88,7 @@ class HttpHelper:
     mock = 0
 
     @staticmethod
-    def send_batch(config, batch):
+    def send_hit(config, hit):
         import flagship
         headers = {
             "x-sdk-client": "python",
@@ -97,7 +97,7 @@ class HttpHelper:
         body = {
             "cid": config.env_id
         }
-        body.update(batch.data())
+        body.update(hit.data())
         response = requests.post(url=URL_TRACKING, headers=headers, json=body, timeout=config.timeout)
         HttpHelper.log_request(HttpHelper.RequestType.POST, URL_TRACKING, headers, body, response)
         return response

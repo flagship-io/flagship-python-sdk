@@ -36,13 +36,17 @@ class VariationGroup:
 
     def select_variation(self, visitor):
         if self.variations is not None:
-            murmur_allocation = self._get_murmur_allocation(self.variation_group_id, visitor.visitor_id)
-            p = 0
-            for (variation_id, variation) in self.variations.items():
-                if variation.allocation > 0:
-                    p += variation.allocation
-                    if murmur_allocation < p:
-                        return variation
+            cached_variation_id = visitor.assignations[self.variation_group_id] if self.variation_group_id in visitor.assignations else None
+            if cached_variation_id is not None and cached_variation_id in self.variations:
+                return self.variations[cached_variation_id]
+            else:
+                murmur_allocation = self._get_murmur_allocation(self.variation_group_id, visitor.visitor_id)
+                p = 0
+                for (variation_id, variation) in self.variations.items():
+                    if variation.allocation > 0:
+                        p += variation.allocation
+                        if murmur_allocation < p:
+                            return variation
         return None
 
 

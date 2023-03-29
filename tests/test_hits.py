@@ -6,17 +6,20 @@ import responses
 from flagship import Flagship, LogLevel, Visitor
 from flagship.config import DecisionApi
 from flagship.hits import Page, Event, EventCategory, Transaction, Item, Screen
-from test_constants_res import DECISION_API_URL, API_RESPONSE_1, ARIANE_URL, ACTIVATE_URL
+from flagship.tracking_manager import TrackingManagerConfig, TrackingManagerStrategy
+from test_constants_res import DECISION_API_URL, API_RESPONSE_1, ARIANE_URL, ACTIVATE_URL, EVENTS_URL
 
 
 @responses.activate
 def test_visitor_send_hits():
     Flagship.stop()
-    Flagship.start('_env_id_', '_api_key_', DecisionApi())
+    Flagship.start('_env_id_', '_api_key_', DecisionApi(tracking_manager_config=TrackingManagerConfig(
+                                                    strategy=TrackingManagerStrategy._NO_BATCHING_CONTINUOUS_CACHING_STRATEGY)))
     responses.reset()
 
     responses.add(responses.POST, DECISION_API_URL, json=json.loads(API_RESPONSE_1), status=200)
-    responses.add(responses.POST, ARIANE_URL, body="", status=200)
+    # responses.add(responses.POST, ARIANE_URL, body="", status=200)
+    responses.add(responses.POST, EVENTS_URL, body="", status=200)
     responses.add(responses.POST, ACTIVATE_URL, body="", status=200)
 
     visitor = Flagship.new_visitor("92bc-e237-a8d7-9234-bb78", instance_type=Visitor.Instance.NEW_INSTANCE,

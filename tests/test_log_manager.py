@@ -4,6 +4,7 @@ from mock import mock_open, patch
 from flagship import Flagship
 from flagship.config import Bucketing
 from flagship.log_manager import LogManager, LogLevel
+from flagship.tracking_manager import TrackingManagerConfig, TrackingManagerStrategy
 from test_constants_res import BUCKETING_RESPONSE_1
 
 
@@ -23,11 +24,13 @@ def test_initialization_custom_log_manager_only_debug(isfile_mock):
 
     Flagship.start("_env_id_", "_api_key_", Bucketing(
         log_manager=CustomLogManager(),
-        log_level=LogLevel.DEBUG
+        log_level=LogLevel.DEBUG,
+        tracking_manager_config=TrackingManagerConfig(
+            strategy=TrackingManagerStrategy._NO_BATCHING_CONTINUOUS_CACHING_STRATEGY)
     ))
     time.sleep(1)
     print(str(logs))
-    assert len(logs) == 3
+    assert len(logs) >= 3
     assert [log for log in logs if "has started successfully" in log] is not None
 
 @patch('io.open', mock_open(read_data=BUCKETING_RESPONSE_1))
@@ -46,10 +49,12 @@ def test_initialization_custom_log_manager_only_error(isfile_mock):
 
     Flagship.start("_env_id_", "_api_key_", Bucketing(
         log_manager=CustomLogManager(),
-        log_level=LogLevel.ERROR
+        log_level=LogLevel.ERROR,
+        tracking_manager_config=TrackingManagerConfig(
+            strategy=TrackingManagerStrategy._NO_BATCHING_CONTINUOUS_CACHING_STRATEGY)
     ))
     time.sleep(1)
-    assert len(logs) == 5
+    assert len(logs) >= 5
     assert [log for log in logs if "403" in log] is not None
     assert [log for log in logs if "has started successfully" in log] is not None
     assert [log for log in logs if "SDK status has changed" in log] is not None

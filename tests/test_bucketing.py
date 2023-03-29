@@ -11,9 +11,10 @@ from flagship.hits import Screen
 from flagship.log_manager import LogLevel, LogManager
 from flagship.status_listener import StatusListener
 from flagship.targeting_comparator import TargetingComparator
+from flagship.tracking_manager import TrackingManagerStrategy, TrackingManagerConfig
 from test_constants_res import BUCKETING_RESPONSE_1, BUCKETING_URL, BUCKETING_LAST_MODIFIED_1, \
     BUCKETING_CACHED_RESPONSE_1, ARIANE_URL, ACTIVATE_URL, SEGMENT_URL, BUCKETING_RESPONSE_2, BUCKETING_RESPONSE_PANIC, \
-    BUCKETING_RESPONSE_EMPTY
+    BUCKETING_RESPONSE_EMPTY, EVENTS_URL
 
 
 @responses.activate
@@ -66,11 +67,11 @@ def test_bucketing_file():
 def test_bucketing_campaigns():
     responses.add(responses.GET, BUCKETING_URL, json=json.loads(BUCKETING_RESPONSE_1), status=200,
                   headers=[("Last-Modified", BUCKETING_LAST_MODIFIED_1)])
-    responses.add(responses.POST, ARIANE_URL, body="", status=200)
+    responses.add(responses.POST, EVENTS_URL, body="", status=200)
     responses.add(responses.POST, ACTIVATE_URL, body="", status=200)
     responses.add(responses.POST, SEGMENT_URL, body="", status=200)
     Flagship.stop()
-    Flagship.start('_env_id_', '_api_key_', Bucketing(polling_interval=0, log_level=LogLevel.NONE)) #1 bucketing
+    Flagship.start('_env_id_', '_api_key_', Bucketing(polling_interval=0, log_level=LogLevel.NONE, tracking_manager_config=TrackingManagerConfig(strategy=TrackingManagerStrategy._NO_BATCHING_CONTINUOUS_CACHING_STRATEGY))) #1 bucketing
     sleep(0.5)
 
     visitor = Flagship.new_visitor("87524982740", instance_type=Visitor.Instance.NEW_INSTANCE,
@@ -193,23 +194,25 @@ def test_bucketing_cached_file():
         pass
     responses.add(responses.GET, BUCKETING_URL, json=json.loads(BUCKETING_RESPONSE_1), status=200,
                   headers=[("Last-Modified", BUCKETING_LAST_MODIFIED_1)])
-    responses.add(responses.POST, ARIANE_URL, body="", status=200)
+    responses.add(responses.POST, EVENTS_URL, body="", status=200)
+    # responses.add(responses.POST, ARIANE_URL, body="", status=200)
     responses.add(responses.POST, ACTIVATE_URL, body="", status=200)
     responses.add(responses.POST, SEGMENT_URL, body="", status=200)
     Flagship.stop()
-    Flagship.start('_env_id_', '_api_key_', Bucketing(polling_interval=0, log_level=LogLevel.NONE))  # 1 bucketing
+    Flagship.start('_env_id_', '_api_key_', Bucketing(polling_interval=0, log_level=LogLevel.NONE,  tracking_manager_config=TrackingManagerConfig(strategy=TrackingManagerStrategy._NO_BATCHING_CONTINUOUS_CACHING_STRATEGY)))  # 1 bucketing
     sleep(0.2)
 
     responses.reset()
     responses.remove(responses.GET, BUCKETING_URL)
     responses.add(responses.GET, BUCKETING_URL, json=json.loads(BUCKETING_RESPONSE_1), status=500,
                   headers=[("Last-Modified", BUCKETING_LAST_MODIFIED_1)])
-    responses.add(responses.POST, ARIANE_URL, body="", status=200)
+    # responses.add(responses.POST, ARIANE_URL, body="", status=200)
+    responses.add(responses.POST, EVENTS_URL, body="", status=200)
     responses.add(responses.POST, ACTIVATE_URL, body="", status=200)
     responses.add(responses.POST, SEGMENT_URL, body="", status=200)
     Flagship.stop()
 
-    Flagship.start('_env_id_', '_api_key_', Bucketing(polling_interval=0, log_level=LogLevel.NONE))  # 1 bucketing
+    Flagship.start('_env_id_', '_api_key_', Bucketing(polling_interval=0, log_level=LogLevel.NONE, tracking_manager_config=TrackingManagerConfig(strategy=TrackingManagerStrategy._NO_BATCHING_CONTINUOUS_CACHING_STRATEGY)))  # 1 bucketing
     sleep(0.2)
     visitor = Flagship.new_visitor("9356925", instance_type=Visitor.Instance.NEW_INSTANCE,
                                    context={'isVIPUser': False})  # 2 consent
@@ -226,17 +229,27 @@ def test_bucketing_cached_file():
     assert len(calls) == 4
     sleep(0.2)
 
-
+db_path = "./cache/"
+def remove_db():
+    import shutil
+    try:
+        shutil.rmtree(db_path)
+    except:
+        pass
 
 @responses.activate
 def test_bucketing_alloc():
+    remove_db()
     responses.add(responses.GET, BUCKETING_URL, json=json.loads(BUCKETING_RESPONSE_2), status=200,
                   headers=[("Last-Modified", BUCKETING_LAST_MODIFIED_1)])
-    responses.add(responses.POST, ARIANE_URL, body="", status=200)
+    responses.add(responses.POST, EVENTS_URL, body="", status=200)
+    # responses.add(responses.POST, ARIANE_URL, body="", status=200)
     responses.add(responses.POST, ACTIVATE_URL, body="", status=200)
     responses.add(responses.POST, SEGMENT_URL, body="", status=200)
     Flagship.stop()
-    Flagship.start('_env_id_', '_api_key_', Bucketing(polling_interval=0, log_level=LogLevel.NONE))  # 1 bucketing
+    Flagship.start('_env_id_', '_api_key_', Bucketing(polling_interval=0, log_level=LogLevel.NONE, tracking_manager_config=TrackingManagerConfig(
+                                                    strategy=TrackingManagerStrategy._NO_BATCHING_CONTINUOUS_CACHING_STRATEGY)))  # 1 bucketing
+    sleep(0.5)
     ids = ["202072017183814142",
            "202072017183860649",
            "202072017183828850",
@@ -267,8 +280,8 @@ def test_bucketing_alloc():
         visitor.fetch_flags()
         v25 = visitor.get_flag("variation", 0).value(False)
         v50 = visitor.get_flag("variation50", 0).value(False)
-        print ("{} v50 {} == variation50[{}] {}".format(ids[i], v50, i, variation50[i]))
-        print ("{} v25 {} == variation25[{}] {}".format(ids[i], v25, i, variation25[i]))
+        print("{} v50 {} == variation50[{}] {}".format(ids[i], v50, i, variation50[i]))
+        print("{} v25 {} == variation25[{}] {}".format(ids[i], v25, i, variation25[i]))
         if v25 != variation25[i]:
             print("Error = {} - expected {} got {}".format(ids[i], variation25[i], v25))
         if v50 != variation50[i]:

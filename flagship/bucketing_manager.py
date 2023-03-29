@@ -86,7 +86,8 @@ class BucketingManager(DecisionManager, Thread):
                         if variation_group.is_targeting_valid(dict(visitor.context)):
                             variation = variation_group.select_variation(visitor)
                             if variation is not None:
-                                visitor.add_new_assignment_to_history(variation.variation_group_id, variation.variation_id)
+                                # visitor.add_new_assignment_to_history(variation.variation_group_id, variation.variation_id)
+                                visitor.assignations[variation.variation_group_id] = variation.variation_id
                                 modification_values = variation.get_modification_values()
                                 if modification_values is not None:
                                     campaign_modifications.update(modification_values)

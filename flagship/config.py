@@ -32,7 +32,7 @@ class _FlagshipConfig(object):
         self.status_listener = self.get_arg(kwargs, 'status_listener', StatusListener) or None
         self.tracking_manager_config = self.get_arg(kwargs, 'tracking_manager_config',
                                                       TrackingManagerConfig) or TrackingManagerConfig()
-        self.cache_manager = self.get_arg(kwargs, 'cache_manager', CacheManager) or SqliteCacheManager()
+        self.cache_manager = self.get_arg(kwargs, 'cache_manager', CacheManager) or None
         # self.__update_flagship_status()
 
     def get_arg(self, kwargs, name, c_type):

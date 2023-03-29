@@ -8,8 +8,9 @@ import responses
 
 from flagship.hits import Screen
 from flagship.log_manager import LogManager
+from flagship.tracking_manager import TrackingManagerConfig, TrackingManagerStrategy
 from test_constants_res import API_RESPONSE_1, DECISION_API_URL, ARIANE_URL, API_RESPONSE_2, ACTIVATE_URL, \
-    API_RESPONSE_3
+    API_RESPONSE_3, EVENTS_URL
 
 
 def test_visitor_creation_default():
@@ -135,9 +136,11 @@ def test_visitor_update_context():
 def test_visitor_consent():
     Flagship.stop()
     responses.add(responses.POST, DECISION_API_URL, json=json.loads(API_RESPONSE_1), status=200)
-    responses.add(responses.POST, ARIANE_URL, body="", status=200)
+    # responses.add(responses.POST, ARIANE_URL, body="", status=200)
+    responses.add(responses.POST, EVENTS_URL, body="", status=200)
 
-    Flagship.start('_env_id_', '_api_key_', DecisionApi())
+    Flagship.start('_env_id_', '_api_key_', DecisionApi(tracking_manager_config=TrackingManagerConfig(
+                                                    strategy=TrackingManagerStrategy._NO_BATCHING_CONTINUOUS_CACHING_STRATEGY)))
 
     _visitor_10 = Flagship.new_visitor('_visitor_10', instance_type=Visitor.Instance.NEW_INSTANCE)
     _visitor_11 = Flagship.new_visitor('_visitor_11', instance_type=Visitor.Instance.NEW_INSTANCE, consent=False)
@@ -149,7 +152,7 @@ def test_visitor_consent():
     assert len(calls) == 4
     for i in range(0, len(calls)):
         c = calls[i]
-        if ARIANE_URL in c.request.url:
+        if EVENTS_URL in c.request.url:
             body = json.loads(c.request.body)
             if i == 0:
                 assert body['t'] == 'EVENT'
@@ -181,10 +184,12 @@ def test_visitor_consent():
 def test_visitor_xpc():
     Flagship.stop()
     responses.add(responses.POST, DECISION_API_URL, json=json.loads(API_RESPONSE_1), status=200)
-    responses.add(responses.POST, ARIANE_URL, body="", status=200)
+    responses.add(responses.POST, EVENTS_URL, body="", status=200)
+    # responses.add(responses.POST, ARIANE_URL, body="", status=200)
     responses.add(responses.POST, ACTIVATE_URL, body="", status=200)
 
-    Flagship.start('_env_id_', '_api_key_', DecisionApi())
+    Flagship.start('_env_id_', '_api_key_', DecisionApi(tracking_manager_config=TrackingManagerConfig(
+                                                    strategy=TrackingManagerStrategy._NO_BATCHING_CONTINUOUS_CACHING_STRATEGY)))
 
     visitor = Flagship.new_visitor('anonymous', instance_type=Visitor.Instance.NEW_INSTANCE)
     # anonymous
@@ -215,8 +220,10 @@ def test_visitor_xpc():
             assert body['visitorId'] == 'anonymous'
             assert body['anonymousId'] is None
         if i == 2:
-            assert body['vid'] == 'anonymous'
-            assert body['aid'] is None
+            # assert body['vid'] == 'anonymous'
+            # assert body['aid'] is None
+            assert body['batch'][0]['vid'] == 'anonymous'
+            assert body['batch'][0]['aid'] is None
         if i == 3:
             assert body['vid'] == 'anonymous'
             assert body['cuid'] is None
@@ -224,8 +231,10 @@ def test_visitor_xpc():
             assert body['visitorId'] == 'user_001'
             assert body['anonymousId'] == 'anonymous'
         if i == 5:
-            assert body['vid'] == 'user_001'
-            assert body['aid'] == 'anonymous'
+            # assert body['vid'] == 'user_001'
+            # assert body['aid'] == 'anonymous'
+            assert body['batch'][0]['vid'] == 'user_001'
+            assert body['batch'][0]['aid'] == 'anonymous'
         if i == 6:
             assert body['vid'] == 'anonymous'
             assert body['cuid'] == 'user_001'
@@ -233,8 +242,10 @@ def test_visitor_xpc():
             assert body['visitorId'] == 'anonymous'
             assert body['anonymousId'] is None
         if i == 8:
-            assert body['vid'] == 'anonymous'
-            assert body['aid'] is None
+            # assert body['vid'] == 'anonymous'
+            # assert body['aid'] is None
+            assert body['batch'][0]['vid'] == 'anonymous'
+            assert body['batch'][0]['aid'] is None
         if i == 9:
             assert body['vid'] == 'anonymous'
             assert body['cuid'] is None
@@ -258,10 +269,12 @@ def test_visitor_strategy_panic():
     custom_log_manager = CustomLogManager()
     Flagship.stop()
     responses.add(responses.POST, DECISION_API_URL, json=json.loads(API_RESPONSE_3), status=200)
-    responses.add(responses.POST, ARIANE_URL, body="", status=200)
+    responses.add(responses.POST, EVENTS_URL, body="", status=200)
+    # responses.add(responses.POST, ARIANE_URL, body="", status=200)
     responses.add(responses.POST, ACTIVATE_URL, body="", status=200)
 
-    Flagship.start('_env_id_', '_api_key_', DecisionApi(log_manager=custom_log_manager))
+    Flagship.start('_env_id_', '_api_key_', DecisionApi(log_manager=custom_log_manager, tracking_manager_config=TrackingManagerConfig(
+                                                    strategy=TrackingManagerStrategy._NO_BATCHING_CONTINUOUS_CACHING_STRATEGY)))
     assert Flagship.status() == Flagship.status().READY
     visitor = Flagship.new_visitor("visitor_xxx")
     visitor.fetch_flags()
@@ -279,11 +292,10 @@ def test_visitor_strategy_panic():
     assert custom_log_manager.deactivated_method_log_cnt == 4
 
     sleep(1)
-    print("########################")
     custom_log_manager.deactivated_method_log_cnt = 0
     responses.reset()
     responses.add(responses.POST, DECISION_API_URL, json=json.loads(API_RESPONSE_1), status=200)
-    responses.add(responses.POST, ARIANE_URL, body="", status=200)
+    responses.add(responses.POST, EVENTS_URL, body="", status=200)
     responses.add(responses.POST, ACTIVATE_URL, body="", status=200)
     sleep(0.1)
     visitor.fetch_flags()
@@ -353,12 +365,14 @@ def test_visitor_strategy_no_consent():
     custom_log_manager = CustomLogManager()
     Flagship.stop()
 
+    # responses.add(responses.POST, DECISION_API_URL, json=json.loads(API_RESPONSE_1), status=200)
     responses.add(responses.POST, DECISION_API_URL, json=json.loads(API_RESPONSE_1), status=200)
-    responses.add(responses.POST, DECISION_API_URL, json=json.loads(API_RESPONSE_1), status=200)
-    responses.add(responses.POST, ARIANE_URL, body="", status=200)
+    responses.add(responses.POST, EVENTS_URL, body="", status=200)
+    # responses.add(responses.POST, ARIANE_URL, body="", status=200)
     responses.add(responses.POST, ACTIVATE_URL, body="", status=200)
 
-    Flagship.start('_env_id_', '_api_key_', DecisionApi(log_manager=custom_log_manager))
+    Flagship.start('_env_id_', '_api_key_', DecisionApi(log_manager=custom_log_manager, tracking_manager_config=TrackingManagerConfig(
+                                                    strategy=TrackingManagerStrategy._NO_BATCHING_CONTINUOUS_CACHING_STRATEGY)))
     assert Flagship.status() == Flagship.status().READY
     visitor = Flagship.new_visitor("visitor_xxx", consent=False)  # +1
     visitor.fetch_flags() # +1

@@ -30,12 +30,13 @@ TAG_AUTHENTICATE = "Authenticate"
 TAG_UNAUTHENTICATE = "Unauthenticate"
 TAG_TRACKING_MANAGER = 'Tracking Manager'
 TAG_CACHE_MANAGER = 'Cache Manager'
+TAG_CONFIG_PARAM = 'Configuration parameter'
 
 # INFO
 INFO_STATUS_CHANGED = "SDK status has changed ({})"
 INFO_READY = "Flagship version {} has started successfully.\nConfiguration: {}"
 INFO_BUCKETING_POLLING = "Polling event."
-INFO_TRACKING_MANAGER = "Polling event ({})."
+INFO_TRACKING_MANAGER = "Polling event."
 
 # DEBUG
 DEBUG_CONTEXT = "Context have been updated with success.\n{}"
@@ -50,6 +51,10 @@ DEBUG_TRACKING_MANAGER_CACHE_HITS = "Cache hits \n"
 # WARNING
 WARNING_PANIC = "Panic mode is enabled : all features are disabled except 'fetchFlags()'."
 WARNING_DEFAULT_CONFIG = "No flagship configuration is passed. Default configuration will be used."
+WARNING_CONFIGURATION_PARAM_TYPE = "'{}' parameter type is not valid. Please check the documentation. Default value " \
+                                   "will be used."
+WARNING_CONFIGURATION_PARAM_MIN_MAX = "'{}' parameter type is not valid. Please check the documentation. Default " \
+                                      "value {} will be used."
 
 # ERRORS
 ERROR_INITIALIZATION_PARAM = "Params 'envId' and 'apiKey' must not be None or emtpy."

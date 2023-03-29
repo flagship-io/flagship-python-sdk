@@ -2,6 +2,7 @@ import traceback
 from abc import ABCMeta, abstractmethod
 from enum import Enum
 from flagship import param_types_validator, log, LogLevel
+from flagship.cache_manager import VisitorCacheImplementation
 from flagship.constants import TAG_UPDATE_CONTEXT, TAG_VISITOR, DEBUG_CONTEXT, TAG_FETCH_FLAGS, DEBUG_FETCH_FLAGS, \
     ERROR_METHOD_DEACTIVATED, ERROR_METHOD_DEACTIVATED_PANIC, TAG_TRACKING, ERROR_METHOD_DEACTIVATED_NO_CONSENT, \
     ERROR_METHOD_DEACTIVATED_NOT_READY, TAG_AUTHENTICATE, TAG_UNAUTHENTICATE, ERROR_TRACKING_HIT_SUBCLASS, \
@@ -81,6 +82,8 @@ class DefaultStrategy(IVisitorStrategy):
 
     def __init__(self, strategy=VisitorStrategies.DEFAULT_STRATEGY, visitor=None):
         super(DefaultStrategy, self).__init__(strategy, visitor)
+        cache_manager = self.visitor._configuration_manager.flagship_config.cache_manager
+        self.visitor_cache_interface = cache_manager if cache_manager is not None and isinstance(cache_manager, VisitorCacheImplementation) else None
 
     def update_context(self, context):
         if isinstance(context, tuple) and len(context) == 2:
@@ -132,19 +135,17 @@ class DefaultStrategy(IVisitorStrategy):
 
     def cache_visitor(self):
         try:
-            cache_manager = self.visitor._configuration_manager.flagship_config.cache_manager
-            if cache_manager is not None:
+            if self.visitor_cache_interface is not None:
                 from flagship.cache_helper import visitor_to_cache_json
-                cache_manager.cache_visitor(self.visitor.visitor_id, visitor_to_cache_json(self.visitor))
+                self.visitor_cache_interface.cache_visitor(self.visitor.visitor_id, visitor_to_cache_json(self.visitor))
         except Exception as e:
             log_exception(TAG_CACHE_MANAGER, e, traceback.format_exc())
 
     def lookup_visitor(self):
         try:
-            cache_manager = self.visitor._configuration_manager.flagship_config.cache_manager
-            if cache_manager is not None:
+            if self.visitor_cache_interface is not None:
                 from flagship.cache_helper import load_visitor_from_json
-                visitor_data = cache_manager.lookup_visitor(self.visitor.visitor_id)
+                visitor_data = self.visitor_cache_interface.lookup_visitor(self.visitor.visitor_id)
                 if visitor_data:
                     load_visitor_from_json(self.visitor, visitor_data)
         except Exception as e:
@@ -152,14 +153,14 @@ class DefaultStrategy(IVisitorStrategy):
 
     def flush_visitor(self):
         try:
-            cache_manager = self.visitor._configuration_manager.flagship_config.cache_manager
-            if cache_manager is not None:
-                cache_manager.flush_visitor(self.visitor.visitor_id)
+            if self.visitor_cache_interface is not None:
+                self.visitor_cache_interface.flush_visitor(self.visitor.visitor_id)
         except Exception as e:
             log_exception(TAG_CACHE_MANAGER, e, traceback.format_exc())
 
     def flush_hits(self):
         try:
+            print("-VISITOR FLUSH HIT-")
             tracking_manager = self.visitor._configuration_manager.tracking_manager
             tracking_manager.delete_hits_by_visitor_id(self.visitor.visitor_id, False)
             # cache_manager = self.visitor._configuration_manager.flagship_config.cache_manager

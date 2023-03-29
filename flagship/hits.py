@@ -5,6 +5,7 @@ import sys
 import time
 import traceback
 import uuid
+from collections import OrderedDict
 
 from enum import Enum
 
@@ -160,7 +161,14 @@ class Hit(object):
         return True
 
     def __str__(self):
-        return ''+json.dumps(self.hit_data)
+        return ''+str({
+            'id': self.id,
+            'type': str(self.type.value),
+            'visitor_id': self.visitor_id,
+            'anonymous_id': self.anonymous_id,
+            'timestamp': self.timestamp,
+            'data': self.hit_data
+        })
 
 
 class Page(Hit):

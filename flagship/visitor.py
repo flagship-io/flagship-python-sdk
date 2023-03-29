@@ -42,18 +42,17 @@ class Visitor(IVisitorStrategy):
         super(Visitor, self).__init__(self)
         self._configuration_manager = configuration_manager
         self._config = configuration_manager.flagship_config
-
-        self.is_authenticated = self._get_arg(kwargs, 'authenticated', bool, False)
+        self.exposed_variations = []
+        self.assignations = {}
         self.visitor_id = visitor_id
+        self.is_authenticated = self._get_arg(kwargs, 'authenticated', bool, False)
         self.anonymous_id = str(uuid.uuid4()) if self.is_authenticated is True else None
+        self._modifications = dict()
         from flagship.flagship_context import FlagshipContext
         self.context = FlagshipContext.load()
-        self._modifications = dict()
         self.has_consented = self._get_arg(kwargs, 'consent', bool, True)
         self.set_consent(self.has_consented)
         self.update_context(self._get_arg(kwargs, 'context', dict, {}))
-        self.exposed_variations = []
-        self.assignations = {}
         self.lookup_visitor()
 
     # @param_types_validator(True, str, [int, float, str])
@@ -130,7 +129,9 @@ class Visitor(IVisitorStrategy):
             "has_consented": self.has_consented,
             "is_authenticated": self.is_authenticated,
             "context": self.context,
-            "flags": self._flags_to_dict()
+            "flags": self._flags_to_dict(),
+            "assignations": self.assignations,
+            "exposed_variations": self.exposed_variations
         })
 
     def _get_arg(self, kwargs, name, c_type, default, ):

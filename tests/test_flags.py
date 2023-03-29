@@ -5,7 +5,9 @@ from flagship import Flagship, Visitor
 from flagship.config import DecisionApi
 from flagship.flagship_context import FlagshipContext
 import responses
-from test_constants_res import DECISION_API_URL, ARIANE_URL, API_RESPONSE_1, API_RESPONSE_2, ACTIVATE_URL
+
+from flagship.tracking_manager import TrackingManagerConfig, TrackingManagerStrategy
+from test_constants_res import DECISION_API_URL, ARIANE_URL, API_RESPONSE_1, API_RESPONSE_2, ACTIVATE_URL, EVENTS_URL
 
 
 @responses.activate
@@ -69,7 +71,8 @@ def test_visitor_get_flags():
 def test_flag_metadata():
     Flagship.stop()
     responses.add(responses.POST, DECISION_API_URL, json=json.loads(API_RESPONSE_1), status=200)
-    responses.add(responses.POST, ARIANE_URL, body="", status=200)
+    # responses.add(responses.POST, ARIANE_URL, body="", status=200)
+    responses.add(responses.POST, EVENTS_URL, body="", status=200)
 
     Flagship.start('_env_id_', '_api_key_', DecisionApi())
 
@@ -79,7 +82,6 @@ def test_flag_metadata():
 
     assert _visitor_8.get_flag("flag_do_not exists", "default").exists() is False
     metadata = _visitor_8.get_flag("flag_do_not exists", "default").metadata()
-    metadata.v
     assert metadata.variation_id == ""
     assert metadata.variation_group_id == ""
     assert metadata.campaign_id == ""
@@ -127,10 +129,12 @@ def test_flag_metadata():
 def test_flag_user_exposed():
     Flagship.stop()
     responses.add(responses.POST, DECISION_API_URL, json=json.loads(API_RESPONSE_1), status=200)
-    responses.add(responses.POST, ARIANE_URL, body="", status=200)
+    # responses.add(responses.POST, ARIANE_URL, body="", status=200)
+    responses.add(responses.POST, EVENTS_URL, body="", status=200)
     responses.add(responses.POST, ACTIVATE_URL, body="", status=200)
 
-    Flagship.start('_env_id_', '_api_key_', DecisionApi())
+    Flagship.start('_env_id_', '_api_key_', DecisionApi(tracking_manager_config=TrackingManagerConfig(
+                                                    strategy=TrackingManagerStrategy._NO_BATCHING_CONTINUOUS_CACHING_STRATEGY)))
 
     _visitor_9 = Flagship.new_visitor('_visitor_9', instance_type=Visitor.Instance.NEW_INSTANCE)
 
@@ -148,15 +152,21 @@ def test_flag_user_exposed():
         c = calls[i]
         if ACTIVATE_URL in c.request.url:
             body = json.loads(c.request.body)
+            assert body['cid'] == '_env_id_'
             if i == 2 or i == 3:
-                assert body['cid'] == '_env_id_'
-                assert body['vid'] == '_visitor_9'
-                assert body['aid'] is None
-                assert body['caid'] == 'bmsor064jaeg0guuuuuu'
-                assert body['vaid'] == 'bmsor064jaeg0goooooo'
+                # assert body['cid'] == '_env_id_'
+                # assert body['vid'] == '_visitor_9'
+                # assert body['aid'] is None
+                # assert body['caid'] == 'bmsor064jaeg0guuuuuu'
+                # assert body['vaid'] == 'bmsor064jaeg0goooooo'
+                # assert body['batch'][0]['cid'] == '_env_id_'
+                assert body['batch'][0]['vid'] == '_visitor_9'
+                assert body['batch'][0]['aid'] is None
+                assert body['batch'][0]['caid'] == 'bmsor064jaeg0guuuuuu'
+                assert body['batch'][0]['vaid'] == 'bmsor064jaeg0goooooo'
             if i == 4:
-                assert body['cid'] == '_env_id_'
-                assert body['vid'] == '_visitor_9'
-                assert body['aid'] is None
-                assert body['caid'] == 'c348750k33nnjpaaaaaa'
-                assert body['vaid'] == 'c348750k33nnjpeeeeee'
+                # assert body['batch'][0]['cid'] == '_env_id_'
+                assert body['batch'][0]['vid'] == '_visitor_9'
+                assert body['batch'][0]['aid'] is None
+                assert body['batch'][0]['caid'] == 'c348750k33nnjpaaaaaa'
+                assert body['batch'][0]['vaid'] == 'c348750k33nnjpeeeeee'

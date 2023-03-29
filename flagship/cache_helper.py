@@ -21,7 +21,7 @@ def visitor_to_cache_json(visitor):
             'consent': visitor.has_consented,
             'context': visitor.context,
             'campaigns': visitor_campaigns_to_json(visitor),
-            'assignations': visitor.assignations
+            'assignationHistory': visitor.assignations
         }
     })
     return json
@@ -70,13 +70,13 @@ def load_visitor_from_json(visitor, visitor_data):
             for key, value in campaign['flags'].items():
                 visitor_m._modifications[key] = Modification(key, campaign_id, campaign_type, campaign_slug,
                                                              variation_group_id, variation_id, is_reference, value)
-        visitor_m.assignations.update(data_m['assignations'])
+        visitor_m.assignations.update(data_m['assignationHistory'])
 
     try:
         migrations = [migration_1, ]
-        visitor_json = json.loads(visitor_data)
-        version = visitor_json['version']
-        data = visitor_json['data']
+        # visitor_json = json.loads(visitor_data)
+        version = visitor_data['version']
+        data = visitor_data['data']
         migrations[version - 1](visitor, data)
     except Exception as e:
         log_exception(TAG_CACHE_MANAGER, e, traceback.format_exc())
