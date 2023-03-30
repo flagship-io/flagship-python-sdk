@@ -9,7 +9,7 @@ import responses
 from flagship.hits import Screen
 from flagship.log_manager import LogManager
 from flagship.tracking_manager import TrackingManagerConfig, TrackingManagerStrategy
-from test_constants_res import API_RESPONSE_1, DECISION_API_URL, ARIANE_URL, API_RESPONSE_2, ACTIVATE_URL, \
+from test_constants_res import API_RESPONSE_1, DECISION_API_URL, API_RESPONSE_2, ACTIVATE_URL, \
     API_RESPONSE_3, EVENTS_URL
 
 

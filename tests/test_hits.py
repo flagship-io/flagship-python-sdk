@@ -7,7 +7,7 @@ from flagship import Flagship, LogLevel, Visitor
 from flagship.config import DecisionApi
 from flagship.hits import Page, Event, EventCategory, Transaction, Item, Screen
 from flagship.tracking_manager import TrackingManagerConfig, TrackingManagerStrategy
-from test_constants_res import DECISION_API_URL, API_RESPONSE_1, ARIANE_URL, ACTIVATE_URL, EVENTS_URL
+from test_constants_res import DECISION_API_URL, API_RESPONSE_1, ACTIVATE_URL, EVENTS_URL
 
 
 @responses.activate

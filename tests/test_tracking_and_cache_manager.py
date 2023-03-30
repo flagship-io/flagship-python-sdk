@@ -11,7 +11,7 @@ from flagship.config import DecisionApi, Bucketing
 from flagship.hits import Screen, Event, EventCategory
 from flagship.log_manager import LogManager, LogLevel
 from flagship.tracking_manager import TrackingManagerConfig, TrackingManagerStrategy
-from test_constants_res import DECISION_API_URL, API_RESPONSE_1, ARIANE_URL, ACTIVATE_URL, EVENTS_URL, API_RESPONSE_3, \
+from test_constants_res import DECISION_API_URL, API_RESPONSE_1, ACTIVATE_URL, EVENTS_URL, API_RESPONSE_3, \
     BUCKETING_URL, BUCKETING_RESPONSE_1, BUCKETING_LAST_MODIFIED_1
 
 db_name = "test_db"
@@ -193,7 +193,6 @@ def test_hit_custom_cache_manager_panic():
     remove_db()
     responses.reset()
     responses.add(responses.POST, DECISION_API_URL, json=json.loads(API_RESPONSE_3), status=200)  # PANIC
-    responses.add(responses.POST, ARIANE_URL, body="", status=200)
     responses.add(responses.POST, EVENTS_URL, body="", status=200)
     responses.add(responses.POST, ACTIVATE_URL, body="", status=200)
 

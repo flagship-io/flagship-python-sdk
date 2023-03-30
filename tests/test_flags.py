@@ -1,13 +1,12 @@
 import json
 from time import sleep
 
-from flagship import Flagship, Visitor
-from flagship.config import DecisionApi
-from flagship.flagship_context import FlagshipContext
 import responses
 
+from flagship import Flagship, Visitor
+from flagship.config import DecisionApi
 from flagship.tracking_manager import TrackingManagerConfig, TrackingManagerStrategy
-from test_constants_res import DECISION_API_URL, ARIANE_URL, API_RESPONSE_1, API_RESPONSE_2, ACTIVATE_URL, EVENTS_URL
+from test_constants_res import DECISION_API_URL, API_RESPONSE_1, API_RESPONSE_2, ACTIVATE_URL, EVENTS_URL
 
 
 @responses.activate
@@ -15,7 +14,7 @@ def test_visitor_get_flags():
     Flagship.stop()
     responses.reset()
     responses.add(responses.POST, DECISION_API_URL, json=json.loads(API_RESPONSE_1), status=200)
-    responses.add(responses.POST, ARIANE_URL, body="", status=200)
+    responses.add(responses.POST, EVENTS_URL, body="", status=200)
 
     Flagship.start('_env_id_', '_api_key_', DecisionApi())
 
@@ -50,7 +49,7 @@ def test_visitor_get_flags():
 
     responses.reset()
     responses.add(responses.POST, DECISION_API_URL, json=json.loads(API_RESPONSE_2), status=200)
-    responses.add(responses.POST, ARIANE_URL, body="", status=200)
+    responses.add(responses.POST, EVENTS_URL, body="", status=200)
 
     _visitor_7.fetch_flags()
 

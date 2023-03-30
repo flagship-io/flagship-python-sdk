@@ -13,7 +13,7 @@ from flagship.status_listener import StatusListener
 from flagship.targeting_comparator import TargetingComparator
 from flagship.tracking_manager import TrackingManagerStrategy, TrackingManagerConfig
 from test_constants_res import BUCKETING_RESPONSE_1, BUCKETING_URL, BUCKETING_LAST_MODIFIED_1, \
-    BUCKETING_CACHED_RESPONSE_1, ARIANE_URL, ACTIVATE_URL, SEGMENT_URL, BUCKETING_RESPONSE_2, BUCKETING_RESPONSE_PANIC, \
+    BUCKETING_CACHED_RESPONSE_1, ACTIVATE_URL, SEGMENT_URL, BUCKETING_RESPONSE_2, BUCKETING_RESPONSE_PANIC, \
     BUCKETING_RESPONSE_EMPTY, EVENTS_URL
 
 
@@ -331,7 +331,7 @@ def test_bucketing_panic():
 
     responses.add(responses.GET, BUCKETING_URL, json=json.loads(BUCKETING_RESPONSE_PANIC), status=200,  # +2 bucketing
                   headers=[("Last-Modified", BUCKETING_LAST_MODIFIED_1)])
-    responses.add(responses.POST, ARIANE_URL, body="", status=200)
+    responses.add(responses.POST, EVENTS_URL, body="", status=200)
     responses.add(responses.POST, ACTIVATE_URL, body="", status=200)
     responses.add(responses.POST, SEGMENT_URL, body="", status=200)
     Flagship.stop()
@@ -387,7 +387,7 @@ def test_bucketing_304():
     responses.reset()
     responses.add(responses.GET, BUCKETING_URL, json=json.loads(BUCKETING_RESPONSE_1), status=200,
                   headers=[("Last-Modified", BUCKETING_LAST_MODIFIED_1)])
-    responses.add(responses.POST, ARIANE_URL, body="", status=200)
+    responses.add(responses.POST, EVENTS_URL, body="", status=200)
     responses.add(responses.POST, ACTIVATE_URL, body="", status=200)
     responses.add(responses.POST, SEGMENT_URL, body="", status=200)
     Flagship.stop()
@@ -397,7 +397,7 @@ def test_bucketing_304():
     responses.reset()
     responses.add(responses.GET, BUCKETING_URL, json=json.loads(BUCKETING_RESPONSE_EMPTY), status=304,
                   headers=[("Last-Modified", BUCKETING_LAST_MODIFIED_1)])
-    responses.add(responses.POST, ARIANE_URL, body="", status=200)
+    responses.add(responses.POST, EVENTS_URL, body="", status=200)
     responses.add(responses.POST, ACTIVATE_URL, body="", status=200)
     responses.add(responses.POST, SEGMENT_URL, body="", status=200)
     runner.run(1)
@@ -406,7 +406,7 @@ def test_bucketing_304():
     responses.reset()
     responses.add(responses.GET, BUCKETING_URL, json=json.loads(BUCKETING_RESPONSE_EMPTY), status=200,
                   headers=[("Last-Modified", BUCKETING_LAST_MODIFIED_1)])
-    responses.add(responses.POST, ARIANE_URL, body="", status=200)
+    responses.add(responses.POST, EVENTS_URL, body="", status=200)
     responses.add(responses.POST, ACTIVATE_URL, body="", status=200)
     responses.add(responses.POST, SEGMENT_URL, body="", status=200)
     runner.run(2)
