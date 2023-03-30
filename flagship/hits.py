@@ -187,10 +187,14 @@ class Page(Hit):
         self.hit_data.update(data)
 
     def check_data_validity(self):
-        try:
-            import urlparse
-        except:
+        # try:
+        #     import urlparse
+        # except:
+        #     from urllib.parse import urlparse
+        if sys.version_info >= (3, 0):
             from urllib.parse import urlparse
+        if (3, 0) > sys.version_info >= (2, 7):
+            from urlparse import urlparse
         if ((Hit.check_data_validity(self) is False) or
                 (not bool(self.hit_data[HitFields.origin])) or
                 (bool(urlparse(self.hit_data[HitFields.origin]).scheme) is False) or

@@ -153,12 +153,6 @@ def test_flag_user_exposed():
             body = json.loads(c.request.body)
             assert body['cid'] == '_env_id_'
             if i == 2 or i == 3:
-                # assert body['cid'] == '_env_id_'
-                # assert body['vid'] == '_visitor_9'
-                # assert body['aid'] is None
-                # assert body['caid'] == 'bmsor064jaeg0guuuuuu'
-                # assert body['vaid'] == 'bmsor064jaeg0goooooo'
-                # assert body['batch'][0]['cid'] == '_env_id_'
                 assert body['batch'][0]['vid'] == '_visitor_9'
                 assert body['batch'][0]['aid'] is None
                 assert body['batch'][0]['caid'] == 'bmsor064jaeg0guuuuuu'
