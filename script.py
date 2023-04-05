@@ -44,6 +44,7 @@
 #     v.send_hit(Screen("python screen view"))
 #     print(value)
 # init()
+import asyncio
 import json
 import sys
 import time
@@ -59,192 +60,17 @@ from flagship.log_manager import LogManager
 from flagship.status_listener import StatusListener
 from flagship.tracking_manager import TrackingManagerConfig
 
+async def toto():
+    print("je retourne toto")
+    await asyncio.sleep(1)
+    return 'toto'
 
 def init():
     print(sys.version)
-    # init_api()
-    init_bucketing()
-
-    # class CustomStatusListener(StatusListener):
-    #
-    #     def on_status_changed(self, new_status):
-    #         print("New status = " + str(new_status))
-
-    # class CustomLogManager(LogManager):
-    #
-    #     def log(self, tag, level, message):
-    #         print(">>> " + tag + str(level) + message)
-    #
-    #     def exception(self, exception, traceback):
-    #         pass
-
-    # visitor0 = Flagship.new_visitor("toto 0", instance_type=Visitor.Instance.SINGLE_INSTANCE)
-    # visitor0.fetch_flags()
-    # print(str(visitor0.get_flag("nope 0", "default 0").value()))
-    #
-    # # Flagship.start("custom_end_id", "custom_api_key", DecisionApi(timeout=3000, status_listener=CustomStatusListener()))
-    # Flagship.start("bkk4s7gcmjcg07fke9dg", "Q6FDmj6F188nh75lhEato2MwoyXDS7y34VrAL4Aa", DecisionApi(timeout=3000, status_listener=CustomStatusListener()))
-    # # Flagship.start("custom_end_id", "custom_api_key", DecisionApi(timeout=3000, status_listener=CustomStatusListener(), log_manager=CustomLogManager()))
-    # visitor = Flagship.new_visitor("toto", instance_type=Visitor.Instance.SINGLE_INSTANCE)
-    # print(visitor._visitor_id)
-    # print(Flagship.get_visitor()._visitor_id)
-    # visitor.update_context({
-    #     "coucou":3,
-    #     "coucou2":2,
-    #     "haha": False,
-    #     "isVIPUser":True
-    # })
-    # visitor.update_context(('coucou3', 2))
-    # visitor.fetch_flags()
-    # print("Json.metadata > " + visitor.get_flag("json", dict()).metadata().toJson())
-    # print("Json.exists > " + str(visitor.get_flag("json", dict()).exists()))
-    # print("Json.value > " + str(visitor.get_flag("json", dict()).value(False)))
-    #
-    # print("string.metadata > " + str(visitor.get_flag("string", "default").metadata().toJson()))
-    # print("string.exists > " + str(visitor.get_flag("string", "default").exists()))
-    # print("string.value > " + str(visitor.get_flag("string", "default").value(False)))
-    #
-    # print("featureEnabled.metadata > " + str(visitor.get_flag("featureEnabled", False).metadata().toJson()))
-    # print("featureEnabled.exists > " + str(visitor.get_flag("featureEnabled", False).exists()))
-    # print("featureEnabled.value > " + str(visitor.get_flag("featureEnabled", False).value(False)))
-    #
-    # print("nope.metadata > " + str(visitor.get_flag("nope", 1).metadata().toJson()))
-    # print("nope.exists > " + str(visitor.get_flag("nope", 1).exists()))
-    # print("nope.value > " + str(visitor.get_flag("nope", 1).value(False)))
-    #
-    # visitor.get_flag("featureEnabled", False).user_exposed()
-    # visitor.send_hit(Screen('Script.py'))
-    # visitor.fetch_flags()
-    # visitor.set_consent(False)
-    # visitor.send_hit(Screen('Script.py 2'))
-    # visitor.set_consent(True)
-    # visitor.send_hit(Screen('Script.py 3'))
-
-    # Flagship.start("bkk4s7gcmjcg07fke9dg", "Q6FDmj6F188nh75lhEato2MwoyXDS7y34VrAL4Aa",
-    #                DecisionApi(timeout=3000))
-    # visitor = Flagship.new_visitor("xxx_1", instance_type=Visitor.Instance.SINGLE_INSTANCE, context={
-    #     "isVIPUser": True
-    # }, consent=False)
-    # visitor.fetch_flags()
-    # featureEnabled = visitor.get_flag("featureEnabled", False).value(False)
-    # print("=> " + str(featureEnabled))
-    # visitor.send_hit(Screen("aaaaa"))
-    #
-    # visitor.authenticate("online_1")
-    # visitor.fetch_flags()
-    # featureEnabled = visitor.get_flag("featureEnabled", False).value(False)
-    # print("=> " + str(featureEnabled))
-    # visitor.send_hit(Screen("aaaaa"))
-    #
-    # visitor.unauthenticate()
-    # visitor.fetch_flags()
-    # featureEnabled = visitor.get_flag("featureEnabled", False).value(False)
-    # print("=> " + str(featureEnabled))
-    # visitor.send_hit(Screen("aaaaa"))
-
-
-
-##################################################################
-
-# def init_api():
-#     Flagship.start("bkk4s7gcmjcg07fke9dg", "Q6FDmj6F188nh75lhEato2MwoyXDS7y34VrAL4Aa",
-#                    DecisionApi(timeout=3000))
-#     visitor = Flagship.new_visitor("_visitor_ze", instance_type=Visitor.Instance.SINGLE_INSTANCE, context={
-#         # "isVIPUser": True,
-#         'daysSinceLastLaunch': 3
-#     }, consent=False)
-#     visitor.fetch_flags()
-#     featureEnabled = visitor.get_flag("featureEnabled", False).value(False)
-#     print("=> " + str(featureEnabled))
-#     visitor.send_hit(Screen("aaaaa"))
-#
-#     visitor.authenticate("online_1")
-#     visitor.fetch_flags()
-#     featureEnabled = visitor.get_flag("featureEnabled", False).value(False)
-#     print("=> " + str(featureEnabled))
-#     visitor.send_hit(Screen("aaaaa"))
-#
-#     visitor.unauthenticate()
-#     visitor.fetch_flags()
-#     featureEnabled = visitor.get_flag("featureEnabled", False).value(False)
-#     print("=> " + str(featureEnabled))
-#     visitor.send_hit(Screen("aaaaa"))
-
-
-
-##################################################################
-
-def init_bucketing():
-
-    visitor = None
-    class CustomStatusListener(StatusListener):
-
-        def __init__(self, function):
-            self.function = function
-
-        def on_status_changed(self, new_status):
-            print("New status = " + str(new_status))
-            if new_status == Status.READY:
-                self.function()
-
-    def create_visitor():
-        visitor = Flagship.new_visitor("aaaaaaa", instance_type=Visitor.Instance.SINGLE_INSTANCE) #1 Consent
-        # visitor2 = Flagship.new_visitor("222", instance_type=Visitor.Instance.SINGLE_INSTANCE)
-        visitor.update_context({
-            "coucou": 3,
-            "coucou2": 2,
-            "haha": False,
-            "isVIPUser": True,
-            "slug": True,
-            "daysSinceLastLaunch": 3
-        })
-        visitor.fetch_flags() #1 Segment
-        # time.sleep(5)
-        print(visitor.get_flag("visitorIdColor", "default").value()) #1 Activate
-        print(visitor.get_flag("visitorIdColor", "default").value()) #1 Activate
-        time.sleep(1)
-        print(visitor.get_flag("visitorIdColor", "default").value()) #1 Activate
-
-        time.sleep(1)
-        visitor.send_hit(Screen("coucou 1")) #1 Screen
-        visitor.send_hit(Screen("coucou 2")) #1 Screen
-        visitor.send_hit(Screen("coucou 3")) #1 Screen
-        visitor.send_hit(Screen("coucou 4")) #1 Screen
-        visitor.send_hit(Screen("coucou 5")) #1 Screen
-        visitor.set_consent(False) # 1 Consent
-        # time.sleep(1)
-        visitor.send_hit(Transaction("TID_92470", "AFFILIATION")) #0
-        visitor.send_hit(Transaction("TID_04444", "AFFILIATION2")) #0
-        # visitor2.send_hit(Screen("2222"))
-        # time.sleep(1)
-        visitor.set_consent(True) #1 Consent
-        visitor.send_hit(Event(EventCategory.ACTION_TRACKING, "ACTION 1")) #1 Event
-        visitor.send_hit(Event(EventCategory.ACTION_TRACKING, "ACTION 2")) #1 Event
-        visitor.send_hit(Event(EventCategory.ACTION_TRACKING, "ACTION 3")) #1 Event
-        visitor.send_hit(Event(EventCategory.ACTION_TRACKING, "ACTION 4")) #1 Event
-        visitor.send_hit(Event(EventCategory.ACTION_TRACKING, "ACTION 5")) #1 Event
-        time.sleep(4)
-        visitor.send_hit(Item("TID_92470", "NAME", "SKU")) #1 Iem
-        visitor.send_hit(Page("Not supposed to work"))
-        visitor.send_hit(Page("https://www.supposed.towork.com")) # 1 Page
-
-        print(" === " + visitor.get_flag("troll", 'nooooooooooooo').value(True))
-
-        print(" === " + visitor.get_flag("troll", 'nooooooooooooo').value(True))
-
-        # visitor.fetch_flags()
-
-        # visitor.set_consent(False) # 1 Consent
-        visitor.set_consent(True) # 1 Consent
-        visitor.fetch_flags() # 1 Segment
-
-        print(" === " + visitor.get_flag("troll", 'nooooooooooooo').value(True))
-
-    Flagship.start("bkk4s7gcmjcg07fke9dg", "Q6FDmj6F188nh75lhEato2MwoyXDS7y34VrAL4Aa",
-                   Bucketing(timeout=3000, status_listener=CustomStatusListener(create_visitor), polling_interval=10000,
-                             tracking_manager_config=TrackingManagerConfig(max_pool_size=10, time_interval=5000)))
-#
-    time.sleep(20000)
+    value = asyncio.run(asyncio.wait_for(toto(), timeout=2))
+    # value = asyncio.run(asyncio.wait_for(toto(), timeout=2))
+    print("Value = " + str(value))
+    # time.sleep(1)
 
 
 

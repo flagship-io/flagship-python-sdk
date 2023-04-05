@@ -1,3 +1,4 @@
+import asyncio
 import json
 import sqlite3 as sl
 import time
@@ -162,13 +163,13 @@ def test_hit_custom_cache_manager_panic():
         def __init__(self, **kwargs):
             CacheManager.__init__(self, timeout=200)
 
-        def cache_visitor(self, visitor_id, data):
+        async def cache_visitor(self, visitor_id, data):
             pass
 
-        def lookup_visitor(self, visitor_id):
+        async def lookup_visitor(self, visitor_id):
             pass
 
-        def flush_visitor(self, visitor_id):
+        async def flush_visitor(self, visitor_id):
             pass
 
         def cache_hits(self, hits):
@@ -178,7 +179,7 @@ def test_hit_custom_cache_manager_panic():
             #     self.cached_hits.append(v['data']['content'])
             self.cached_hits.update(hits)
 
-        def lookup_hits(self):
+        async def lookup_hits(self):
             self.lookup_hit_iteration += 1
             if self.lookup_hit_iteration == 2:
                 return self.cached_hits
@@ -461,7 +462,7 @@ def test_hit_data():
             self.cache_hits_calls += 1
             self.cached_hits.update(hits)
 
-        def lookup_hits(self):
+        async def lookup_hits(self):
             self.lookup_hits_calls += 1
             return {
                 'wrong data': {
@@ -566,7 +567,7 @@ def test_visitor_data():
     class CustomCacheManager0(CacheManager, VisitorCacheImplementation):
 
         def __init__(self, **kwargs):
-            CacheManager.__init__(self, timeout=200)
+            CacheManager.__init__(self, **kwargs)
             self.nb_call_open_database = 0
             self.nb_call_close_database = 0
             self.nb_call_cache_visitor = 0
@@ -584,7 +585,7 @@ def test_visitor_data():
             self.nb_call_close_database += 1
             pass
 
-        def cache_visitor(self, visitor_id, data):
+        async def cache_visitor(self, visitor_id, data):
             assert 'version' in data
             assert 'data' in data
             assert 'visitorId' in data['data']
@@ -612,7 +613,7 @@ def test_visitor_data():
                 self.nb_call_cache_visitor_10 += 1
             self.nb_call_cache_visitor += 1
 
-        def lookup_visitor(self, visitor_id):
+        async def lookup_visitor(self, visitor_id):
             self.nb_call_lookup_visitor += 1
             if visitor_id == "test_visitor_9":
                 return {
@@ -627,11 +628,11 @@ def test_visitor_data():
                 self.nb_call_lookup_visitor_10 += 1
             return None
 
-        def flush_visitor(self, visitor_id):
+        async def flush_visitor(self, visitor_id):
             self.nb_call_flush_visitor += 1
             pass
 
-    ccm0 = CustomCacheManager0()
+    ccm0 = CustomCacheManager0(timeout=200)
 
     Flagship.start(env_id, api_key, Bucketing(timeout=3000,
                                                 tracking_manager_config=TrackingManagerConfig(
@@ -640,6 +641,7 @@ def test_visitor_data():
                                                 cache_manager=ccm0
                                                 # polling_interval=10000
                                                 ))
+
     time.sleep(1)
     visitor9 = Flagship.new_visitor("test_visitor_9", instance_type=Visitor.Instance.NEW_INSTANCE)
     visitor9.fetch_flags()
@@ -661,4 +663,66 @@ def test_visitor_data():
     visitor10.fetch_flags()
     assert visitor10.get_flag('rank', -1).value() == 3333
 
-# wrong json format
+
+@responses.activate
+def test_visitor_timeout():
+    Flagship.stop()
+    remove_db()
+    responses.add(responses.GET, BUCKETING_URL, json=json.loads(BUCKETING_RESPONSE_1), status=200,
+                  headers=[("Last-Modified", BUCKETING_LAST_MODIFIED_1)])
+    responses.add(responses.POST, EVENTS_URL, body="", status=200)
+    responses.add(responses.POST, ACTIVATE_URL, body="", status=200)
+
+    class CustomLogManager(LogManager):
+
+        def __init__(self):
+            self.nb_timeout = 0
+
+        def log(self, tag, level, message):
+            if 'Cache Manager' in tag and 'lookup_visitor' in message and 'timed out' in message:
+                self.nb_timeout += 1
+
+        def exception(self, exception, traceback):
+            pass
+
+
+    class CustomCacheManager0(CacheManager, VisitorCacheImplementation):
+        def open_database(self, env_id):
+            pass
+
+        def close_database(self):
+            pass
+
+        async def cache_visitor(self, visitor_id, data):
+            pass
+
+        async def lookup_visitor(self, visitor_id):
+            print("[LOOKUP]")
+            await asyncio.sleep(1)
+            return 'LOOKUP'
+
+        async def flush_visitor(self, visitor_id):
+            pass
+
+    ccm0 = CustomCacheManager0(timeout=2000)
+    clm = CustomLogManager()
+    Flagship.start(env_id, api_key, Bucketing(timeout=30000, cache_manager=ccm0, log_manager=clm))
+    time.sleep(0.2)
+    visitor11 = Flagship.new_visitor("test_visitor_11", instance_type=Visitor.Instance.NEW_INSTANCE,
+                                     context={"access": 'password'}, authenticated=True)
+    time.sleep(0.2)
+
+    assert clm.nb_timeout == 0
+
+    ccm0 = CustomCacheManager0(timeout=0.100)
+    clm = CustomLogManager()
+    Flagship.start(env_id, api_key, Bucketing(timeout=30000, cache_manager=ccm0, log_manager=clm))
+    time.sleep(0.2)
+    visitor11 = Flagship.new_visitor("test_visitor_11", instance_type=Visitor.Instance.NEW_INSTANCE,
+                                     context={"access": 'password'}, authenticated=True)
+    time.sleep(0.2)
+
+    assert clm.nb_timeout == 1
+
+
+

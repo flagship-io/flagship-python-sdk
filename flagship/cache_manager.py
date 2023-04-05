@@ -2,46 +2,93 @@
 #     from abc import ABC, abstractmethod
 # except ImportError:
 import json
+import sqlite3 as sl
 import time
 import traceback
-from abc import abstractmethod, ABCMeta
-import sqlite3 as sl
+from abc import abstractmethod, ABC
 
 from flagship.constants import TAG_CACHE_MANAGER
 from flagship.utils import log_exception
 
 
-class VisitorCacheImplementation:
+class VisitorCacheImplementation(ABC):
 
-    @abstractmethod
-    def cache_visitor(self, visitor_id, data):
+    def __init__(self):
+        """
+        VisitorCacheImplementation is an abstract class which helps to connect the Flagship SDK and an existing database
+        in order to provide a custom cache implementation for visitors information.
+
+        Caching visitors information will prevent any re-allocation.
+        """
         pass
 
     @abstractmethod
-    def lookup_visitor(self, visitor_id):
+    async def cache_visitor(self, visitor_id: str, data: dict):
+        """
+        This method is called when the Flagship SDK needs to save visitor's data into cache.
+        @param visitor_id: Identifier of the visitor whose data must be cached.
+        @param data: Visitor's data to be cached.
+        """
         pass
 
     @abstractmethod
-    def flush_visitor(self, visitor_id):
+    async def lookup_visitor(self, visitor_id: str):
+        """
+        This method is called when the Flagship SDK needs to load visitor's data from cache.
+        @param visitor_id: Identifier of the visitor whose cache must be loaded.
+        @return Cached data corresponding to the given visitor id. Please check the documentation for the expected format.
+        """
+        pass
+
+    @abstractmethod
+    async def flush_visitor(self, visitor_id: str):
+        """
+        This method is called when the Flagship SDK needs to flush visitor's data from cache.
+        @param visitor_id: Identifier of the visitor whose cache must be flushed.
+        """
         pass
 
 
-class HitCacheImplementation:
+class HitCacheImplementation(ABC):
+
+    def __init__(self):
+        """
+        HitCacheImplementation is an abstract class which helps to connect the Flagship SDK and an existing database
+        in order to provide a custom cache implementation for visitors hits.
+
+        Caching visitors hits will prevent any data loss in case of errors or network failures.
+        """
+        pass
 
     @abstractmethod
     def cache_hits(self, hits):
+        """
+        This method is called when the Flagship SDK needs to save visitors hits into cache.
+        @param hits: dictionary of hits that need to be saved into cache.
+        """
         pass
 
     @abstractmethod
-    def lookup_hits(self):
+    async def lookup_hits(self):
+        """
+        This method is called when the Flagship SDK needs to load visitors hits from the cache.
+        @return dictionary of previously cached visitors hits. Please check the documentation for the expected format.
+        """
         pass
 
     @abstractmethod
     def flush_hits(self, hits_ids):
+        """
+        This method is called when the Flagship SDK needs to flush specific hits.
+        @param hits_ids: hits ids that need to be flushed from cache.
+        """
         pass
 
     @abstractmethod
     def flush_all_hits(self):
+        """
+        This method is called when the Flagship SDK needs to flush all the hits from cache.
+        """
         pass
 
 
@@ -49,7 +96,7 @@ class CacheManager:
     env_id = None
 
     def __init__(self, **kwargs):
-        self.timeout = kwargs['timeout'] if 'timeout' in kwargs and isinstance(kwargs['timeout'], int) else 50
+        self.timeout = (kwargs['timeout'] if 'timeout' in kwargs and isinstance(kwargs['timeout'], int) else 100.0) / 1000.0
 
         # self.visitor_cache_interface = kwargs[
         #     'visitor_cache_implementation'] if 'visitor_cache_implementation' in kwargs and isinstance(
@@ -73,11 +120,20 @@ class CacheManager:
 
 
 class SqliteCacheManager(CacheManager, VisitorCacheImplementation, HitCacheImplementation):
+
     full_db_path = None
     db_version = 1
     con = None
 
     def __init__(self, **kwargs):
+        """
+        SqliteCacheManager provide a built-in cache manager using local SQLITE database.
+        This implementation is designed for client-side applications only (one visitor at a time), for server-side
+        applications (multiple visitors at a time) it is possible to provide a custom cache manager implementation.
+        @keyword
+        @param local_db_patch: destination of the database file. Default is './cache/'
+        'timeout': time delay for reading and writing in the database in milliseconds. Default is 100ms
+        """
         self.db_path = kwargs[
             'local_db_path'] if 'local_db_path' in kwargs and isinstance(
             kwargs['local_db_path'], str) else "./cache/"
@@ -131,7 +187,7 @@ class SqliteCacheManager(CacheManager, VisitorCacheImplementation, HitCacheImple
             con.execute(sql, data)
             con.commit()
 
-    def cache_visitor(self, visitor_id, visitor_data):
+    async def cache_visitor(self, visitor_id, visitor_data):
         try:
             con = sl.connect(self.full_db_path)
             with con:
@@ -142,7 +198,7 @@ class SqliteCacheManager(CacheManager, VisitorCacheImplementation, HitCacheImple
         except Exception as e:
             log_exception(TAG_CACHE_MANAGER, e, traceback.format_exc())
 
-    def lookup_visitor(self, visitor_id):
+    async def lookup_visitor(self, visitor_id):
         try:
             con = sl.connect(self.full_db_path)
             with con:
@@ -156,7 +212,7 @@ class SqliteCacheManager(CacheManager, VisitorCacheImplementation, HitCacheImple
             log_exception(TAG_CACHE_MANAGER, e, traceback.format_exc())
         return None
 
-    def flush_visitor(self, visitor_id):
+    async def flush_visitor(self, visitor_id):
         try:
             con = sl.connect(self.full_db_path)
             with con:

@@ -1,3 +1,4 @@
+import asyncio
 import time
 import traceback
 
@@ -6,6 +7,7 @@ from flagship.cache_manager import HitCacheImplementation
 from flagship.constants import TAG_TRACKING_MANAGER, ERROR_INVALID_HIT, TAG_CACHE_MANAGER, INFO_TRACKING_MANAGER, \
     DEBUG_TRACKING_MANAGER_STOPPED, DEBUG_TRACKING_MANAGER_STARTED, DEBUG_TRACKING_MANAGER_LOOKUP_HITS, \
     DEBUG_TRACKING_MANAGER_ADDED_HITS, DEBUG_TRACKING_MANAGER_CACHE_HITS
+from flagship.errors import HitCacheTimeoutException
 from flagship.log_manager import LogLevel
 from flagship.utils import log, log_exception, get_args_or_default, get_args_or_default_with_min_max
 
@@ -70,15 +72,12 @@ class TrackingManagerStrategy(Enum):
 class TrackingManagerConfig:
     DEFAULT_MAX_POOL_SIZE = 20
     DEFAULT_TIME_INTERVAL = 10000  # time in ms
+    DEFAULT_TIMEOUT = 200  # time in ms
 
     def __init__(self, **kwargs):
-        # self.strategy = kwargs['strategy'] if 'strategy' in kwargs \
-        #                                       and isinstance(kwargs['strategy'], TrackingManagerStrategy) \
-        #     else TrackingManagerStrategy.BATCHING_WITH_CONTINUOUS_CACHING_STRATEGY
-        # self.time_interval = kwargs['time_interval'] if 'time_interval' in kwargs else self.DEFAULT_TIME_INTERVAL
-        # self.max_pool_size = kwargs['max_pool_size'] if 'max_pool_size' in kwargs else self.DEFAULT_MAX_POOL_SIZE
         self.strategy = get_args_or_default('strategy', TrackingManagerStrategy,
                                             TrackingManagerStrategy.BATCHING_WITH_CONTINUOUS_CACHING_STRATEGY, kwargs)
+        self.timeout = get_args_or_default('timeout', int, self.DEFAULT_TIMEOUT, kwargs)
         self.time_interval = get_args_or_default_with_min_max('time_interval', int, self.DEFAULT_TIME_INTERVAL, kwargs, 200, 10800000)
         self.max_pool_size = get_args_or_default_with_min_max('max_pool_size', int, self.DEFAULT_MAX_POOL_SIZE, kwargs, 0, 5000)
 
@@ -86,11 +85,6 @@ class TrackingManagerConfig:
 class TrackingManager(TrackingManagerCacheStrategyInterface, Thread):
     BATCH_MAX_SIZE = 2500000
     HIT_EXPIRATION = 14400000
-
-    # first_round = True
-    # running = False
-    # hitQueue = Queue()
-    # activateQueue = Queue()
 
     def __init__(self, config):
         Thread.__init__(self)
@@ -103,14 +97,15 @@ class TrackingManager(TrackingManagerCacheStrategyInterface, Thread):
         self.activateQueue = Queue()
         self.tracking_manager_config = config.tracking_manager_config
         self.time_interval = config.tracking_manager_config.time_interval
+        self.cache_manager = self.config.cache_manager
         self.strategy = self.get_strategy()
 
     def init(self, config):
         self.config = config
+        self.cache_manager = self.config.cache_manager
         self.tracking_manager_config = config.tracking_manager_config
         self.time_interval = config.tracking_manager_config.time_interval
         self.strategy = self.get_strategy()
-        # self.lookup_pool()
         if self.strategy == TrackingManagerStrategy._NO_BATCHING_CONTINUOUS_CACHING_STRATEGY:
             self.lookup_pool()
             self.polling()
@@ -193,11 +188,12 @@ class TrackingManagerCacheStrategyAbstract(TrackingManagerCacheStrategyInterface
     def __init__(self, tracking_manager):
         TrackingManagerCacheStrategyInterface.__init__(self)
         self.tracking_manager = tracking_manager
+        cache_manager = self.tracking_manager.cache_manager
+        self.timeout = cache_manager.timeout if cache_manager is not None else self.tracking_manager.config.timeout
 
     def add_hit(self, hit, new=True):
         if hit.check_data_validity():
             if isinstance(hit, _Activate):
-                # Thread(target=lambda: self.send_activates_batch(hit)).start()
                 self.send_activates_batch(hit)
             else:
                 self.tracking_manager.hitQueue.put(hit, block=False)
@@ -218,7 +214,6 @@ class TrackingManagerCacheStrategyAbstract(TrackingManagerCacheStrategyInterface
 
     def check_max_pool_size(self):
         if self.tracking_manager.hitQueue.qsize() >= self.tracking_manager.tracking_manager_config.max_pool_size:
-            # Thread(target=lambda: self.send_hits_batch()).start()
             self.send_hits_batch()
 
     def delete_hits_by_id(self, ids, delete_consent_hits=True):
@@ -249,33 +244,29 @@ class TrackingManagerCacheStrategyAbstract(TrackingManagerCacheStrategyInterface
         hit_cache_interface = self.get_hit_cache_interface()
         if hit_cache_interface is not None:
             try:
-                cached_hits = hit_cache_interface.lookup_hits()
+                cached_hits = asyncio.run(asyncio.wait_for(hit_cache_interface.lookup_hits(), timeout=self.timeout))
+                # cached_hits = hit_cache_interface.lookup_hits()
                 if cached_hits and isinstance(cached_hits, dict) and len(cached_hits) > 0:
                     hits = cache_helper.hits_from_cache_json(cached_hits)
                     log(TAG_TRACKING_MANAGER, LogLevel.DEBUG, DEBUG_TRACKING_MANAGER_LOOKUP_HITS + self.__hits_to_str__(hits))
                     self.add_hits(hits)
             except Exception as e:
-                log_exception(TAG_TRACKING_MANAGER, e, traceback.format_exc())
+                if type(e) is asyncio.exceptions.TimeoutError:
+                    log(TAG_CACHE_MANAGER, LogLevel.ERROR, str(HitCacheTimeoutException("lookup_hits()")))
+                else:
+                    log(TAG_CACHE_MANAGER, LogLevel.ERROR, str(e))
 
     def cache_pool(self):
-        cache_manager = self.tracking_manager.config.cache_manager
-        if cache_manager:
-            hits = list(self.tracking_manager.hitQueue.queue) + list(self.tracking_manager.activateQueue.queue)
-            if len(hits) > 0:
-                log(TAG_TRACKING_MANAGER, LogLevel.DEBUG, DEBUG_TRACKING_MANAGER_CACHE_HITS + self.__hits_to_str__(hits))
-                self.cache_hits(hits)
+        hits = list(self.tracking_manager.hitQueue.queue) + list(self.tracking_manager.activateQueue.queue)
+        if len(hits) > 0:
+            log(TAG_TRACKING_MANAGER, LogLevel.DEBUG, DEBUG_TRACKING_MANAGER_CACHE_HITS + self.__hits_to_str__(hits))
+            self.cache_hits(hits)
 
     @abstractmethod
     def polling(self):
         log(TAG_TRACKING_MANAGER, LogLevel.DEBUG, INFO_TRACKING_MANAGER)
         self.send_hits_batch()
         self.send_activates_batch()
-
-    # def __print_pool(self, tag=""):
-    #     print(tag + " pool size : " + str(self.tracking_manager.hitQueue.qsize()))
-    #     if self.tracking_manager.hitQueue.qsize() > 0:
-    #         for h in self.tracking_manager.hitQueue.queue:
-    #             print(str(tag) + " / " + str(h))
 
     def __hits_to_str__(self, hits):
         results = ""
@@ -341,8 +332,8 @@ class TrackingManagerCacheStrategyAbstract(TrackingManagerCacheStrategyInterface
     #     self.tracking_manager._print_pool(tag)
 
     def get_hit_cache_interface(self):
-        cache_manager = self.tracking_manager.config.cache_manager
-        return cache_manager if cache_manager is not None and isinstance(cache_manager, HitCacheImplementation) else None
+        return self.tracking_manager.cache_manager if self.tracking_manager.cache_manager is not None and isinstance(
+            self.tracking_manager.cache_manager, HitCacheImplementation) else None
 
 
 class ContinuousCacheStrategy(TrackingManagerCacheStrategyAbstract):

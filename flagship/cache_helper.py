@@ -1,12 +1,10 @@
 __VISITOR_CACHE_VERSION__ = 1
 __HIT_CACHE_VERSION__ = 1
 
-import json
 import traceback
 from collections import OrderedDict
-
-from flagship import hits
 from flagship.constants import TAG_CACHE_MANAGER
+from flagship.errors import VisitorCacheFormatException
 from flagship.modification import Modification
 from flagship.utils import log_exception
 
@@ -79,7 +77,8 @@ def load_visitor_from_json(visitor, visitor_data):
         data = visitor_data['data']
         migrations[version - 1](visitor, data)
     except Exception as e:
-        log_exception(TAG_CACHE_MANAGER, e, traceback.format_exc())
+        # log_exception(TAG_CACHE_MANAGER, e, traceback.format_exc())
+        raise VisitorCacheFormatException(visitor.visitor_id)
 
 
 def hit_to_cache_json(hit):
@@ -99,7 +98,12 @@ def hit_to_cache_json(hit):
 def load_hit_from_json(cached_hit):
     def migration_1(hit_json):
         from flagship.hits import HitFactory
-        return HitFactory.from_json(hit_json)
+        try:
+            return HitFactory.from_json(hit_json)
+        except Exception as e:
+            from flagship import LogLevel
+            log_exception(TAG_CACHE_MANAGER, LogLevel.ERROR, str(e))
+            return None
 
     try:
         migrations = [migration_1, ]

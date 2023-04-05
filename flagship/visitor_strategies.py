@@ -1,15 +1,17 @@
+import asyncio
 import traceback
 from abc import ABCMeta, abstractmethod
 from enum import Enum
+
 from flagship import param_types_validator, log, LogLevel
 from flagship.cache_manager import VisitorCacheImplementation
 from flagship.constants import TAG_UPDATE_CONTEXT, TAG_VISITOR, DEBUG_CONTEXT, TAG_FETCH_FLAGS, DEBUG_FETCH_FLAGS, \
     ERROR_METHOD_DEACTIVATED, ERROR_METHOD_DEACTIVATED_PANIC, TAG_TRACKING, ERROR_METHOD_DEACTIVATED_NO_CONSENT, \
     ERROR_METHOD_DEACTIVATED_NOT_READY, TAG_AUTHENTICATE, TAG_UNAUTHENTICATE, ERROR_TRACKING_HIT_SUBCLASS, \
     TAG_CACHE_MANAGER
+from flagship.errors import VisitorCacheTimeoutException
 from flagship.flag import Flag
 from flagship.hits import Hit, _Consent, _Activate
-from flagship.http_helper import HttpHelper
 from flagship.utils import log_exception
 
 
@@ -84,6 +86,7 @@ class DefaultStrategy(IVisitorStrategy):
         super(DefaultStrategy, self).__init__(strategy, visitor)
         cache_manager = self.visitor._configuration_manager.flagship_config.cache_manager
         self.visitor_cache_interface = cache_manager if cache_manager is not None and isinstance(cache_manager, VisitorCacheImplementation) else None
+        self.timeout = cache_manager.timeout if cache_manager is not None else 0.1
 
     def update_context(self, context):
         if isinstance(context, tuple) and len(context) == 2:
@@ -118,13 +121,11 @@ class DefaultStrategy(IVisitorStrategy):
                 hit._with_visitor_ids(self.visitor.visitor_id, self.visitor.anonymous_id)
             tracking_manager = self.visitor._configuration_manager.tracking_manager
             tracking_manager.add_hit(hit)
-            # HttpHelper.send_hit(self.visitor, hit)
         else:
             log(TAG_TRACKING, LogLevel.ERROR, ERROR_TRACKING_HIT_SUBCLASS)
 
     def set_consent(self, consent):
         self.visitor.has_consented = consent
-        # HttpHelper.send_hit(self.visitor, _Consent(consent))
         self.send_hit(_Consent(consent))
 
     def authenticate(self, visitor_id):
@@ -137,35 +138,46 @@ class DefaultStrategy(IVisitorStrategy):
         try:
             if self.visitor_cache_interface is not None:
                 from flagship.cache_helper import visitor_to_cache_json
-                self.visitor_cache_interface.cache_visitor(self.visitor.visitor_id, visitor_to_cache_json(self.visitor))
+                asyncio.run(self.visitor_cache_interface.cache_visitor(self.visitor.visitor_id, visitor_to_cache_json(self.visitor)))
         except Exception as e:
-            log_exception(TAG_CACHE_MANAGER, e, traceback.format_exc())
+            if type(e) is asyncio.exceptions.TimeoutError:
+                log(TAG_CACHE_MANAGER, LogLevel.ERROR,
+                    str(VisitorCacheTimeoutException("cache_visitor()", self.visitor.visitor_id)))
+            else:
+                log(TAG_CACHE_MANAGER, LogLevel.ERROR, str(e))
 
     def lookup_visitor(self):
         try:
             if self.visitor_cache_interface is not None:
                 from flagship.cache_helper import load_visitor_from_json
-                visitor_data = self.visitor_cache_interface.lookup_visitor(self.visitor.visitor_id)
+                visitor_data = asyncio.run(
+                    asyncio.wait_for(self.visitor_cache_interface.lookup_visitor(self.visitor.visitor_id),
+                                     timeout=self.timeout))
+                # self.visitor_cache_interface.lookup_visitor(self.visitor.visitor_id))
                 if visitor_data:
                     load_visitor_from_json(self.visitor, visitor_data)
         except Exception as e:
-            log_exception(TAG_CACHE_MANAGER, e, traceback.format_exc())
+            if type(e) is asyncio.exceptions.TimeoutError:
+                log(TAG_CACHE_MANAGER, LogLevel.ERROR,
+                    str(VisitorCacheTimeoutException("lookup_visitor()", self.visitor.visitor_id)))
+            else:
+                log(TAG_CACHE_MANAGER, LogLevel.ERROR, str(e))
 
     def flush_visitor(self):
         try:
             if self.visitor_cache_interface is not None:
-                self.visitor_cache_interface.flush_visitor(self.visitor.visitor_id)
+                asyncio.run(self.visitor_cache_interface.flush_visitor(self.visitor.visitor_id))
         except Exception as e:
-            log_exception(TAG_CACHE_MANAGER, e, traceback.format_exc())
+            if type(e) is asyncio.exceptions.TimeoutError:
+                log(TAG_CACHE_MANAGER, LogLevel.ERROR,
+                    str(VisitorCacheTimeoutException("flush_visitor()", self.visitor.visitor_id)))
+            else:
+                log(TAG_CACHE_MANAGER, LogLevel.ERROR, str(e))
 
     def flush_hits(self):
         try:
-            print("-VISITOR FLUSH HIT-")
             tracking_manager = self.visitor._configuration_manager.tracking_manager
             tracking_manager.delete_hits_by_visitor_id(self.visitor.visitor_id, False)
-            # cache_manager = self.visitor._configuration_manager.flagship_config.cache_manager
-            # if cache_manager is not None:
-            #     cache_manager.cache_hits(hits_ids)
         except Exception as e:
             log_exception(TAG_CACHE_MANAGER, e, traceback.format_exc())
 

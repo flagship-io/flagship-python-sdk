@@ -11,6 +11,7 @@ from enum import Enum
 
 from flagship.constants import TAG_CACHE_MANAGER
 from flagship.decorators import param_types_validator
+from flagship.errors import HitCacheFormatException
 from flagship.utils import log_exception
 
 
@@ -666,7 +667,9 @@ class _Batch(Hit):
 class HitFactory:
     @staticmethod
     def from_json(hit_json):
+        hit_id = ""
         try:
+            hit_id = hit_json['id']
             hit_type = hit_json['type']
             content = hit_json['content']
             hit = {
@@ -678,12 +681,13 @@ class HitFactory:
                 'ACTIVATE': _Activate.from_json,
                 'SEGMENT': _Segment.from_json
             }[hit_type](content)
-            hit.id = hit_json['id']
+            hit.id = hit_id
             hit.timestamp = hit_json['timestamp']
             hit.visitor_id = hit_json['visitorId']
             hit.anonymous_id = hit_json['anonymousId']
             hit.hit_data = content
             return hit
         except Exception as e:
-            log_exception(TAG_CACHE_MANAGER, e, traceback.format_exc())
+            # log_exception(TAG_CACHE_MANAGER, e, traceback.format_exc())
+            raise HitCacheFormatException(hit_id)
         return None

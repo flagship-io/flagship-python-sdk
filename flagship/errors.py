@@ -1,4 +1,4 @@
-from flagship.constants import ERROR_INITIALIZATION_PARAM
+from flagship.constants import ERROR_INITIALIZATION_PARAM, ERROR_CACHE_HIT_TIMEOUT, ERROR_CACHE_HIT_LOOKUP_FORMAT
 
 
 class FlagshipException(Exception):
@@ -36,3 +36,28 @@ class FlagExpositionNotFoundException(Exception):
         from flagship.constants import ERROR_FLAG_EXPOSITION_FLAG_NOT_FOUND
         super(Exception, self).__init__(
             '[FlagNotFoundError] ' + ERROR_FLAG_EXPOSITION_FLAG_NOT_FOUND.format(flag_key, visitor_id))
+
+
+class VisitorCacheFormatException(Exception):
+    def __init__(self, visitor_id):
+        from flagship.constants import ERROR_CACHE_VISITOR_LOOKUP_FORMAT
+        super(VisitorCacheFormatException, self).__init__('[VisitorCacheFormatError] ' +
+                                                          ERROR_CACHE_VISITOR_LOOKUP_FORMAT.format(visitor_id))
+
+
+class HitCacheFormatException(Exception):
+    def __init__(self, hit_id):
+        from flagship.constants import ERROR_CACHE_VISITOR_LOOKUP_FORMAT
+        super().__init__('[HitCacheFormatError] ' + ERROR_CACHE_HIT_LOOKUP_FORMAT.format(hit_id))
+
+
+class VisitorCacheTimeoutException(Exception):
+    def __init__(self, method_name, visitor_id):
+        from flagship.constants import ERROR_CACHE_VISITOR_LOOKUP_TIMEOUT
+        super(VisitorCacheTimeoutException, self).__init__(
+            '[VisitorCacheTimeoutError] ' + ERROR_CACHE_VISITOR_LOOKUP_TIMEOUT.format(method_name, visitor_id))
+
+class HitCacheTimeoutException(Exception):
+    def __init__(self, method_name):
+        from flagship.constants import ERROR_CACHE_VISITOR_LOOKUP_TIMEOUT
+        super().__init__('[HitCacheTimeoutError] ' + ERROR_CACHE_HIT_TIMEOUT.format(method_name))

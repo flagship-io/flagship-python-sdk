@@ -31,7 +31,7 @@ class _FlagshipConfig(object):
         self.timeout = self.get_arg(kwargs, 'timeout', type(1)) or 2000
         self.status_listener = self.get_arg(kwargs, 'status_listener', StatusListener) or None
         self.tracking_manager_config = self.get_arg(kwargs, 'tracking_manager_config',
-                                                      TrackingManagerConfig) or TrackingManagerConfig()
+                                                    TrackingManagerConfig) or TrackingManagerConfig()
         self.cache_manager = self.get_arg(kwargs, 'cache_manager', CacheManager) or None
         # self.__update_flagship_status()
 
@@ -72,7 +72,7 @@ class DecisionApi(_FlagshipConfig):
         @keyword log_level: Specifies a log level to filter logs emitted by the SDK. Requires LogLevel type.
         @keyword log_manager: Specifies a custom implementation of LogManager in order to receive logs from the SDK.
         Requires a LogManager class implementation.
-        @keyword timeout: Specifies timeout for api requests.
+        @keyword timeout: Specifies timeout for decision api requests in milliseconds. Default is 2000ms.
         @keyword status_listener: Specifies a callback to be notified when the SDK status has changed.
         Requires a StatusListener class implementation.
         @keyword tracking_manager_config: Define a custom tracking manager configuration.
@@ -112,7 +112,7 @@ class Bucketing(_FlagshipConfig):
         @keyword log_level: Specifies a log level to filter logs emitted by the SDK. Requires LogLevel type.
         @keyword log_manager: Specifies a custom implementation of LogManager in order to receive logs from the SDK.
         Requires a LogManager class implementation.
-        @keyword timeout: Specifies timeout for api requests.
+        @keyword timeout: Specifies timeout for bucketing requests in milliseconds. Default is 2000ms.
         @keyword status_listener: Specifies a callback to be notified when the SDK status has changed.
         Requires a StatusListener class implementation.
         @keyword polling_interval: Define the time interval between two bucketing updates in milliseconds.

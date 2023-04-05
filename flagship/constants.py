@@ -86,4 +86,9 @@ ERROR_BUCKETING_XPC_DISABLED = "The '{}' method is disabled in Bucketing configu
 ERROR_TRACKING_HIT_SUBCLASS = "send_hit() param must be a subclass of Hit."
 ERROR_INVALID_HIT = "Hit {} {} has invalid data and wont be sent."
 
-ERROR_CACHE_VISITOR = "An error occurred during {}: {}"
+ERROR_CACHE_VISITOR_LOOKUP_FORMAT = "'VisitorCacheImplementation.{}' for visitor '{}' has returned a " \
+                                    "wrong format. Please check the documentation."
+ERROR_CACHE_VISITOR_LOOKUP_TIMEOUT = "'VisitorCacheImplementation.{}' for visitor '{}' has timed out."
+ERROR_CACHE_HIT_TIMEOUT = "'HitCacheImplementation.{}' has timed out."
+ERROR_CACHE_HIT_LOOKUP_FORMAT = "'HitCacheImplementation.{}' for hit id '{}' has returned a " \
+                                    "wrong format. Please check the documentation."
