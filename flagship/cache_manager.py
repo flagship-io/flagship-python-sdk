@@ -49,7 +49,7 @@ class VisitorCacheImplementation(ABC):
         pass
 
 
-class HitCacheImplementation(ABC):
+class HitCacheImplementation:
 
     def __init__(self):
         """
@@ -92,23 +92,22 @@ class HitCacheImplementation(ABC):
         pass
 
 
-class CacheManager:
-    env_id = None
+class CacheManager(ABC):
 
     def __init__(self, **kwargs):
-        self.timeout = (kwargs['timeout'] if 'timeout' in kwargs and isinstance(kwargs['timeout'], int) else 100.0) / 1000.0
+        """
+        Abstract class to extend in order to provide a custom CacheManager and link the Flagship SDK to an existing
+        database. Your custom class must implement VisitorCacheImplementation class to manage Visitor cache and/or
+        HitCacheImplementation class to manager visitor hits.
+        @param kwargs: <br><br>
+        'timeout' (int) : timeout for database operation in milliseconds. Default is 100.
+        """
+        self.timeout = (kwargs['timeout'] if 'timeout' in kwargs and isinstance(kwargs['timeout'],
+                                                                                int) else 100.0) / 1000.0
 
-        # self.visitor_cache_interface = kwargs[
-        #     'visitor_cache_implementation'] if 'visitor_cache_implementation' in kwargs and isinstance(
-        #     kwargs['visitor_cache_implementation'], VisitorCacheImplementation) else None
-        #
-        # self.hit_cache_interface = kwargs[
-        #     'hit_cache_implementation'] if 'hit_cache_implementation' in kwargs and isinstance(
-        #     kwargs['hit_cache_implementation'], HitCacheImplementation) else None
-
-    def init(self, env_id):
-        self.env_id = env_id
-        self.open_database(env_id)
+    def init(self, flagship_config):
+        self.env_id = flagship_config.env_id if flagship_config is not None else None
+        self.open_database(self.env_id)
 
     @abstractmethod
     def open_database(self, env_id):
@@ -128,19 +127,22 @@ class SqliteCacheManager(CacheManager, VisitorCacheImplementation, HitCacheImple
     def __init__(self, **kwargs):
         """
         SqliteCacheManager provide a built-in cache manager using local SQLITE database.
-        This implementation is designed for client-side applications only (one visitor at a time), for server-side
-        applications (multiple visitors at a time) it is possible to provide a custom cache manager implementation.
-        @keyword
-        @param local_db_patch: destination of the database file. Default is './cache/'
-        'timeout': time delay for reading and writing in the database in milliseconds. Default is 100ms
+        This implementation is designed for client-side applications (one visitor at a time), for server-side
+        applications (multiple visitors at a time) it is possible to provide a custom CacheManager implementation.
+        @see CacheManager<br>
+
+        <br><br><b>@param kwargs</b><br><br>
+        <b>'local_db_patch'</b> (str): destination of the database file. Default is './cache/'. <br>
+        <b>'timeout'</b> (int): time delay for reading and writing in the database in milliseconds. Default is 100ms.
         """
+
         self.db_path = kwargs[
             'local_db_path'] if 'local_db_path' in kwargs and isinstance(
             kwargs['local_db_path'], str) else "./cache/"
         CacheManager.__init__(self, **kwargs)
 
     def open_database(self, env_id):
-        CacheManager.open_database(self, env_id)
+        super().open_database(env_id)
         import os
         if not os.path.exists(self.db_path):
             os.makedirs(self.db_path)

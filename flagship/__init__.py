@@ -26,9 +26,11 @@ class Flagship:
     def start(env_id, api_key, configuration=None):
         """
         Start the flagship SDK.
+
         @param env_id: Environment id provided by Flagship.
         @param api_key: Secure api key provided by Flagship.
         @param configuration: Flagship configuration to initialize with. Can be DecisionApi or Bucketing.
+        @return:
         """
         Flagship.__get_instance().start(env_id, api_key, configuration)
 
@@ -43,18 +45,19 @@ class Flagship:
     @staticmethod
     def new_visitor(visitor_id, **kwargs):
         """
-        Create and return a new Flagship visitor instance.
-        @param visitor_id: Unique visitor identifier.
-        @param kwargs: optional parameters, see below.
+        Create and return a new Flagship visitor instance.<br><br>
 
-        @keyword instance_type: Visitor.Instance.NEW_INSTANCE or Visitor.Instance.SINGLE_INSTANCE.
-        Default is SINGLE_INSTANCE.
-        @keyword authenticated: Bool that Specifies if the visitor is authenticated (True) or anonymous (False).
-        Default value is False.
-        @keyword consent: Bool that Specifies if the visitor has consented for personal data usage. When false some
-        features will be deactivated, cache will be deactivated and cleared. True by default.
-        @keyword context: Dict that specifies visitor initial context key / values used for targeting.
-        Context keys must be String, and values types must be one of the following : Number, Boolean, String.
+        @param visitor_id: Unique visitor identifier. <br>
+        @param kwargs optional parameters: <br><br>
+
+        <b>'instance_type'</b> (Visitor.Instance): Visitor.Instance.NEW_INSTANCE or Visitor.Instance.SINGLE_INSTANCE.
+        Default is SINGLE_INSTANCE.<br>
+        <b>'authenticated'</b> (bool): Bool that Specifies if the visitor is authenticated (True) or anonymous (False).
+        Default value is False. <br>
+        <b>'consent'</b> (bool): Bool that Specifies if the visitor has consented for personal data usage. When false some
+        features will be deactivated, cache will be deactivated and cleared. True by default. <br>
+        <b>'context'</b> (dict): Dict that specifies visitor initial context key / values used for targeting.
+        Context keys must be String, and values types must be one of the following : Number, Boolean, String.<br>
 
         @return: Newly created Visitor instance.
         """

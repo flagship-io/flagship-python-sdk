@@ -5,7 +5,7 @@ import responses
 
 from flagship import Flagship, Visitor
 from flagship.config import DecisionApi
-from flagship.tracking_manager import TrackingManagerConfig, TrackingManagerStrategy
+from flagship.tracking_manager import TrackingManagerConfig, CacheStrategy
 from test_constants_res import DECISION_API_URL, API_RESPONSE_1, API_RESPONSE_2, ACTIVATE_URL, EVENTS_URL
 
 
@@ -133,7 +133,7 @@ def test_flag_user_exposed():
     responses.add(responses.POST, ACTIVATE_URL, body="", status=200)
 
     Flagship.start('_env_id_', '_api_key_', DecisionApi(tracking_manager_config=TrackingManagerConfig(
-                                                    strategy=TrackingManagerStrategy._NO_BATCHING_CONTINUOUS_CACHING_STRATEGY)))
+                                                    cache_strategy=CacheStrategy._NO_BATCHING_CONTINUOUS_CACHING)))
 
     _visitor_9 = Flagship.new_visitor('_visitor_9', instance_type=Visitor.Instance.NEW_INSTANCE)
 

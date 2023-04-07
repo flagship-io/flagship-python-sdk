@@ -10,8 +10,8 @@ from flagship import Flagship, Visitor
 from flagship.cache_manager import SqliteCacheManager, CacheManager, VisitorCacheImplementation, HitCacheImplementation
 from flagship.config import DecisionApi, Bucketing
 from flagship.hits import Screen, Event, EventCategory
-from flagship.log_manager import LogManager, LogLevel
-from flagship.tracking_manager import TrackingManagerConfig, TrackingManagerStrategy
+from flagship.log_manager import LogManager
+from flagship.tracking_manager import TrackingManagerConfig, CacheStrategy
 from test_constants_res import DECISION_API_URL, API_RESPONSE_1, ACTIVATE_URL, EVENTS_URL, API_RESPONSE_3, \
     BUCKETING_URL, BUCKETING_RESPONSE_1, BUCKETING_LAST_MODIFIED_1
 
@@ -154,14 +154,14 @@ def test_hit_custom_cache_manager_panic():
         cached_hits = {}
         nb_cached_hits = 0
 
+        def __init__(self):
+            super().__init__()
+
         def open_database(self, env_id):
             pass
 
         def close_database(self):
             pass
-
-        def __init__(self, **kwargs):
-            CacheManager.__init__(self, timeout=200)
 
         async def cache_visitor(self, visitor_id, data):
             pass
@@ -238,7 +238,7 @@ def test_hit_periodic_strategy():
     # Flagship.stop()
     Flagship.start(env_id, api_key, DecisionApi(timeout=3000,
                                                 tracking_manager_config=TrackingManagerConfig(
-                                                    strategy=TrackingManagerStrategy.BATCHING_WITH_PERIODIC_CACHING_STRATEGY,
+                                                    cache_strategy=CacheStrategy.PERIODIC_CACHING,
                                                     max_pool_size=10,
                                                     time_interval=2000),
                                                 cache_manager=SqliteCacheManager(local_db_path=db_path)))
@@ -262,7 +262,7 @@ def test_hit_periodic_strategy():
 
     Flagship.start(env_id, api_key, DecisionApi(timeout=3000,
                                                 tracking_manager_config=TrackingManagerConfig(
-                                                    strategy=TrackingManagerStrategy.BATCHING_WITH_PERIODIC_CACHING_STRATEGY,
+                                                    strategy=CacheStrategy.PERIODIC_CACHING,
                                                     max_pool_size=10,
                                                     time_interval=2000),
                                                 cache_manager=SqliteCacheManager(local_db_path=db_path)))
@@ -290,7 +290,7 @@ def test_hit_no_batching_strategy():
     assert get_db_hits() is None
     Flagship.start(env_id, api_key, DecisionApi(timeout=3000,
                                                 tracking_manager_config=TrackingManagerConfig(
-                                                    strategy=TrackingManagerStrategy._NO_BATCHING_CONTINUOUS_CACHING_STRATEGY,
+                                                    cache_strategy=CacheStrategy._NO_BATCHING_CONTINUOUS_CACHING,
                                                     max_pool_size=10,
                                                     time_interval=2000),
                                                 cache_manager=SqliteCacheManager(local_db_path=db_path)))
@@ -346,7 +346,7 @@ def test_tracking_polling_timer():
     Flagship.start(env_id, api_key, DecisionApi(timeout=3000,
                                                 log_manager=clm,
                                                 tracking_manager_config=TrackingManagerConfig(
-                                                    strategy=TrackingManagerStrategy.BATCHING_WITH_CONTINUOUS_CACHING_STRATEGY,
+                                                    strategy=CacheStrategy.CONTINUOUS_CACHING,
                                                     max_pool_size=10,
                                                     time_interval=200),
                                                 cache_manager=SqliteCacheManager(local_db_path=db_path)))
@@ -388,6 +388,7 @@ def test_tracking_polling_timer():
     assert clm.nb_polling == 1
     assert get_db_hits() is None
 
+
 @responses.activate
 def test_tracking_no_cache_interface():
     Flagship.stop()
@@ -419,6 +420,7 @@ def test_tracking_no_cache_interface():
     assert get_db_hits() is None
     visitor5.set_consent(False)
 
+
 @responses.activate
 def test_hit_data():
     Flagship.stop()
@@ -431,7 +433,7 @@ def test_hit_data():
     class CustomCacheManager(CacheManager, HitCacheImplementation):
 
         def __init__(self, **kwargs):
-            CacheManager.__init__(self, timeout=200)
+            CacheManager.__init__(self, **kwargs)
             self.open_database_calls = 0
             self.close_database_calls = 0
             self.cache_hits_calls = 0
@@ -505,8 +507,7 @@ def test_hit_data():
                                                 tracking_manager_config=TrackingManagerConfig(
                                                     max_pool_size=10,
                                                     time_interval=2000),
-                                                cache_manager=ccm
-                                                ))
+                                                cache_manager=ccm))
     time.sleep(1)  # Load 1 Event from cache + polling
     visitor6 = Flagship.new_visitor("test_visitor_6", instance_type=Visitor.Instance.SINGLE_INSTANCE)  # +1 Consent
     visitor6.fetch_flags()
@@ -516,6 +517,7 @@ def test_hit_data():
     visitor6.set_consent(False)  # +1 Consent
     visitor6.send_hit(Screen("test_hit_no_batching_strategy8"))  # +0 Screen
     assert visitor6.get_flag("featureEnabled", False).value() is True  # +0 Activate
+    # time.sleep(1000)
     assert ccm.lookup_hits_calls == 1
     assert ccm.cache_hits_calls == 5
     assert ccm.flush_hits_calls == 2
@@ -635,18 +637,18 @@ def test_visitor_data():
     ccm0 = CustomCacheManager0(timeout=200)
 
     Flagship.start(env_id, api_key, Bucketing(timeout=3000,
-                                                tracking_manager_config=TrackingManagerConfig(
-                                                    max_pool_size=-1,
-                                                    time_interval=50),
-                                                cache_manager=ccm0
-                                                # polling_interval=10000
-                                                ))
+                                              tracking_manager_config=TrackingManagerConfig(
+                                                  max_pool_size=-1,
+                                                  time_interval=50),
+                                              cache_manager=ccm0
+                                              ))
 
     time.sleep(1)
     visitor9 = Flagship.new_visitor("test_visitor_9", instance_type=Visitor.Instance.NEW_INSTANCE)
     visitor9.fetch_flags()
 
-    visitor10 = Flagship.new_visitor("test_visitor_10", instance_type=Visitor.Instance.NEW_INSTANCE, context={"access": 'password'}, authenticated=True)
+    visitor10 = Flagship.new_visitor("test_visitor_10", instance_type=Visitor.Instance.NEW_INSTANCE,
+                                     context={"access": 'password'}, authenticated=True)
     visitor10.fetch_flags()
     assert visitor10.get_flag('rank', -1).value() == 2222
 
@@ -685,8 +687,11 @@ def test_visitor_timeout():
         def exception(self, exception, traceback):
             pass
 
-
     class CustomCacheManager0(CacheManager, VisitorCacheImplementation):
+        
+        def __init__(self, **kwargs):
+            CacheManager.__init__(self, **kwargs)
+
         def open_database(self, env_id):
             pass
 
@@ -714,7 +719,7 @@ def test_visitor_timeout():
 
     assert clm.nb_timeout == 0
 
-    ccm0 = CustomCacheManager0(timeout=0.100)
+    ccm0 = CustomCacheManager0(imeout=0.100)
     clm = CustomLogManager()
     Flagship.start(env_id, api_key, Bucketing(timeout=30000, cache_manager=ccm0, log_manager=clm))
     time.sleep(0.2)
@@ -723,6 +728,3 @@ def test_visitor_timeout():
     time.sleep(0.2)
 
     assert clm.nb_timeout == 1
-
-
-

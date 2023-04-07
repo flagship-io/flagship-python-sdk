@@ -1,6 +1,5 @@
 import json
 import os
-from threading import Thread
 from time import sleep
 
 import responses
@@ -11,7 +10,7 @@ from flagship.hits import Screen
 from flagship.log_manager import LogLevel, LogManager
 from flagship.status_listener import StatusListener
 from flagship.targeting_comparator import TargetingComparator
-from flagship.tracking_manager import TrackingManagerStrategy, TrackingManagerConfig
+from flagship.tracking_manager import TrackingManagerConfig, CacheStrategy
 from test_constants_res import BUCKETING_RESPONSE_1, BUCKETING_URL, BUCKETING_LAST_MODIFIED_1, \
     BUCKETING_CACHED_RESPONSE_1, ACTIVATE_URL, SEGMENT_URL, BUCKETING_RESPONSE_2, BUCKETING_RESPONSE_PANIC, \
     BUCKETING_RESPONSE_EMPTY, EVENTS_URL
@@ -71,7 +70,11 @@ def test_bucketing_campaigns():
     responses.add(responses.POST, ACTIVATE_URL, body="", status=200)
     responses.add(responses.POST, SEGMENT_URL, body="", status=200)
     Flagship.stop()
-    Flagship.start('_env_id_', '_api_key_', Bucketing(polling_interval=0, log_level=LogLevel.NONE, tracking_manager_config=TrackingManagerConfig(strategy=TrackingManagerStrategy._NO_BATCHING_CONTINUOUS_CACHING_STRATEGY))) #1 bucketing
+    Flagship.start('_env_id_', '_api_key_', Bucketing(polling_interval=0,
+                                                      log_level=LogLevel.NONE,
+                                                      tracking_manager_config=TrackingManagerConfig(
+                                                          cache_strategy=CacheStrategy.
+                                                          _NO_BATCHING_CONTINUOUS_CACHING)))  # 1 bucketing
     sleep(0.5)
 
     visitor = Flagship.new_visitor("87524982740", instance_type=Visitor.Instance.NEW_INSTANCE,
@@ -199,7 +202,7 @@ def test_bucketing_cached_file():
     responses.add(responses.POST, ACTIVATE_URL, body="", status=200)
     responses.add(responses.POST, SEGMENT_URL, body="", status=200)
     Flagship.stop()
-    Flagship.start('_env_id_', '_api_key_', Bucketing(polling_interval=0, log_level=LogLevel.NONE,  tracking_manager_config=TrackingManagerConfig(strategy=TrackingManagerStrategy._NO_BATCHING_CONTINUOUS_CACHING_STRATEGY)))  # 1 bucketing
+    Flagship.start('_env_id_', '_api_key_', Bucketing(polling_interval=0, log_level=LogLevel.NONE, tracking_manager_config=TrackingManagerConfig(cache_strategy=CacheStrategy._NO_BATCHING_CONTINUOUS_CACHING)))  # 1 bucketing
     sleep(0.2)
 
     responses.reset()
@@ -212,7 +215,7 @@ def test_bucketing_cached_file():
     responses.add(responses.POST, SEGMENT_URL, body="", status=200)
     Flagship.stop()
 
-    Flagship.start('_env_id_', '_api_key_', Bucketing(polling_interval=0, log_level=LogLevel.NONE, tracking_manager_config=TrackingManagerConfig(strategy=TrackingManagerStrategy._NO_BATCHING_CONTINUOUS_CACHING_STRATEGY)))  # 1 bucketing
+    Flagship.start('_env_id_', '_api_key_', Bucketing(polling_interval=0, log_level=LogLevel.NONE, tracking_manager_config=TrackingManagerConfig(cache_strategy=CacheStrategy._NO_BATCHING_CONTINUOUS_CACHING)))  # 1 bucketing
     sleep(0.2)
     visitor = Flagship.new_visitor("9356925", instance_type=Visitor.Instance.NEW_INSTANCE,
                                    context={'isVIPUser': False})  # 2 consent
@@ -248,7 +251,7 @@ def test_bucketing_alloc():
     responses.add(responses.POST, SEGMENT_URL, body="", status=200)
     Flagship.stop()
     Flagship.start('_env_id_', '_api_key_', Bucketing(polling_interval=0, log_level=LogLevel.NONE, tracking_manager_config=TrackingManagerConfig(
-                                                    strategy=TrackingManagerStrategy._NO_BATCHING_CONTINUOUS_CACHING_STRATEGY)))  # 1 bucketing
+                                                    strategy=CacheStrategy._NO_BATCHING_CONTINUOUS_CACHING)))  # 1 bucketing
     sleep(0.5)
     ids = ["202072017183814142",
            "202072017183860649",

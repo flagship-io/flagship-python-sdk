@@ -84,7 +84,7 @@ class DefaultStrategy(IVisitorStrategy):
 
     def __init__(self, strategy=VisitorStrategies.DEFAULT_STRATEGY, visitor=None):
         super(DefaultStrategy, self).__init__(strategy, visitor)
-        cache_manager = self.visitor._configuration_manager.flagship_config.cache_manager
+        cache_manager = self.visitor._configuration_manager.cache_manager
         self.visitor_cache_interface = cache_manager if cache_manager is not None and isinstance(cache_manager, VisitorCacheImplementation) else None
         self.timeout = cache_manager.timeout if cache_manager is not None else 0.1
 

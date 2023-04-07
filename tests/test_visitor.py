@@ -1,15 +1,15 @@
 import json
 from time import sleep
 
+import responses
+
 from flagship import Flagship, Visitor
 from flagship.config import DecisionApi
 from flagship.flagship_context import FlagshipContext
-import responses
-
 from flagship.hits import Screen
 from flagship.log_manager import LogManager
-from flagship.tracking_manager import TrackingManagerConfig, TrackingManagerStrategy
-from test_constants_res import API_RESPONSE_1, DECISION_API_URL, API_RESPONSE_2, ACTIVATE_URL, \
+from flagship.tracking_manager import TrackingManagerConfig, CacheStrategy
+from test_constants_res import API_RESPONSE_1, DECISION_API_URL, ACTIVATE_URL, \
     API_RESPONSE_3, EVENTS_URL
 
 
@@ -140,7 +140,7 @@ def test_visitor_consent():
     responses.add(responses.POST, EVENTS_URL, body="", status=200)
 
     Flagship.start('_env_id_', '_api_key_', DecisionApi(tracking_manager_config=TrackingManagerConfig(
-                                                    strategy=TrackingManagerStrategy._NO_BATCHING_CONTINUOUS_CACHING_STRATEGY)))
+                                                    cache_strategy=CacheStrategy._NO_BATCHING_CONTINUOUS_CACHING)))
 
     _visitor_10 = Flagship.new_visitor('_visitor_10', instance_type=Visitor.Instance.NEW_INSTANCE)
     _visitor_11 = Flagship.new_visitor('_visitor_11', instance_type=Visitor.Instance.NEW_INSTANCE, consent=False)
@@ -189,7 +189,7 @@ def test_visitor_xpc():
     responses.add(responses.POST, ACTIVATE_URL, body="", status=200)
 
     Flagship.start('_env_id_', '_api_key_', DecisionApi(tracking_manager_config=TrackingManagerConfig(
-                                                    strategy=TrackingManagerStrategy._NO_BATCHING_CONTINUOUS_CACHING_STRATEGY)))
+                                                    cache_strategy=CacheStrategy._NO_BATCHING_CONTINUOUS_CACHING)))
 
     visitor = Flagship.new_visitor('anonymous', instance_type=Visitor.Instance.NEW_INSTANCE)
     # anonymous
@@ -274,7 +274,7 @@ def test_visitor_strategy_panic():
     responses.add(responses.POST, ACTIVATE_URL, body="", status=200)
 
     Flagship.start('_env_id_', '_api_key_', DecisionApi(log_manager=custom_log_manager, tracking_manager_config=TrackingManagerConfig(
-                                                    strategy=TrackingManagerStrategy._NO_BATCHING_CONTINUOUS_CACHING_STRATEGY)))
+                                                    cache_strategy=CacheStrategy._NO_BATCHING_CONTINUOUS_CACHING)))
     assert Flagship.status() == Flagship.status().READY
     visitor = Flagship.new_visitor("visitor_xxx")
     visitor.fetch_flags()
@@ -372,7 +372,7 @@ def test_visitor_strategy_no_consent():
     responses.add(responses.POST, ACTIVATE_URL, body="", status=200)
 
     Flagship.start('_env_id_', '_api_key_', DecisionApi(log_manager=custom_log_manager, tracking_manager_config=TrackingManagerConfig(
-                                                    strategy=TrackingManagerStrategy._NO_BATCHING_CONTINUOUS_CACHING_STRATEGY)))
+                                                    cache_strategy=CacheStrategy._NO_BATCHING_CONTINUOUS_CACHING)))
     assert Flagship.status() == Flagship.status().READY
     visitor = Flagship.new_visitor("visitor_xxx", consent=False)  # +1
     visitor.fetch_flags() # +1

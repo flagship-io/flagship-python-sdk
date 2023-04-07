@@ -1,10 +1,11 @@
 import time
+
 from mock import mock_open, patch
 
 from flagship import Flagship
 from flagship.config import Bucketing
 from flagship.log_manager import LogManager, LogLevel
-from flagship.tracking_manager import TrackingManagerConfig, TrackingManagerStrategy
+from flagship.tracking_manager import TrackingManagerConfig, CacheStrategy
 from test_constants_res import BUCKETING_RESPONSE_1
 
 
@@ -26,7 +27,7 @@ def test_initialization_custom_log_manager_only_debug(isfile_mock):
         log_manager=CustomLogManager(),
         log_level=LogLevel.DEBUG,
         tracking_manager_config=TrackingManagerConfig(
-            strategy=TrackingManagerStrategy._NO_BATCHING_CONTINUOUS_CACHING_STRATEGY)
+            strategy=CacheStrategy._NO_BATCHING_CONTINUOUS_CACHING)
     ))
     time.sleep(1)
     print(str(logs))
@@ -51,7 +52,7 @@ def test_initialization_custom_log_manager_only_error(isfile_mock):
         log_manager=CustomLogManager(),
         log_level=LogLevel.ERROR,
         tracking_manager_config=TrackingManagerConfig(
-            strategy=TrackingManagerStrategy._NO_BATCHING_CONTINUOUS_CACHING_STRATEGY)
+            strategy=CacheStrategy._NO_BATCHING_CONTINUOUS_CACHING)
     ))
     time.sleep(1)
     assert len(logs) >= 5

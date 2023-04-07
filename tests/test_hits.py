@@ -3,18 +3,19 @@ from time import sleep
 
 import responses
 
-from flagship import Flagship, LogLevel, Visitor
+from flagship import Flagship, Visitor
 from flagship.config import DecisionApi
 from flagship.hits import Page, Event, EventCategory, Transaction, Item, Screen
-from flagship.tracking_manager import TrackingManagerConfig, TrackingManagerStrategy
+from flagship.tracking_manager import TrackingManagerConfig, CacheStrategy
 from test_constants_res import DECISION_API_URL, API_RESPONSE_1, ACTIVATE_URL, EVENTS_URL
 
 
 @responses.activate
 def test_visitor_send_hits():
     Flagship.stop()
-    Flagship.start('_env_id_', '_api_key_', DecisionApi(tracking_manager_config=TrackingManagerConfig(
-                                                    strategy=TrackingManagerStrategy._NO_BATCHING_CONTINUOUS_CACHING_STRATEGY)))
+    Flagship.start('_env_id_', '_api_key_', DecisionApi(
+        tracking_manager_config=TrackingManagerConfig(
+            cache_strategy=CacheStrategy._NO_BATCHING_CONTINUOUS_CACHING)))
     responses.reset()
 
     responses.add(responses.POST, DECISION_API_URL, json=json.loads(API_RESPONSE_1), status=200)

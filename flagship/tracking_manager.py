@@ -3,7 +3,7 @@ import time
 import traceback
 
 from flagship import cache_helper
-from flagship.cache_manager import HitCacheImplementation
+from flagship.cache_manager import HitCacheImplementation, CacheManager, VisitorCacheImplementation
 from flagship.constants import TAG_TRACKING_MANAGER, ERROR_INVALID_HIT, TAG_CACHE_MANAGER, INFO_TRACKING_MANAGER, \
     DEBUG_TRACKING_MANAGER_STOPPED, DEBUG_TRACKING_MANAGER_STARTED, DEBUG_TRACKING_MANAGER_LOOKUP_HITS, \
     DEBUG_TRACKING_MANAGER_ADDED_HITS, DEBUG_TRACKING_MANAGER_CACHE_HITS
@@ -63,50 +63,90 @@ class TrackingManagerCacheStrategyInterface(object):
         pass
 
 
-class TrackingManagerStrategy(Enum):
-    BATCHING_WITH_CONTINUOUS_CACHING_STRATEGY = 'BATCHING_WITH_CONTINUOUS_CACHING_STRATEGY'
-    BATCHING_WITH_PERIODIC_CACHING_STRATEGY = 'BATCHING_WITH_PERIODIC_CACHING_STRATEGY'
-    _NO_BATCHING_CONTINUOUS_CACHING_STRATEGY = '_NO_BATCHING_CONTINUOUS_CACHING_STRATEGY'
+class CacheStrategy(Enum):
+
+    def __init__(self, *args):
+        """
+        This class specify the hits caching strategy to adopt into the TrackingManager and relies on the
+        HitCacheImplementation class that must be implemented in the CacheManager. Depending on the strategy the
+        TrackingManager will request the CacheManager to CACHE, LOOK-UP or FLUSH hits from the linked database.
+        """
+        pass
+    
+    CONTINUOUS_CACHING = 'CONTINUOUS_CACHING'
+    """
+    Hits will be continuously cached and flushed from the database.
+    The database linked to the HitCacheImplementation class implemented in the provided CacheManager will be required 
+    each time time a hit is added or flushed 
+    from the TrackingManager pool.
+    """
+
+    PERIODIC_CACHING = 'PERIODIC_CACHING'
+    """
+    Hits will be cached and flushed from the database periodically.
+    The database linked to the HitCacheImplementation class implemented in the provided CacheManager will be required to
+    cache/look-up/flush hits at regular time intervals. The time intervals relies on the TrackingManager 'time_interval' 
+    option.
+    """
+
+    _NO_BATCHING_CONTINUOUS_CACHING = '_NO_BATCHING_CONTINUOUS_CACHING'
 
 
 class TrackingManagerConfig:
+
     DEFAULT_MAX_POOL_SIZE = 20
     DEFAULT_TIME_INTERVAL = 10000  # time in ms
     DEFAULT_TIMEOUT = 200  # time in ms
 
     def __init__(self, **kwargs):
-        self.strategy = get_args_or_default('strategy', TrackingManagerStrategy,
-                                            TrackingManagerStrategy.BATCHING_WITH_CONTINUOUS_CACHING_STRATEGY, kwargs)
+        """
+        This class configure the Flagship SDK Tracking Manager which gathers all visitors emitted hits in a pool and
+        fire them in batch requests at regular time intervals withing a dedicated thread.
+
+        <br><br><b>@param kwargs: </b><br><br>
+        <b>'cache_strategy'</b> (CacheStrategy): Specifies the strategy to use for hits caching. An implementation of
+        HitCacheImplementation is required in the provided CacheManager. <br>
+        <b>'timeout' (int)</b>: Specifies a timeout for hits https requests in milliseconds. Default is 200ms. <br>
+        <b>'time_interval' (int)</b>: Specifies a time delay between each batched hit requests. <br>
+        <b>'max_pool_size' (int)</b>: Specifies a max hit pool size that will trigger a batch request once reached.
+        Default is 20.
+        """
+        self.strategy = get_args_or_default('cache_strategy', CacheStrategy, CacheStrategy.CONTINUOUS_CACHING, kwargs)
         self.timeout = get_args_or_default('timeout', int, self.DEFAULT_TIMEOUT, kwargs)
         self.time_interval = get_args_or_default_with_min_max('time_interval', int, self.DEFAULT_TIME_INTERVAL, kwargs, 200, 10800000)
         self.max_pool_size = get_args_or_default_with_min_max('max_pool_size', int, self.DEFAULT_MAX_POOL_SIZE, kwargs, 0, 5000)
 
 
 class TrackingManager(TrackingManagerCacheStrategyInterface, Thread):
+    """
+    The Tracking Manager gathers all visitors emitted hits in a pool and fire them in batch requests at regular time
+    intervals withing a dedicated thread.
+    """
+
     BATCH_MAX_SIZE = 2500000
     HIT_EXPIRATION = 14400000
 
-    def __init__(self, config):
+    def __init__(self, flagship_config, cache_manager=None):
         Thread.__init__(self)
         TrackingManagerCacheStrategyInterface.__init__(self)
         self.daemon = True  # Attach the thread to main thread
-        self.config = config
+        self.config = flagship_config
         self.first_round = True
         self.running = False
         self.hitQueue = Queue()
         self.activateQueue = Queue()
-        self.tracking_manager_config = config.tracking_manager_config
-        self.time_interval = config.tracking_manager_config.time_interval
-        self.cache_manager = self.config.cache_manager
+        self.tracking_manager_config = flagship_config.tracking_manager_config
+        self.time_interval = flagship_config.tracking_manager_config.time_interval
+        self.cache_manager = cache_manager
         self.strategy = self.get_strategy()
 
-    def init(self, config):
-        self.config = config
-        self.cache_manager = self.config.cache_manager
-        self.tracking_manager_config = config.tracking_manager_config
-        self.time_interval = config.tracking_manager_config.time_interval
+    def init(self, flagship_config, cache_manager):
+        self.config = flagship_config
+        self.tracking_manager_config = flagship_config.tracking_manager_config
+        self.time_interval = flagship_config.tracking_manager_config.time_interval
+        self.cache_manager = cache_manager
         self.strategy = self.get_strategy()
-        if self.strategy == TrackingManagerStrategy._NO_BATCHING_CONTINUOUS_CACHING_STRATEGY:
+        if self.strategy == CacheStrategy._NO_BATCHING_CONTINUOUS_CACHING:
             self.lookup_pool()
             self.polling()
             pass
@@ -134,7 +174,7 @@ class TrackingManager(TrackingManagerCacheStrategyInterface, Thread):
                 print(str(tag) + " / " + str(h))
 
     def stop_running(self, do_last_polling=True):
-        if self.strategy == TrackingManagerStrategy._NO_BATCHING_CONTINUOUS_CACHING_STRATEGY:
+        if self.strategy == CacheStrategy._NO_BATCHING_CONTINUOUS_CACHING:
             if do_last_polling:
                 self.cache_pool()
         if self.running is True:
@@ -171,11 +211,11 @@ class TrackingManager(TrackingManagerCacheStrategyInterface, Thread):
         return self.strategy.send_activates_batch(hit)
 
     def get_strategy(self):
-        if self.tracking_manager_config.strategy == TrackingManagerStrategy.BATCHING_WITH_CONTINUOUS_CACHING_STRATEGY:
+        if self.tracking_manager_config.strategy == CacheStrategy.CONTINUOUS_CACHING:
             return ContinuousCacheStrategy(self)
-        elif self.tracking_manager_config.strategy == TrackingManagerStrategy.BATCHING_WITH_PERIODIC_CACHING_STRATEGY:
+        elif self.tracking_manager_config.strategy == CacheStrategy.PERIODIC_CACHING:
             return PeriodicCacheStrategy(self)
-        elif self.tracking_manager_config.strategy == TrackingManagerStrategy._NO_BATCHING_CONTINUOUS_CACHING_STRATEGY:
+        elif self.tracking_manager_config.strategy == CacheStrategy._NO_BATCHING_CONTINUOUS_CACHING:
             return NoBatchingCacheStrategy(self)
 
     def is_running(self):
@@ -332,8 +372,10 @@ class TrackingManagerCacheStrategyAbstract(TrackingManagerCacheStrategyInterface
     #     self.tracking_manager._print_pool(tag)
 
     def get_hit_cache_interface(self):
-        return self.tracking_manager.cache_manager if self.tracking_manager.cache_manager is not None and isinstance(
-            self.tracking_manager.cache_manager, HitCacheImplementation) else None
+        if self.tracking_manager.cache_manager is not None:
+            if isinstance(self.tracking_manager.cache_manager, HitCacheImplementation):
+                return self.tracking_manager.cache_manager
+        return None
 
 
 class ContinuousCacheStrategy(TrackingManagerCacheStrategyAbstract):

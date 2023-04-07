@@ -1,5 +1,4 @@
-import time
-from flagship import Flagship, LogLevel, Status
+from flagship import Flagship, LogLevel
 from flagship.config import DecisionApi
 from flagship.decision_mode import DecisionMode
 from flagship.log_manager import LogManager, FlagshipLogManager
