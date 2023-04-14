@@ -386,10 +386,11 @@ class ContinuousCacheStrategy(TrackingManagerCacheStrategyAbstract):
         self.hit_cache_interface = TrackingManagerCacheStrategyAbstract.get_hit_cache_interface(self)
 
     def add_hit(self, hit, new=True):
-        if TrackingManagerCacheStrategyAbstract.add_hit(self, hit, new):
+        if hit.check_data_validity():
             TrackingManagerCacheStrategyAbstract.cache_hits(self, [hit])
-            TrackingManagerCacheStrategyAbstract.check_max_pool_size(self)
-        # TrackingManagerCacheStrategyAbstract._print_pool(self)
+            if TrackingManagerCacheStrategyAbstract.add_hit(self, hit, new):
+                # TrackingManagerCacheStrategyAbstract.cache_hits(self, [hit])
+                TrackingManagerCacheStrategyAbstract.check_max_pool_size(self)
 
     def add_hits(self, hits, new=True):
         added_hits = TrackingManagerCacheStrategyAbstract.add_hits(self, hits, new)
@@ -435,6 +436,7 @@ class ContinuousCacheStrategy(TrackingManagerCacheStrategyAbstract):
         if response is not None and response.status_code <= 400:
             activates_ids = [item.id for item in activates]
             if self.hit_cache_interface is not None:
+                print("TM FLUSH ACTIVATE : " + str(activates_ids))
                 self.hit_cache_interface.flush_hits(activates_ids)
 
     def polling(self):

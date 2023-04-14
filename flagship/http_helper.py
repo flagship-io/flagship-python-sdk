@@ -61,19 +61,23 @@ class HttpHelper:
 
     @staticmethod
     def send_hit(config, hit):
-        import flagship
-        headers = {
-            "x-sdk-client": "python",
-            "x-sdk-version": flagship.__version__
-        }
-        body = {
-            "cid": config.env_id
-        }
-        body.update(hit.data())
-        timeout = config.tracking_manager_config.timeout / 1000.0
-        response = requests.post(url=URL_TRACKING, headers=headers, json=body, timeout=timeout)
-        HttpHelper.log_request(HttpHelper.RequestType.POST, URL_TRACKING, headers, body, response)
-        return response
+        try:
+            import flagship
+            headers = {
+                "x-sdk-client": "python",
+                "x-sdk-version": flagship.__version__
+            }
+            body = {
+                "cid": config.env_id
+            }
+            body.update(hit.data())
+            timeout = config.tracking_manager_config.timeout / 1000.0
+            response = requests.post(url=URL_TRACKING, headers=headers, json=body, timeout=timeout)
+            HttpHelper.log_request(HttpHelper.RequestType.POST, URL_TRACKING, headers, body, response)
+            return response
+        except Exception as e:
+            HttpHelper.log_request(HttpHelper.RequestType.POST, URL_TRACKING, headers, body, None)
+            return None
 
     # @staticmethod
     # def send_activate(visitor, hit):
@@ -100,6 +104,7 @@ class HttpHelper:
 
     @staticmethod
     def send_activates(config, hits):
+
         import flagship
         headers = {
             # 'x-api-key': config.api_key,
@@ -117,10 +122,13 @@ class HttpHelper:
                 "cid": config.env_id,
                 "batch": batch
             }
-            timeout = config.tracking_manager_config.timeout
-            response = requests.post(url=URL_ACTIVATE, headers=headers, json=body, timeout=timeout)
-            HttpHelper.log_request(HttpHelper.RequestType.POST, URL_ACTIVATE, headers, body, response)
-            return response
+            try:
+                timeout = config.tracking_manager_config.timeout
+                response = requests.post(url=URL_ACTIVATE, headers=headers, json=body, timeout=timeout)
+                HttpHelper.log_request(HttpHelper.RequestType.POST, URL_ACTIVATE, headers, body, response)
+                return response
+            except Exception as e:
+                HttpHelper.log_request(HttpHelper.RequestType.POST, URL_TRACKING, headers, body, None)
         return None
 
     # @staticmethod
@@ -159,18 +167,24 @@ class HttpHelper:
 
     @staticmethod
     def log_request(method, url, headers, content, response):
-        message = DEBUG_REQUEST.format(method.name, url, response.status_code,
-                                       int(response.elapsed.total_seconds() * 1000))
-        try:
-            response_dict = json.loads(response.content.decode("utf-8"))
-        except Exception as e:
-            response_dict = {}
-        pretty_request = pretty_dict(content, 2)
-        pretty_response = pretty_dict(response_dict, 2)
-        string = "Request body =>\n" \
+        body_str = "Request body =>\n" \
                  "{}\n" \
                  "Response body =>\n" \
-                 "{}\n" \
-            .format(pretty_request, pretty_response)
-        message += string
-        log(TAG_HTTP_REQUEST, LogLevel.DEBUG if response.status_code in range(200, 305) else LogLevel.ERROR, message)
+                 "{}\n"
+        if response is None:
+            message = DEBUG_REQUEST.format(method.name, url, 'FAIL', int(0))
+            pretty_request = pretty_dict(content, 2)
+            pretty_response = ''
+        else:
+            message = DEBUG_REQUEST.format(method.name, url, response.status_code,
+                                           int(response.elapsed.total_seconds() * 1000))
+            try:
+                response_dict = json.loads(response.content.decode("utf-8"))
+            except Exception as e:
+                response_dict = {}
+            pretty_request = pretty_dict(content, 2)
+            pretty_response = pretty_dict(response_dict, 2)
+        message += body_str.format(pretty_request, pretty_response)
+        log(TAG_HTTP_REQUEST,
+            LogLevel.DEBUG if response is not None and response.status_code in range(200, 305) else LogLevel.ERROR,
+            message)

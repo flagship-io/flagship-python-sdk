@@ -209,7 +209,7 @@ class SqliteCacheManager(CacheManager, VisitorCacheImplementation, HitCacheImple
                 result = cursor.fetchone()
                 if result:
                     cursor.close()
-                    return result[1]
+                    return json.loads(result[1])
         except Exception as e:
             log_exception(TAG_CACHE_MANAGER, e, traceback.format_exc())
         return None
@@ -256,7 +256,7 @@ class SqliteCacheManager(CacheManager, VisitorCacheImplementation, HitCacheImple
         except Exception as e:
             log_exception(TAG_CACHE_MANAGER + " _1", e, traceback.format_exc())
 
-    def lookup_hits(self):
+    async def lookup_hits(self):
         try:
             con = sl.connect(self.full_db_path)
             with con:
@@ -275,12 +275,14 @@ class SqliteCacheManager(CacheManager, VisitorCacheImplementation, HitCacheImple
 
     def flush_hits(self, hits_ids):
         try:
+            print("_FLUSH_" + str(hits_ids))
             con = sl.connect(self.full_db_path)
             if len(hits_ids) > 0:
                 with con:
                     cursor = con.cursor()
                     cursor.execute("DELETE FROM HITS WHERE id IN ({})".format(", ".join("?" * len(hits_ids))), hits_ids)
                     con.commit()
+                    print('_FLUSH_ cnt : ' + str(cursor.rowcount))
         except Exception as e:
             log_exception(TAG_CACHE_MANAGER, e, traceback.format_exc())
 
