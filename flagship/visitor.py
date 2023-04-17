@@ -4,7 +4,7 @@ from enum import Enum
 
 from flagship import Status, LogLevel
 from flagship.constants import TAG_GET_FLAG, TAG_FLAG_USER_EXPOSITION, TAG_UPDATE_CONTEXT, TAG_VISITOR, \
-    ERROR_UPDATE_CONTEXT_TYPE, ERROR_UPDATE_CONTEXT_EMPTY_KEY
+    ERROR_UPDATE_CONTEXT_TYPE, ERROR_UPDATE_CONTEXT_EMPTY_KEY, DEBUG_CONTEXT, TAG_VISITOR_CREATION, DEBUG_NEW_VISITOR
 from flagship.errors import FlagNotFoundException, FlagExpositionNotFoundException, FlagTypeException
 from flagship.hits import _Activate
 from flagship.utils import pretty_dict, log_exception, log
@@ -52,8 +52,11 @@ class Visitor(IVisitorStrategy):
         self.context = FlagshipContext.load()
         self.has_consented = self._get_arg(kwargs, 'consent', bool, True)
         self.set_consent(self.has_consented)
-        self.update_context(self._get_arg(kwargs, 'context', dict, {}))
+        # self.update_context(self._get_arg(kwargs, 'context', dict, {}))
+        self._get_strategy().update_context(self._get_arg(kwargs, 'context', dict, {}))
         self.lookup_visitor()
+        log(TAG_VISITOR_CREATION, LogLevel.DEBUG,
+            DEBUG_NEW_VISITOR.format(self.visitor_id, self.__str__()))
 
     # @param_types_validator(True, str, [int, float, str])
     def _update_context(self, key, value):
@@ -160,7 +163,11 @@ class Visitor(IVisitorStrategy):
         @param context: Tuple (key, value) or dict.
         @return:
         """
-        return self._get_strategy().update_context(context)
+        self._get_strategy().update_context(context)
+        log(TAG_UPDATE_CONTEXT, LogLevel.DEBUG, "[" + TAG_VISITOR.format(self.visitor_id) + "] " +
+            DEBUG_CONTEXT.format(self.__str__()))
+        return
+
 
     def fetch_flags(self):
         """

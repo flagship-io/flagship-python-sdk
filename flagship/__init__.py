@@ -3,7 +3,8 @@ from __future__ import unicode_literals
 
 from flagship.config import _FlagshipConfig
 from flagship.config_manager import ConfigManager
-from flagship.constants import TAG_STATUS, INFO_STATUS_CHANGED, TAG_INITIALIZATION, INFO_READY, ERROR_CONFIGURATION
+from flagship.constants import TAG_STATUS, INFO_STATUS_CHANGED, TAG_INITIALIZATION, INFO_READY, ERROR_CONFIGURATION, \
+    TAG_MAIN, INFO_STOPPED, TAG_TERMINATION
 from flagship.decorators import param_types_validator
 from flagship.errors import InitializationParamError
 from flagship.log_manager import LogLevel
@@ -146,6 +147,7 @@ class Flagship:
         def stop(self):
             self.current_visitor = None
             self.status = Status.NOT_INITIALIZED
+            log(TAG_TERMINATION, LogLevel.INFO, INFO_STOPPED)
             self.configuration_manager.reset()
 
         def __log(self, tag, level, message):

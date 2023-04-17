@@ -11,6 +11,7 @@ URL_CONTEXT = "https://decision.flagship.io/v2/{}/events"
 TAG_MAIN = "Flagship"
 TAG_INITIALIZATION = "Initialization"
 TAG_STATUS = "Status"
+TAG_VISITOR_CREATION = "New Visitor"
 TAG_VISITOR = "Visitor:{}"
 TAG_UPDATE_CONTEXT = "Update Context"
 TAG_TRACKING = "Tracking"
@@ -31,12 +32,14 @@ TAG_UNAUTHENTICATE = "Unauthenticate"
 TAG_TRACKING_MANAGER = 'Tracking Manager'
 TAG_CACHE_MANAGER = 'Cache Manager'
 TAG_CONFIG_PARAM = 'Configuration parameter'
+TAG_TERMINATION = 'Termination'
 
 # INFO
 INFO_STATUS_CHANGED = "SDK status has changed ({})"
 INFO_READY = "Flagship version {} has started successfully.\nConfiguration: {}"
 INFO_BUCKETING_POLLING = "Polling event."
 INFO_TRACKING_MANAGER = "Polling event."
+INFO_STOPPED = 'Flagship has been stopped.'
 
 # DEBUG
 DEBUG_CONTEXT = "Context have been updated with success.\n{}"
@@ -47,6 +50,7 @@ DEBUG_TRACKING_MANAGER_STOPPED = "Stopped."
 DEBUG_TRACKING_MANAGER_LOOKUP_HITS = "Lookup hits \n"
 DEBUG_TRACKING_MANAGER_ADDED_HITS = "Add hits into the pool\n"
 DEBUG_TRACKING_MANAGER_CACHE_HITS = "Cache hits \n"
+DEBUG_NEW_VISITOR = "New visitor '{}' has been created. \n{}"
 
 # WARNING
 WARNING_PANIC = "Panic mode is enabled : all features are disabled except 'fetchFlags()'."

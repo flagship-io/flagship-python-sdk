@@ -1,4 +1,5 @@
 import asyncio
+import json
 import time
 import traceback
 
@@ -9,7 +10,7 @@ from flagship.constants import TAG_TRACKING_MANAGER, ERROR_INVALID_HIT, TAG_CACH
     DEBUG_TRACKING_MANAGER_ADDED_HITS, DEBUG_TRACKING_MANAGER_CACHE_HITS
 from flagship.errors import HitCacheTimeoutException
 from flagship.log_manager import LogLevel
-from flagship.utils import log, log_exception, get_args_or_default, get_args_or_default_with_min_max
+from flagship.utils import log, log_exception, get_args_or_default, get_args_or_default_with_min_max, pretty_dict
 
 try:
     from Queue import Queue
@@ -107,7 +108,8 @@ class TrackingManagerConfig:
         <b>'cache_strategy'</b> (CacheStrategy): Specifies the strategy to use for hits caching. An implementation of
         HitCacheImplementation is required in the provided CacheManager. <br>
         <b>'timeout' (int)</b>: Specifies a timeout for hits https requests in milliseconds. Default is 200ms. <br>
-        <b>'time_interval' (int)</b>: Specifies a time delay between each batched hit requests. <br>
+        <b>'time_interval' (int)</b>: Specifies a time delay between each batched hit requests in milliseconds.
+        Default is 10000ms<br>
         <b>'max_pool_size' (int)</b>: Specifies a max hit pool size that will trigger a batch request once reached.
         Default is 20.
         """
@@ -115,6 +117,14 @@ class TrackingManagerConfig:
         self.timeout = get_args_or_default('timeout', int, self.DEFAULT_TIMEOUT, kwargs)
         self.time_interval = get_args_or_default_with_min_max('time_interval', int, self.DEFAULT_TIME_INTERVAL, kwargs, 200, 10800000)
         self.max_pool_size = get_args_or_default_with_min_max('max_pool_size', int, self.DEFAULT_MAX_POOL_SIZE, kwargs, 0, 5000)
+
+    def to_dict(self):
+        return {
+            'strategy': str(self.strategy),
+            'timeout': self.timeout,
+            'time_interval': self.time_interval,
+            'max_pool_size': self.max_pool_size
+        }
 
 
 class TrackingManager(TrackingManagerCacheStrategyInterface, Thread):

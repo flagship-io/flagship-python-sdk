@@ -64,13 +64,13 @@ async def toto():
     return 'toto'
 
 def init():
-    print(sys.version)
-    from pglet import Text
-
-    p = pglet.page('Script')
-    p.add(Text("Hello, world! hahaha 3"))
-    p.add(Textbox(placeholder="test"))
-    # qa_4()
+    # print(sys.version)
+    # from pglet import Text
+    #
+    # p = pglet.page('Script')
+    # p.add(Text("Hello, world! hahaha 3"))
+    # p.add(Textbox(placeholder="test"))
+    qa_4()
 
 
 
@@ -83,16 +83,16 @@ def qa_4():
                                                                                                        max_pool_size=5)))  ## Demo
     time.sleep(0.2)
     visitor = Flagship.new_visitor('visitor-A', context={'testing_tracking_manager': True})
-    visitor.fetch_flags()
-    print('################## offline ######################')
-    time.sleep(5)
-    visitor.get_flag("my_flag", 'default').value()
-    visitor.send_hit(Screen("screen 1"))
-    print('################## online ######################')
-    time.sleep(30)
-    visitorB = Flagship.new_visitor('visitor-B', context={'testing_tracking_manager': True})
-    visitorB.fetch_flags()
-    visitorB.get_flag("my_flag", 'default').value()
+    # visitor.fetch_flags()
+    # print('################## offline ######################')
+    # time.sleep(5)
+    # visitor.get_flag("my_flag", 'default').value()
+    # visitor.send_hit(Screen("screen 1"))
+    # print('################## online ######################')
+    # time.sleep(30)
+    # visitorB = Flagship.new_visitor('visitor-B', context={'testing_tracking_manager': True})
+    # visitorB.fetch_flags()
+    # visitorB.get_flag("my_flag", 'default').value()
 
     time.sleep(10000000)
 

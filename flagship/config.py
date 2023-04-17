@@ -10,6 +10,7 @@ from flagship.status_listener import StatusListener
 __metaclass__ = type
 
 from flagship.tracking_manager import TrackingManagerConfig
+from flagship.utils import pretty_dict
 
 
 class _FlagshipConfig(object):
@@ -32,18 +33,13 @@ class _FlagshipConfig(object):
         self.tracking_manager_config = self.get_arg(kwargs, 'tracking_manager_config',
                                                     TrackingManagerConfig) or TrackingManagerConfig()
         self.cache_manager = self.get_arg(kwargs, 'cache_manager', CacheManager) or None
-        # self.__update_flagship_status()
 
     def get_arg(self, kwargs, name, c_type):
         return kwargs[name] if name in kwargs and isinstance(kwargs[name], c_type) else None
 
-    # def __update_flagship_status(self):
-    #     if self.status_listener is not None:
-    #         self.status_listener.status(Status.READY)
 
     def is_set(self):
         return self.api_key is not None and self.api_key is not None
-        # return self.api_key is not None and self.api_key
 
     def __str__(self):
         config = {
@@ -55,11 +51,11 @@ class _FlagshipConfig(object):
             'polling_interval': self.polling_interval,
             'timeout': self.timeout,
             'status_listener': None if self.status_listener is None else str(self.status_listener.__class__.__name__),
-            'tracking_manager_config': str(self.tracking_manager_config.__class__.__name__),
+            'tracking_manager_config': self.tracking_manager_config.to_dict(),
             'cache_manager': None if self.cache_manager is None else str(
                 self.cache_manager.__class__.__name__)
         }
-        return json.dumps(config, indent=4)
+        pretty_dict(config)
 
 
 class DecisionApi(_FlagshipConfig):
@@ -86,15 +82,16 @@ class DecisionApi(_FlagshipConfig):
         config = {
             'env_id': str(self.env_id),
             'api_key': str(self.api_key),
+            'decision_mode': 'API',
             'log_level': str(self.log_level),
             'log_manager': None if self.log_manager is None else str(self.log_manager.__class__.__name__),
             'timeout': self.timeout,
             'status_listener': None if self.status_listener is None else str(self.status_listener.__class__.__name__),
-            'tracking_manager_config': str(self.tracking_manager_config.__class__.__name__),
+            'tracking_manager_config': self.tracking_manager_config.to_dict(),
             'cache_manager': None if self.cache_manager is None else str(
                 self.cache_manager.__class__.__name__)
         }
-        return json.dumps(config, indent=4)
+        return pretty_dict(config)
 
 
 class Bucketing(_FlagshipConfig):
@@ -123,12 +120,13 @@ class Bucketing(_FlagshipConfig):
         config = {
             'env_id': str(self.env_id),
             'api_key': str(self.api_key),
+            'decision_mode': 'BUCKETING',
             'log_level': str(self.log_level),
             'log_manager': None if self.log_manager is None else str(self.log_manager.__class__.__name__),
             'polling_interval': self.polling_interval,
             'timeout': self.timeout,
             'status_listener': None if self.status_listener is None else str(self.status_listener.__class__.__name__),
-            'tracking_manager_config': str(self.tracking_manager_config.__class__.__name__),
+            'tracking_manager_config': self.tracking_manager_config.to_dict(),
             'cache_manager': None if self.cache_manager is None else str(self.cache_manager.__class__.__name__)
         }
-        return json.dumps(config, indent=4)
+        return pretty_dict(config)

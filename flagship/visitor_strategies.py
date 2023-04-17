@@ -85,7 +85,9 @@ class DefaultStrategy(IVisitorStrategy):
     def __init__(self, strategy=VisitorStrategies.DEFAULT_STRATEGY, visitor=None):
         super(DefaultStrategy, self).__init__(strategy, visitor)
         cache_manager = self.visitor._configuration_manager.cache_manager
-        self.visitor_cache_interface = cache_manager if cache_manager is not None and isinstance(cache_manager, VisitorCacheImplementation) else None
+        self.visitor_cache_interface = cache_manager \
+            if cache_manager is not None and isinstance(cache_manager, VisitorCacheImplementation) \
+            else None
         self.timeout = cache_manager.timeout if cache_manager is not None else 0.1
 
     def update_context(self, context):
@@ -94,8 +96,8 @@ class DefaultStrategy(IVisitorStrategy):
         elif isinstance(context, dict):
             for k, v in context.items():
                 self.visitor._update_context(k, v)
-        log(TAG_UPDATE_CONTEXT, LogLevel.DEBUG, "[" + TAG_VISITOR.format(self.visitor.visitor_id) + "] " +
-            DEBUG_CONTEXT.format(self.visitor.__str__()))
+        # log(TAG_UPDATE_CONTEXT, LogLevel.DEBUG, "[" + TAG_VISITOR.format(self.visitor.visitor_id) + "] " +
+        #     DEBUG_CONTEXT.format(self.visitor.__str__()))
 
     def fetch_flags(self):
         decision_manager = self.visitor._configuration_manager.decision_manager
