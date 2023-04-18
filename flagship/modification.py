@@ -54,8 +54,10 @@ class Modifications:
             if isinstance(value, string_types):
                 value = str(value)
             try:
+                # if value is None or t is int or t is float or t is str or t is bool or \
+                #         isinstance(value, list) or isinstance(value, dict) or t is unicode:
                 if value is None or t is int or t is float or t is str or t is bool or \
-                        isinstance(value, list) or isinstance(value, dict) or t is unicode:
+                        isinstance(value, list) or isinstance(value, dict):
                     values[key] = Modification(key, campaign_id, campaign_type, campaign_slug, variation_group_id,
                                                variation_id, reference, value)
             except Exception as e:

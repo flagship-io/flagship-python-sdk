@@ -10,6 +10,7 @@ from flet_core import TextThemeStyle, CrossAxisAlignment, ThemeMode, Margin, Mai
 from flagship import Flagship, Visitor
 from flagship.cache_manager import SqliteCacheManager
 from flagship.config import DecisionApi, Bucketing
+from flagship.flag import Flag
 from flagship.log_manager import LogManager, LogLevel
 from flagship.tracking_manager import TrackingManagerConfig, CacheStrategy
 from flagship.utils import pretty_dict
@@ -220,9 +221,10 @@ class ConfigurationView(ft.Container):
 
 class VisitorView(ft.Container):
 
-    def __init__(self, page: Page, *args, **kwargs):
+    def __init__(self, page: Page, on_visitor_synchronized, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.page = page
+        self.on_visitor_synchronized = on_visitor_synchronized
         self.visitor = None
         self.visitor_id_field = ft.TextField(border_color='#919993')
         self.anonymous_id_field = ft.TextField(border_color='#919993', read_only=True)
@@ -396,10 +398,9 @@ class VisitorView(ft.Container):
                 ),
                 ft.Container(
                     padding=ft.Padding(40, 0, 40, 0),
-                    alignment=Alignment(1, 1),
-                    bottom=0, right=0,
-                    content=ft.FloatingActionButton(bgcolor='#d13288', icon=ft.icons.SYNC, width=100,
-                                                    height=100, on_click=self.on_synchronize_click),
+                    top=0, right=0,
+                    content=ft.FloatingActionButton(bgcolor='#d13288', icon=ft.icons.SYNC, width=50,
+                                                    height=50, on_click=self.on_synchronize_click),
                 )
             ])
 
@@ -413,6 +414,7 @@ class VisitorView(ft.Container):
                                                 context=context, instance_type=Visitor.Instance.NEW_INSTANCE)
             self.update_visitor_front()
             self.visitor.fetch_flags()
+            self.on_visitor_synchronized(self.visitor)
         except Exception as e:
             print(traceback.print_exc())
 
@@ -468,6 +470,180 @@ class VisitorView(ft.Container):
             self.update_context_field.value = pretty_dict(self.visitor.context)
             self.update_consent_switch.value = self.visitor.has_consented
             self.update()
+            self.on_visitor_synchronized(self.visitor)
+
+
+class FlagView(ft.Container):
+    def __init__(self, page: Page, visitor, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.page = page
+        self.visitor = visitor
+        self.flag_listview = ft.ListView(spacing=20, auto_scroll=True, padding=20)
+        self.flag_key_field = ft.TextField(border_color='#919993', label="Flag key")
+        self.flag_default_field = ft.TextField(border_color='#919993', label="Flag default value", multiline=True, max_lines=1)
+        self.flag_default_type_dropdown = ft.Dropdown(border_color='#919993', width=300,
+                                                      options=[ft.dropdown.Option("str"),
+                                                               ft.dropdown.Option("int"),
+                                                               ft.dropdown.Option("float"),
+                                                               ft.dropdown.Option("bool"),
+                                                               ft.dropdown.Option("dict"),
+                                                               # ft.dropdown.Option("array"),
+                                                               ],
+                                                      value="str")
+        ###
+        self.get_flag_key_textview = ft.Text("Key: ", style=TextThemeStyle.TITLE_MEDIUM, color='#919993', width=300,
+                                             selectable=True)
+        self.get_flag_value_textview = ft.Text("Value: ", style=TextThemeStyle.TITLE_MEDIUM, color='#919993', width=300,
+                                               selectable=True)
+        self.get_flag_default_textview = ft.Text("Default: ", style=TextThemeStyle.TITLE_MEDIUM, color='#919993',
+                                                 width=300, selectable=True)
+        self.get_flag_exists_textview = ft.Text("Exists: ", style=TextThemeStyle.TITLE_MEDIUM, color='#919993',
+                                                width=300, selectable=True)
+        self.metadata_campaign_id_textview = ft.Text("C. id: ", style=TextThemeStyle.TITLE_MEDIUM,
+                                                     color='#919993', width=300, selectable=True)
+        self.metadata_group_id_textview = ft.Text("VG. id: ", style=TextThemeStyle.TITLE_MEDIUM,
+                                                  color='#919993',
+                                                  width=300, selectable=True)
+        self.metadata_variation_id_textview = ft.Text("V. id: ", style=TextThemeStyle.TITLE_MEDIUM,
+                                                      color='#919993', width=300, selectable=True)
+        self.metadata_type_textview = ft.Text("Type: ", style=TextThemeStyle.TITLE_MEDIUM, color='#919993',
+                                              width=300, selectable=True)
+        self.metadata_slug_textview = ft.Text("Slug: ", style=TextThemeStyle.TITLE_MEDIUM, color='#919993',
+                                              width=300, selectable=True)
+        self.metadata_reference_textview = ft.Text("Reference: ", style=TextThemeStyle.TITLE_MEDIUM, color='#919993',
+                                                   width=300, selectable=True)
+        ###
+        self.content = ft.Column(
+            spacing=20,
+            scroll=ScrollMode.ALWAYS,
+            controls=[
+                ft.Container(
+                    padding=ft.Padding(0, 0, 0, 20),
+                    content=ft.Text("Flags", style=TextThemeStyle.TITLE_LARGE, color='#FF8974')
+                ),
+                ft.Row(
+                    alignment=MainAxisAlignment.START,
+                    controls=[
+                        self.flag_key_field,
+                        self.flag_default_field,
+                        self.flag_default_type_dropdown,
+                    ]
+                ),
+                ft.Container(
+                    padding=ft.Padding(0, 20, 100, 0),
+                    content=ft.Row(
+                        alignment=MainAxisAlignment.START,
+                        controls=[
+                            ft.FilledButton(text="Get", style=ButtonStyle(overlay_color="#d13288"), width=100,
+                                            on_click=self.on_flag_get),
+                            ft.FilledButton(text="Expose", style=ButtonStyle(overlay_color="#d13288"), width=100,
+                                            on_click=self.on_flag_exposed)
+                        ]
+                    ),
+                ),
+                ft.Container(
+                    padding=ft.Padding(0, 20, 100, 0),
+                    content=ft.Row(
+                        alignment=MainAxisAlignment.START,
+                        vertical_alignment=ft.CrossAxisAlignment.START,
+                        spacing=20,
+                        controls=[
+                            ft.Column(
+                                controls=[
+                                    self.get_flag_key_textview,
+                                    self.get_flag_value_textview,
+                                    self.get_flag_default_textview,
+                                    self.get_flag_exists_textview
+                                ]
+                            ),
+                            ft.Column(
+                                alignment=MainAxisAlignment.START,
+                                controls=[
+                                    self.metadata_campaign_id_textview,
+                                    self.metadata_group_id_textview,
+                                    self.metadata_variation_id_textview,
+                                ]
+                            ),
+                            ft.Column(
+                                alignment=MainAxisAlignment.START,
+                                controls=[
+                                    self.metadata_type_textview,
+                                    self.metadata_slug_textview,
+                                    self.metadata_reference_textview
+                                ]
+                            )
+                        ], )
+                ),
+                ft.Row(
+                    alignment=MainAxisAlignment.CENTER,
+                    controls=[
+                        ft.Container(height=1, bgcolor="#d13288", width=400, margin=Margin(0, 45, 0, 40))
+                    ]
+                ),
+                self.flag_listview
+            ]
+        )
+        self.on_visitor_synchronized(self.visitor, True)
+
+    def get_flag_from_flagship(self):
+        if self.visitor is not None:
+            try:
+                key = self.flag_key_field.value
+                default = self.flag_default_field.value
+                default_type = self.flag_default_type_dropdown.value
+                if default is not None:
+                    if default_type == "int":
+                        flag = self.visitor.get_flag(key, int(default))
+                    elif default_type == "float":
+                        flag = self.visitor.get_flag(key, float(default))
+                    elif default_type == "bool":
+                        flag = self.visitor.get_flag(key, bool(default.capitalize()))
+                    elif default_type == "dict":
+                        flag = self.visitor.get_flag(key, json.loads(default))
+                    else:
+                        flag = self.visitor.get_flag(key, str(default_type))
+                    return flag
+            except ValueError as e:
+                print(traceback.print_exc())
+        return None
+
+    def on_flag_get(self, e):
+        flag = self.get_flag_from_flagship()
+        if flag is not None:
+            self.update_flag_view(flag)
+
+    def update_flag_view(self, flag : Flag):
+
+        self.get_flag_key_textview.value = "Key: " + flag.key
+        self.get_flag_value_textview.value = "Value: " + str(flag.value(False))
+        self.get_flag_default_textview.value = "Default: " + str(flag.default_value)
+        self.get_flag_exists_textview.value = "Exists: " + str(flag.exists())
+        metadata = flag.metadata()
+        self.metadata_campaign_id_textview.value = "C. id: " + metadata.campaign_id
+        self.metadata_group_id_textview.value = "VG. id: " + metadata.variation_group_id
+        self.metadata_variation_id_textview.value = "V. id: " + metadata.variation_id
+        self.metadata_type_textview.value = "Type: " + str(metadata.campaign_type)
+        self.metadata_slug_textview.value = "Slug: " + str(metadata.campaign_slug)
+        self.metadata_reference_textview.value = "Reference: " + str(metadata.is_reference)
+        self.update()
+
+    def on_flag_exposed(self, e):
+        flag: Flag = self.get_flag_from_flagship()
+        if flag is not None:
+            flag.user_exposed()
+
+    def on_visitor_synchronized(self, new_visitor: Visitor, init=False):
+        if new_visitor is not None:
+            self.visitor = new_visitor
+            self.flag_listview.controls.clear()
+            for k, v in self.visitor._modifications.items():
+                t = "'{}'= {}".format(k, v.value)
+                self.flag_listview.controls.append(
+                    ft.Text(t, style=TextThemeStyle.TITLE_SMALL, color='#FF8974', selectable=True)
+                )
+            if not init:
+                self.flag_listview.update()
+
 
 class Content(ft.Container):
 
@@ -476,8 +652,9 @@ class Content(ft.Container):
         self.log_manager = log_manager
         self.page = page
         self.index = 0
-        self.configuration_layout = None
-        self.visitor_layout = None
+        self.configuration_view = None
+        self.visitor_view = None
+        self.flag_view = None
         self.update_view()
 
     def on_page_changed(self, index):
@@ -485,26 +662,39 @@ class Content(ft.Container):
         self.update_view()
         self.update()
 
+    def on_visitor_synchronized(self, visitor):
+        if self.flag_view is not None:
+            self.flag_view.on_visitor_synchronized(visitor)
+
     def update_view(self):
         if self.index == 0:
-            self.content = self.configuration_view()
+            self.content = self.build_configuration_view()
         elif self.index == 1:
-            self.content = self.visitor_view()
+            self.content = self.build_visitor_view()
+        elif self.index == 2:
+            self.content = self.build_flag_view()
         else:
             self.content = None
 
-    def configuration_view(self):
+    def build_configuration_view(self):
         # return ft.Text("Configuration", style=TextThemeStyle.TITLE_LARGE, color='#FF8974')
-        if self.configuration_layout is None:
-            self.configuration_layout = ConfigurationView(self.page, self.log_manager)
-            self.configuration_layout.padding = ft.Padding(20, 0, 0, 0)
-        return self.configuration_layout
+        if self.configuration_view is None:
+            self.configuration_view = ConfigurationView(self.page, self.log_manager)
+            self.configuration_view.padding = ft.Padding(20, 0, 0, 0)
+        return self.configuration_view
 
-    def visitor_view(self):
-        if self.visitor_layout is None:
-            self.visitor_layout = VisitorView(self.page)
-            self.visitor_layout.padding = ft.Padding(20, 0, 0, 0)
-        return self.visitor_layout
+    def build_visitor_view(self):
+        if self.visitor_view is None:
+            self.visitor_view = VisitorView(self.page, self.on_visitor_synchronized)
+            self.visitor_view.padding = ft.Padding(20, 0, 0, 0)
+        return self.visitor_view
+
+    def build_flag_view(self):
+        if self.flag_view is None:
+            visitor = self.visitor_view.visitor if self.visitor_view is not None else None
+            self.flag_view = FlagView(self.page, visitor)
+            self.flag_view.padding = ft.Padding(20, 0, 0, 0)
+        return self.flag_view
 
 
 class LogView(ft.Container):
@@ -513,13 +703,27 @@ class LogView(ft.Container):
         super().__init__(*args, **kwargs)
         self.log_view = ft.ListView(spacing=10, auto_scroll=True, padding=20)
         self.padding = ft.Padding(20, 0, 0, 20)
-        self.content = ft.Column(
-            auto_scroll=True,
-            scroll=ScrollMode.ALWAYS,
+        self.content = ft.Stack(
             controls=[
-                ft.Text("SDK logs", style=TextThemeStyle.TITLE_LARGE, color='#FF8974'),
-                self.log_view
-            ])
+                ft.Column(
+                    auto_scroll=True,
+                    scroll=ScrollMode.ALWAYS,
+                    controls=[
+                        ft.Text("SDK logs", style=TextThemeStyle.TITLE_LARGE, color='#FF8974'),
+                        self.log_view
+                    ]),
+                ft.Container(
+                    padding=ft.Padding(40, 0, 40, 0),
+                    top=0, right=0,
+                    content=ft.FloatingActionButton(bgcolor='#d13288', icon=ft.icons.CLEAR_ALL, width=50,
+                                                    height=50, on_click=self.on_clear_logs),
+                )
+            ]
+        )
+
+    def on_clear_logs(self, e):
+        self.log_view.controls.clear()
+        self.log_view.update()
 
     def log(self, tag, level, message):
         if level == LogLevel.ERROR:
@@ -592,7 +796,7 @@ class CustomLogManager(LogManager):
         print("[{}][{}][{}]: {}".format(now, tag, str(level), message))
         self.on_log(tag, level, message)
 
-    def exception(self, exception, traceback):
+    def exception(self, tag, exception, traceback):
         pass
 
 

@@ -67,9 +67,10 @@ class LogManager:
 
     @abstractmethod
     @param_types_validator(True, Exception, str)
-    def exception(self, exception, traceback):
+    def exception(self, tag, exception, traceback):
         """
         Called when the SDK has caught an Exception.
+        @param tag: origin of the exception
         @param exception: exception that caused the exception.
         @param traceback: exception traceback.
         @return:
