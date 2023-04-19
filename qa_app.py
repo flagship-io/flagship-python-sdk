@@ -1,14 +1,16 @@
 import json
+import os
+import shelve
 import sys
 import traceback
 from datetime import datetime
 
 import flet as ft
+from flet.security import encrypt, decrypt
 from flet_core import TextThemeStyle, CrossAxisAlignment, ThemeMode, Margin, MainAxisAlignment, Alignment, Page, \
-    ButtonStyle, TextAlign, ScrollMode
+    ButtonStyle, ScrollMode
 
 from flagship import Flagship, Visitor
-from flagship.cache_manager import SqliteCacheManager
 from flagship.config import DecisionApi, Bucketing
 from flagship.flag import Flag
 from flagship.log_manager import LogManager, LogLevel
@@ -66,9 +68,11 @@ class ConfigurationView(ft.Container):
 
     def __init__(self, page: Page, log_manager, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.page = page
         self.log_manager = log_manager
         self.env_id_field = ft.TextField(border_color='#919993')
         self.api_key_field = ft.TextField(border_color='#919993', password=True, can_reveal_password=True)
+        self.decrypt_and_load_from_cache()
         self.mode_dropdown = ft.Dropdown(border_color='#919993', width=300,
                                          options=[ft.dropdown.Option("API"), ft.dropdown.Option("BUCKETING")])
         self.mode_dropdown.value = "API"
@@ -211,12 +215,31 @@ class ConfigurationView(ft.Container):
             else:
                 conf = None
             if conf is not None:
+                self.encrypt_and_cache_conf()
                 Flagship.start(self.env_id_field.value, self.api_key_field.value, conf)
         except Exception as e:
             print(traceback.format_exc())
 
     def stop_flagship(self, e):
         Flagship.stop()
+
+    def decrypt_and_load_from_cache(self):
+        secret_key = os.getenv("QA_APP_SECRET")
+        env_id = self.page.client_storage.get("envId")
+        api_key = self.page.client_storage.get("apiKey")
+        if secret_key is not None:
+            if env_id is not None:
+                self.env_id_field.value = decrypt(env_id, secret_key)
+            if api_key is not None:
+                self.api_key_field.value = decrypt(api_key, secret_key)
+        else:
+            print("===== Set QA_APP_SECRET env variable to cache ids =====")
+
+    def encrypt_and_cache_conf(self):
+        secret_key = os.getenv("QA_APP_SECRET")
+        if secret_key is not None:
+            self.page.client_storage.set("envId", encrypt(self.env_id_field.value, secret_key))
+            self.page.client_storage.set("apiKey", encrypt(self.api_key_field.value, secret_key))
 
 
 class VisitorView(ft.Container):
@@ -236,6 +259,7 @@ class VisitorView(ft.Container):
                                                  multiline=True, min_lines=10, max_lines=10)
         self.authenticate_field = ft.TextField(border_color='#919993')
         self.update_consent_switch = ft.Switch(value=False, on_change=self.on_consent_changed)
+        self.load_visitor_from_cache()
         self.content = ft.Stack(
             controls=[
                 ft.Column(
@@ -414,6 +438,7 @@ class VisitorView(ft.Container):
                                                 context=context, instance_type=Visitor.Instance.NEW_INSTANCE)
             self.update_visitor_front()
             self.visitor.fetch_flags()
+            self.save_visitor_in_cache()
             self.on_visitor_synchronized(self.visitor)
         except Exception as e:
             print(traceback.print_exc())
@@ -457,6 +482,7 @@ class VisitorView(ft.Container):
         try:
             if self.visitor is not None:
                 self.visitor.fetch_flags()
+                self.save_visitor_in_cache()
         except Exception as e:
             print(traceback.print_exc())
 
@@ -471,6 +497,63 @@ class VisitorView(ft.Container):
             self.update_consent_switch.value = self.visitor.has_consented
             self.update()
             self.on_visitor_synchronized(self.visitor)
+
+    def save_visitor_in_cache(self):
+        if self.visitor is not None:
+            # with shelve.open('qa_app') as db:
+            #     db['visitor_id_field'] = self.visitor_id_field.value
+            #     db['anonymous_id_field'] = self.anonymous_id_field.value
+            #     db['authenticated_switch'] = self.authenticated_switch.value
+            #     db['consent_switch'] = self.consent_switch.value
+            #     db['context_field'] = self.context_field.value
+            #     print("============> " + str(db.items()))
+            #     print("============> " + str(db.keys()))
+            #     print("============> " + str(db.values()))
+            #     db.close()
+            self.page.client_storage.remove("visitor_id_field")
+            self.page.client_storage.remove("anonymous_id_field")
+            self.page.client_storage.remove("consent_switch")
+            self.page.client_storage.remove("authenticated_switch")
+            self.page.client_storage.remove("context_field")
+            if self.visitor_id_field.value is not None:
+                self.page.client_storage.set("visitor_id_field", self.visitor_id_field.value)
+            if self.anonymous_id_field.value is not None:
+                self.page.client_storage.set("anonymous_id_field", self.anonymous_id_field.value)
+            if self.authenticated_switch.value is not None:
+                self.page.client_storage.set("authenticated_switch", self.authenticated_switch.value)
+            if self.consent_switch.value is not None:
+                self.page.client_storage.set("consent_switch", self.consent_switch.value)
+            if self.context_field.value is not None:
+                self.page.client_storage.set("context_field", self.context_field.value)
+
+    def load_visitor_from_cache(self):
+
+        # with shelve.open('qa_app') as db:
+        #     print("============> " + str(db.items()))
+        #     print("============> " + str(db.keys()))
+        #     print("============> " + str(db.values()))
+        #     if 'visitor_id_field' in db:
+        #         self.visitor_id_field.value = db['visitor_id_field']
+        #     if 'anonymous_id_field' in db:
+        #         self.anonymous_id_field.value = db['anonymous_id_field']
+        #     if 'authenticated_switch' in db:
+        #         self.authenticated_switch.value = db['authenticated_switch']
+        #     if 'consent_switch' in db:
+        #         self.consent_switch.value = db['consent_switch']
+        #     if 'context_field' in db:
+        #         self.context_field.value = db['context_field']
+        #     db.close()
+
+        if self.page.client_storage.contains_key("visitor_id_field"):
+            self.visitor_id_field.value = self.page.client_storage.get("visitor_id_field")
+        if self.page.client_storage.contains_key("anonymous_id_field"):
+            self.anonymous_id_field.value = self.page.client_storage.get("anonymous_id_field")
+        if self.page.client_storage.contains_key("authenticated_switch"):
+            self.authenticated_switch.value = self.page.client_storage.get("authenticated_switch")
+        if self.page.client_storage.contains_key("consent_switch"):
+            self.consent_switch.value = self.page.client_storage.get("consent_switch")
+        if self.page.client_storage.contains_key("context_field"):
+            self.context_field.value = self.page.client_storage.get("context_field")
 
 
 class FlagView(ft.Container):
