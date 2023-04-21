@@ -106,6 +106,7 @@ class DefaultStrategy(IVisitorStrategy):
             from flagship import Status
             from flagship import Flagship
             if result is True and Flagship.status() is not Status.PANIC:
+                self.visitor._modifications.clear()
                 self.visitor._modifications.update(modifications)
                 for k, v in modifications.items():
                     self.visitor.assignations[v.variation_group_id] = v.variation_id

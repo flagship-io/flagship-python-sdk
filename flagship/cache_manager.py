@@ -275,14 +275,12 @@ class SqliteCacheManager(CacheManager, VisitorCacheImplementation, HitCacheImple
 
     def flush_hits(self, hits_ids):
         try:
-            print("_FLUSH_" + str(hits_ids))
             con = sl.connect(self.full_db_path)
             if len(hits_ids) > 0:
                 with con:
                     cursor = con.cursor()
                     cursor.execute("DELETE FROM HITS WHERE id IN ({})".format(", ".join("?" * len(hits_ids))), hits_ids)
                     con.commit()
-                    print('_FLUSH_ cnt : ' + str(cursor.rowcount))
         except Exception as e:
             log_exception(TAG_CACHE_MANAGER, e, traceback.format_exc())
 

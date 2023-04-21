@@ -112,7 +112,7 @@ class Bucketing(_FlagshipConfig):
         <b>'polling_interval'</b> (int): Define the time interval between two bucketing updates in milliseconds. Default
         is 60000ms. <br>
         <b>'tracking_manager_config'</b> (TrackingManagerConfig): Specify a custom tracking manager configuration. <br>
-        <b>'cache_manager_config'</b> (CacheManagerConfig): Specify a custom cache manager configuration. <br>
+        <b>'cache_manager'</b> (CacheManager): Specify a custom cache manager configuration. <br>
         """
         super(Bucketing, self).__init__(DecisionMode.BUCKETING, **kwargs)
 
