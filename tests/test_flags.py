@@ -53,8 +53,8 @@ def test_visitor_get_flags():
 
     _visitor_7.fetch_flags()
 
-    assert _visitor_7.get_flag("featureEnabled", False).exists() is True
-    assert _visitor_7.get_flag("featureEnabled", False).value(False) is True
+    assert _visitor_7.get_flag("featureEnabled", False).exists() is False
+    assert _visitor_7.get_flag("featureEnabled", False).value(False) is False
 
     assert _visitor_7.get_flag("title", "default").exists() is True
     assert _visitor_7.get_flag("title", "default").value(False) == "Hey"

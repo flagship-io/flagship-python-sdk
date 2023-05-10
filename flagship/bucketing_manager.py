@@ -86,14 +86,12 @@ class BucketingManager(DecisionManager, Thread):
                         if variation_group.is_targeting_valid(dict(visitor.context)):
                             variation = variation_group.select_variation(visitor)
                             if variation is not None:
-                                # visitor.add_new_assignment_to_history(variation.variation_group_id, variation.variation_id)
                                 visitor.assignations[variation.variation_group_id] = variation.variation_id
                                 modification_values = variation.get_modification_values()
                                 if modification_values is not None:
                                     campaign_modifications.update(modification_values)
                                 break
                 self.send_context_hit(visitor)
-                # HttpHelper.send_context(visitor, _Segment(visitor.visitor_id, visitor.context))
             return True, campaign_modifications
         except Exception as e:
             log_exception(TAG_BUCKETING, e, traceback.format_exc())
@@ -106,7 +104,6 @@ class BucketingManager(DecisionManager, Thread):
         file_name = self.local_decision_file_name.format(self.flagship_config.env_id)
         if os.path.isfile(file_name):
             try:
-                # with io.open(file_name, 'r', encoding='utf-8') as f:
                 with open(file_name, 'r') as f:
                     json_data = json.loads(f.read())
                     if 'data' in json_data and 'last_modified' in json_data:
@@ -123,7 +120,6 @@ class BucketingManager(DecisionManager, Thread):
                 'last_modified': self.last_modified,
                 'data': self.bucketing_file
             }
-            # with io.open(file_name, 'w', encoding='utf-8') as f:
             with open(file_name, 'w') as f:
                 f.write(pretty_dict(json_object))
         except Exception as e:

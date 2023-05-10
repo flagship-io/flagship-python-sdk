@@ -252,7 +252,7 @@ def test_bucketing_alloc():
     Flagship.stop()
     Flagship.start('_env_id_', '_api_key_', Bucketing(polling_interval=0, log_level=LogLevel.NONE, tracking_manager_config=TrackingManagerConfig(
                                                     strategy=CacheStrategy._NO_BATCHING_CONTINUOUS_CACHING)))  # 1 bucketing
-    sleep(0.5)
+    sleep(1)
     ids = ["202072017183814142",
            "202072017183860649",
            "202072017183828850",
@@ -283,8 +283,8 @@ def test_bucketing_alloc():
         visitor.fetch_flags()
         v25 = visitor.get_flag("variation", 0).value(False)
         v50 = visitor.get_flag("variation50", 0).value(False)
-        print("{} v50 {} == variation50[{}] {}".format(ids[i], v50, i, variation50[i]))
         print("{} v25 {} == variation25[{}] {}".format(ids[i], v25, i, variation25[i]))
+        print("{} v50 {} == variation50[{}] {}".format(ids[i], v50, i, variation50[i]))
         if v25 != variation25[i]:
             print("Error = {} - expected {} got {}".format(ids[i], variation25[i], v25))
         if v50 != variation50[i]:

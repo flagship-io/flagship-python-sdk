@@ -238,8 +238,8 @@ class SqliteCacheManager(CacheManager, VisitorCacheImplementation, HitCacheImple
                         print(tag + " / " + str(v))
                         result_as_dict[k] = json.loads(v)
                 return result_as_dict
-        except:
-            print(traceback.format_exc())
+        except Exception as e:
+            log_exception(TAG_CACHE_MANAGER + " _1", e, traceback.format_exc())
             return None
 
     def cache_hits(self, hits):

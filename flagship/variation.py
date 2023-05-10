@@ -37,6 +37,8 @@ class Variation:
             reference = variation_obj['reference'] if 'reference' in variation_obj else True
             modifications = Modifications.parse(campaign_id, campaign_type, campaign_slug, variation_group_id,
                                                 variation_id, reference, variation_obj['modifications'])
+            if modifications is None:
+                return None
             if not use_bucketing:
                 allocation = 100 if 'allocation' not in variation_obj else variation_obj['allocation']
             else:

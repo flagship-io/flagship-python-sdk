@@ -45,22 +45,26 @@ class Modifications:
     @staticmethod
     def parse(campaign_id, campaign_type, campaign_slug, variation_group_id, variation_id, reference,
               modifications_obj):
-        values = dict()
-        value_type = modifications_obj['type']
-        values_obj = modifications_obj['value']
-        for key in values_obj:
-            value = values_obj[key]
-            t = type(value)
-            if isinstance(value, string_types):
-                value = str(value)
-            try:
-                # if value is None or t is int or t is float or t is str or t is bool or \
-                #         isinstance(value, list) or isinstance(value, dict) or t is unicode:
-                if value is None or t is int or t is float or t is str or t is bool or \
-                        isinstance(value, list) or isinstance(value, dict):
-                    values[key] = Modification(key, campaign_id, campaign_type, campaign_slug, variation_group_id,
-                                               variation_id, reference, value)
-            except Exception as e:
-                log_exception(TAG_PARSING_MODIFICATION, FlagshipParsingError(ERROR_PARSING_MODIFICATION),
-                              traceback.format_exc())
-        return Modifications(campaign_id, campaign_type, campaign_slug, variation_group_id, variation_id, reference, value_type, values)
+        try:
+            values = dict()
+            value_type = modifications_obj['type']
+            values_obj = modifications_obj['value']
+            for key in values_obj:
+                value = values_obj[key]
+                t = type(value)
+                if isinstance(value, string_types):
+                    value = str(value)
+                try:
+                    # if value is None or t is int or t is float or t is str or t is bool or \
+                    #         isinstance(value, list) or isinstance(value, dict) or t is unicode:
+                    if value is None or t is int or t is float or t is str or t is bool or \
+                            isinstance(value, list) or isinstance(value, dict):
+                        values[key] = Modification(key, campaign_id, campaign_type, campaign_slug, variation_group_id,
+                                                   variation_id, reference, value)
+                except Exception as e:
+                    log_exception(TAG_PARSING_MODIFICATION, FlagshipParsingError(ERROR_PARSING_MODIFICATION),
+                                  traceback.format_exc())
+            return Modifications(campaign_id, campaign_type, campaign_slug, variation_group_id, variation_id, reference,
+                                 value_type, values)
+        except Exception:
+            return None

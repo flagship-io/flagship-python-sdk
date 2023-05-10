@@ -156,8 +156,9 @@ class TrackingManager(TrackingManagerCacheStrategyInterface, Thread):
         self.time_interval = flagship_config.tracking_manager_config.time_interval
         self.cache_manager = cache_manager
         self.strategy = self.get_strategy()
-        if self.strategy == CacheStrategy._NO_BATCHING_CONTINUOUS_CACHING:
-            self.lookup_pool()
+        # if self.strategy == CacheStrategy._NO_BATCHING_CONTINUOUS_CACHING:
+        if isinstance(self.strategy, NoBatchingCacheStrategy):
+            self.run_lookup()
             self.polling()
             pass
         elif self.time_interval > 0:
@@ -171,11 +172,18 @@ class TrackingManager(TrackingManagerCacheStrategyInterface, Thread):
 
     def run(self):
         while self.running:
-            if self.first_round:
-                self.lookup_pool()
-                self.first_round = False
+            self.run_lookup()
+            # if self.first_round:
+            #     self.lookup_pool()
+            #     self.first_round = False
             self.polling()
             time.sleep(self.time_interval / 1000.0)
+
+    def run_lookup(self):
+        if self.first_round:
+            self.lookup_pool()
+            self.first_round = False
+
 
     def print_pool(self, tag=""):
         print(tag + " pool size : " + str(self.hitQueue.qsize()))
@@ -315,8 +323,10 @@ class TrackingManagerCacheStrategyAbstract(TrackingManagerCacheStrategyInterface
     @abstractmethod
     def polling(self):
         log(TAG_TRACKING_MANAGER, LogLevel.DEBUG, INFO_TRACKING_MANAGER)
-        self.send_hits_batch()
-        self.send_activates_batch()
+        hits_results = self.send_hits_batch()
+        activates_results = self.send_activates_batch()
+        return hits_results, activates_results
+
 
     def __hits_to_str__(self, hits):
         results = ""
@@ -446,7 +456,6 @@ class ContinuousCacheStrategy(TrackingManagerCacheStrategyAbstract):
         if response is not None and response.status_code <= 400:
             activates_ids = [item.id for item in activates]
             if self.hit_cache_interface is not None:
-                print("TM FLUSH ACTIVATE : " + str(activates_ids))
                 self.hit_cache_interface.flush_hits(activates_ids)
 
     def polling(self):
@@ -476,6 +485,12 @@ class PeriodicCacheStrategy(TrackingManagerCacheStrategyAbstract):
     def delete_hits_by_visitor_id(self, visitor_id, delete_consent_hits=True):
         removed_ids = TrackingManagerCacheStrategyAbstract.delete_hits_by_visitor_id(self, visitor_id,
                                                                                      delete_consent_hits)
+        if len(removed_ids) > 0:
+            try:
+                if self.hit_cache_interface is not None:
+                    self.hit_cache_interface.flush_hits(removed_ids)
+            except Exception as e:
+                log_exception(TAG_CACHE_MANAGER, e, traceback.format_exc())
         return removed_ids
 
     def lookup_pool(self):
@@ -507,16 +522,41 @@ class NoBatchingCacheStrategy(TrackingManagerCacheStrategyAbstract):
     def add_hit(self, hit, new=True):
         if hit.check_data_validity():
             if isinstance(hit, _Activate):
+                self.tracking_manager.activateQueue.put(hit, block=False)
                 response = HttpHelper.send_activates(self.tracking_manager.config, hit)
             else:
+                self.tracking_manager.hitQueue.put(hit, block=False)
                 response = HttpHelper.send_hit(self.tracking_manager.config, hit)
             if response is None or response.status_code >= 400:
                 TrackingManagerCacheStrategyAbstract.cache_hits(self, [hit])
+            else:
+                if isinstance(hit, _Activate):
+                    self.tracking_manager.activateQueue.queue.remove(hit)
+                else:
+                    self.tracking_manager.hitQueue.queue.remove(hit)
+                TrackingManagerCacheStrategyAbstract.delete_hits_by_visitor_id(self, [hit.id], True)
             return True
         else:
             log(TAG_TRACKING_MANAGER, LogLevel.ERROR, ERROR_INVALID_HIT.format(hit.type, hit.id))
             TrackingManagerCacheStrategyAbstract.delete_hits_by_visitor_id(self, [hit.id], True)
             return False
+
+    def add_hits(self, hits, new=True):
+        success_hits = list()
+        for hit in hits:
+            if hit.check_data_validity():
+                if isinstance(hit, _Activate):
+                    self.tracking_manager.activateQueue.put(hit, block=False)
+                else:
+                    self.tracking_manager.hitQueue.put(hit, block=False)
+                    log(TAG_TRACKING_MANAGER, LogLevel.DEBUG,
+                        DEBUG_TRACKING_MANAGER_ADDED_HITS + self.__hits_to_str__(hit))
+                success_hits.append(hit)
+            else:
+                log(TAG_TRACKING_MANAGER, LogLevel.ERROR, ERROR_INVALID_HIT.format(hit.type, hit.id))
+                # delete hit
+                self.delete_hits_by_id([hit.id])
+        return success_hits
 
     def send_hits_batch(self, hit=None):
         response, batch = TrackingManagerCacheStrategyAbstract.send_hits_batch(self)
@@ -532,5 +572,97 @@ class NoBatchingCacheStrategy(TrackingManagerCacheStrategyAbstract):
             if self.hit_cache_interface is not None:
                 self.hit_cache_interface.flush_hits(activates_ids)
 
+    def delete_hits_by_visitor_id(self, visitor_id, delete_consent_hits=True):
+        removed_hits = TrackingManagerCacheStrategyAbstract.delete_hits_by_visitor_id(self, visitor_id, delete_consent_hits)
+        if self.hit_cache_interface is not None:
+            self.hit_cache_interface.flush_hits(removed_hits)
+
     def polling(self):
         return TrackingManagerCacheStrategyAbstract.polling(self)
+
+    # def __init__(self, tracking_manager):
+    #     TrackingManagerCacheStrategyAbstract.__init__(self, tracking_manager)
+    #     self.tracking_manager = tracking_manager
+    #     self.hit_cache_interface = TrackingManagerCacheStrategyAbstract.get_hit_cache_interface(self)
+    #     self.visitors_pool = {}
+    #
+    # def add_hit(self, hit, new=True):
+    #     if hit.check_data_validity():
+    #         self.add_hit_in_visitors_pool(hit)
+    #         if isinstance(hit, _Activate):
+    #             response = HttpHelper.send_activates(self.tracking_manager.config, hit)
+    #         else:
+    #             response = HttpHelper.send_hit(self.tracking_manager.config, hit)
+    #         if response is None or response.status_code >= 400:
+    #             TrackingManagerCacheStrategyAbstract.cache_hits(self, [hit])
+    #         else:
+    #             self.delete_hit_from_visitors_pool(hit)
+    #         return True
+    #     else:
+    #         log(TAG_TRACKING_MANAGER, LogLevel.ERROR, ERROR_INVALID_HIT.format(hit.type, hit.id))
+    #         TrackingManagerCacheStrategyAbstract.delete_hits_by_visitor_id(self, [hit.id], True)
+    #         return False
+    #
+    # def add_hit_in_visitors_pool(self, hit):
+    #     if hit.visitor_id not in self.visitors_pool:
+    #         self.visitors_pool[hit.visitor_id] = {}
+    #     self.visitors_pool[hit.visitor_id][hit.id] = hit
+    #
+    # def delete_hit_from_visitors_pool(self, hit):
+    #     if hit.visitor_id in self.visitors_pool:
+    #         if hit.id in self.visitors_pool[hit.visitor_id]:
+    #             del self.visitors_pool[hit.visitor_id][hit.id]
+    #
+    # def get_hits_from_visitors_pool(self, visitor_id):
+    #     if visitor_id in self.visitors_pool:
+    #         return list(self.visitors_pool[visitor_id].values)
+    #     return list()
+    #
+    # def lookup_pool(self):
+    #     if self.hit_cache_interface is not None:
+    #         try:
+    #             cached_hits = asyncio.run(
+    #                 asyncio.wait_for(self.hit_cache_interface.lookup_hits(), timeout=self.timeout)
+    #             )
+    #             if cached_hits and isinstance(cached_hits, dict) and len(cached_hits) > 0:
+    #                 hits = cache_helper.hits_from_cache_json(cached_hits)
+    #                 log(TAG_TRACKING_MANAGER, LogLevel.DEBUG,
+    #                     DEBUG_TRACKING_MANAGER_LOOKUP_HITS + self.__hits_to_str__(hits))
+    #                 self.send_hits_batch(hits)
+    #         except Exception as e:
+    #             if type(e) is asyncio.exceptions.TimeoutError:
+    #                 log(TAG_CACHE_MANAGER, LogLevel.ERROR, str(HitCacheTimeoutException("lookup_hits()")))
+    #             else:
+    #                 log(TAG_CACHE_MANAGER, LogLevel.ERROR, str(e))
+    #
+    # def send_hits_batch(self, hits=None):
+    #
+    #     batch = _Batch()
+    #     for h in hits:
+    #         self.add_hit_in_visitors_pool(h)
+    #         batch.add_child(h)
+    #     if batch.size() > 0:# also activates
+    #         response = HttpHelper.send_hit(self.tracking_manager.config, batch)
+    #         if response is not None and response.status_code <= 400:
+    #             batch_hits_ids = [item.id for item in batch.hits]
+    #             if self.hit_cache_interface is not None:
+    #                 self.hit_cache_interface.flush_hits(batch_hits_ids)
+    #             for h in hits:
+    #                 self.delete_hit_from_visitors_pool(h)
+    #
+    # def delete_hits_by_visitor_id(self, visitor_id, delete_consent_hits=True):
+    #     removed_hits = self.get_hits_from_visitors_pool(visitor_id)
+    #     removed_ids = list()
+    #     if len(removed_hits) > 0:
+    #         for h in removed_hits:
+    #             self.delete_hit_from_visitors_pool(h)
+    #             # ignore consent=
+    #         try:
+    #             if self.hit_cache_interface is not None:
+    #                 self.hit_cache_interface.flush_hits(removed_ids)
+    #         except Exception as e:
+    #             log_exception(TAG_CACHE_MANAGER, e, traceback.format_exc())
+    #     return removed_ids
+    #
+    # def polling(self):
+    #     return TrackingManagerCacheStrategyAbstract.polling(self)

@@ -52,8 +52,10 @@ class Campaign:
             bucketing = type(variation_groups_obj) == list
             if bucketing:
                 for variation_group_obj in variation_groups_obj:
-                    variation_groups.append(
-                        VariationGroup.parse(campaign_id, campaign_type, campaign_slug, variation_group_obj, True))
+                    new_variation_group = VariationGroup.parse(campaign_id, campaign_type, campaign_slug,
+                                                               variation_group_obj, True)
+                    if new_variation_group is not None:
+                        variation_groups.append(new_variation_group)
             else:
                 new_variation_group = VariationGroup.parse(campaign_id, campaign_type, campaign_slug, json, bucketing)
                 if new_variation_group is not None:

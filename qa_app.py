@@ -87,7 +87,8 @@ class ConfigurationView(ft.Container):
         self.tracking_manager_timeout_field = ft.TextField(border_color='#919993', value="200")
         self.tracking_manager_strategy_dropdown = ft.Dropdown(border_color='#919993', width=300,
                                                               options=[ft.dropdown.Option("CONTINUOUS"),
-                                                                       ft.dropdown.Option("PERIODIC")],
+                                                                       ft.dropdown.Option("PERIODIC"),
+                                                                       ft.dropdown.Option("NO BATCHING")],
                                                               value="CONTINUOUS")
         self.padding = ft.Padding(20, 0, 0, 0),
         self.content = ft.Column(
@@ -203,6 +204,8 @@ class ConfigurationView(ft.Container):
         try:
             if self.tracking_manager_strategy_dropdown.value == "PERIODIC":
                 strategy = CacheStrategy.PERIODIC_CACHING
+            elif self.tracking_manager_strategy_dropdown.value == "NO BATCHING":
+                strategy = CacheStrategy._NO_BATCHING_CONTINUOUS_CACHING
             else:
                 strategy = CacheStrategy.CONTINUOUS_CACHING
             tracking_config = TrackingManagerConfig(cache_strategy=strategy,
@@ -262,11 +265,11 @@ class ConfigurationView(ft.Container):
 
 class VisitorView(ft.Container):
 
-    def __init__(self, page: Page, on_visitor_synchronized, *args, **kwargs):
+    def __init__(self, page: Page, visitor, on_visitor_synchronized, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.page = page
         self.on_visitor_synchronized = on_visitor_synchronized
-        self.visitor = None
+        self.visitor = visitor
         self.visitor_id_field = ft.TextField(border_color='#919993')
         self.anonymous_id_field = ft.TextField(border_color='#919993', read_only=True)
         self.authenticated_switch = ft.Switch(value=False)
@@ -276,7 +279,7 @@ class VisitorView(ft.Container):
         self.update_context_field = ft.TextField(border_color='#919993', value="{\n\n\n\n\n\n\n\n\n}", width=600,
                                                  multiline=True, min_lines=10, max_lines=10)
         self.authenticate_field = ft.TextField(border_color='#919993')
-        self.update_consent_switch = ft.Switch(value=False, on_change=self.on_consent_changed)
+        self.update_consent_switch = ft.Switch(value=True, on_change=self.on_consent_changed)
         self.load_visitor_from_cache()
         self.content = ft.Stack(
             controls=[
@@ -489,7 +492,9 @@ class VisitorView(ft.Container):
 
     def on_consent_changed(self, e):
         try:
+            print("CHANGED CONSENT BUT VISITOR IS NONE : " + str(self.update_consent_switch.value))
             if self.visitor is not None:
+                print("CHANGED CONSENT : " + str(self.update_consent_switch.value))
                 self.visitor.set_consent(self.update_consent_switch.value)
                 self.update_visitor_front()
                 self.visitor.fetch_flags()
@@ -966,7 +971,8 @@ class Content(ft.Container):
                 configuration_view.padding = ft.Padding(20, 0, 0, 0)
                 return configuration_view
             elif self.index == 1:
-                visitor_view = VisitorView(self.page, self.on_visitor_synchronized)
+                visitor = self.visitor if self.visitor is not None else None
+                visitor_view = VisitorView(self.page, visitor, self.on_visitor_synchronized)
                 visitor_view.padding = ft.Padding(20, 0, 0, 0)
                 return visitor_view
             elif self.index == 2:
@@ -1083,8 +1089,10 @@ class CustomLogManager(LogManager):
         print("[{}][{}][{}]: {}".format(now, tag, str(level), message))
         self.on_log(tag, level, message)
 
-    def exception(self, tag, exception, traceback):
-        pass
+    def exception(self, tag, exception, traceback_err):
+        now = datetime.now().strftime("%d-%m-%Y %H:%M:%S")
+        print("[{}][{}][{}]: {}".format(now, tag, str(LogLevel.ERROR), str(traceback_err)))
+        # self.on_log(tag, LogLevel.ERROR, traceback_err.print_exc())
 
 
 def main(page: ft.Page):

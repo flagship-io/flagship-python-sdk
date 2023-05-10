@@ -72,13 +72,19 @@ class VariationGroup:
                 variation_obj = variation_group_obj['variation']
                 new_variation = Variation.parse(campaign_id, campaign_type, campaign_slug, variation_group_id,
                                                 variation_obj, bucketing)
-                if new_variation is not None:
+                if new_variation is None:
+                    return None
+                else:
                     variations[new_variation.variation_id] = new_variation
             else:
                 for variation_obj in variation_group_obj['variations']:
                     new_variation = Variation.parse(campaign_id, campaign_type, campaign_slug, variation_group_id,
                                                     variation_obj, bucketing)
-                    variations[new_variation.variation_id] = new_variation
+                    if new_variation is None:
+                        return None
+                    else:
+                        variations[new_variation.variation_id] = new_variation
+                    # end loop
             targeting_groups = None
             if 'targeting' in variation_group_obj:
                 targeting_obj = variation_group_obj['targeting']

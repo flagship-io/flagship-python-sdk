@@ -53,7 +53,7 @@ class ConfigManager:
         if self.tracking_manager is None:
             self.tracking_manager = TrackingManager(self.flagship_config, self.cache_manager)
         self.tracking_manager.init(self.flagship_config, self.cache_manager)
-        self.tracking_manager.start_running()
+        # self.tracking_manager.start_running()
 
     def is_set(self):
         return self.flagship_config.is_set() and self.decision_manager is not None
