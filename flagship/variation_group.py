@@ -39,6 +39,10 @@ class VariationGroup:
             cached_variation_id = visitor.assignations[self.variation_group_id] if self.variation_group_id in visitor.assignations else None
             if cached_variation_id is not None and cached_variation_id in self.variations:
                 return self.variations[cached_variation_id]
+            elif cached_variation_id is not None:
+                # Variation exists in cache but is not anymore present in the bucketing file for this variation group.
+                # Then this should be ignored.
+                return None
             else:
                 murmur_allocation = self._get_murmur_allocation(self.variation_group_id, visitor.visitor_id)
                 p = 0
