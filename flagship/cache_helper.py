@@ -76,7 +76,7 @@ def load_visitor_from_json(visitor, visitor_data):
         version = visitor_data['version']
         data = visitor_data['data']
         migrations[version - 1](visitor, data)
-    except Exception as e:
+    except Exception:
         # log_exception(TAG_CACHE_MANAGER, e, traceback.format_exc())
         raise VisitorCacheFormatException(visitor.visitor_id)
 

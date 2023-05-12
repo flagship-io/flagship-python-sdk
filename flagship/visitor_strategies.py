@@ -1,4 +1,5 @@
 import asyncio
+import sys
 import traceback
 from abc import ABCMeta, abstractmethod
 from enum import Enum
@@ -143,11 +144,18 @@ class DefaultStrategy(IVisitorStrategy):
                 from flagship.cache_helper import visitor_to_cache_json
                 asyncio.run(self.visitor_cache_interface.cache_visitor(self.visitor.visitor_id, visitor_to_cache_json(self.visitor)))
         except Exception as e:
-            if type(e) is asyncio.exceptions.TimeoutError:
-                log(TAG_CACHE_MANAGER, LogLevel.ERROR,
-                    str(VisitorCacheTimeoutException("cache_visitor()", self.visitor.visitor_id)))
+            if sys.version_info[0] < 3.8:
+                if isinstance(e, asyncio.TimeoutError):
+                    log(TAG_CACHE_MANAGER, LogLevel.ERROR,
+                        str(VisitorCacheTimeoutException("cache_visitor()", self.visitor.visitor_id)))
+                else:
+                    log(TAG_CACHE_MANAGER, LogLevel.ERROR, str(e))
             else:
-                log(TAG_CACHE_MANAGER, LogLevel.ERROR, str(e))
+                if isinstance(e, asyncio.exceptions.TimeoutError):
+                    log(TAG_CACHE_MANAGER, LogLevel.ERROR,
+                        str(VisitorCacheTimeoutException("cache_visitor()", self.visitor.visitor_id)))
+                else:
+                    log(TAG_CACHE_MANAGER, LogLevel.ERROR, str(e))
 
     def lookup_visitor(self):
         try:
@@ -160,22 +168,36 @@ class DefaultStrategy(IVisitorStrategy):
                 if visitor_data:
                     load_visitor_from_json(self.visitor, visitor_data)
         except Exception as e:
-            if type(e) is asyncio.exceptions.TimeoutError:
-                log(TAG_CACHE_MANAGER, LogLevel.ERROR,
-                    str(VisitorCacheTimeoutException("lookup_visitor()", self.visitor.visitor_id)))
+            if sys.version_info[0] < 3.8:
+                if isinstance(e, asyncio.TimeoutError):
+                    log(TAG_CACHE_MANAGER, LogLevel.ERROR,
+                        str(VisitorCacheTimeoutException("lookup_visitor()", self.visitor.visitor_id)))
+                else:
+                    log(TAG_CACHE_MANAGER, LogLevel.ERROR, str(e))
             else:
-                log(TAG_CACHE_MANAGER, LogLevel.ERROR, str(e))
+                if isinstance(e, asyncio.exceptions.TimeoutError):
+                    log(TAG_CACHE_MANAGER, LogLevel.ERROR,
+                        str(VisitorCacheTimeoutException("lookup_visitor()", self.visitor.visitor_id)))
+                else:
+                    log(TAG_CACHE_MANAGER, LogLevel.ERROR, str(e))
 
     def flush_visitor(self):
         try:
             if self.visitor_cache_interface is not None:
                 asyncio.run(self.visitor_cache_interface.flush_visitor(self.visitor.visitor_id))
         except Exception as e:
-            if type(e) is asyncio.exceptions.TimeoutError:
-                log(TAG_CACHE_MANAGER, LogLevel.ERROR,
-                    str(VisitorCacheTimeoutException("flush_visitor()", self.visitor.visitor_id)))
+            if sys.version_info[0] < 3.8:
+                if isinstance(e, asyncio.TimeoutError):
+                    log(TAG_CACHE_MANAGER, LogLevel.ERROR,
+                        str(VisitorCacheTimeoutException("flush_visitor()", self.visitor.visitor_id)))
+                else:
+                    log(TAG_CACHE_MANAGER, LogLevel.ERROR, str(e))
             else:
-                log(TAG_CACHE_MANAGER, LogLevel.ERROR, str(e))
+                if isinstance(e, asyncio.exceptions.TimeoutError):
+                    log(TAG_CACHE_MANAGER, LogLevel.ERROR,
+                        str(VisitorCacheTimeoutException("flush_visitor()", self.visitor.visitor_id)))
+                else:
+                    log(TAG_CACHE_MANAGER, LogLevel.ERROR, str(e))
 
     def flush_hits(self):
         try:
