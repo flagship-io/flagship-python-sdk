@@ -68,6 +68,9 @@ class HitFields:
 
 
 class Hit(object):
+
+    HIT_EXPIRATION = 14400000
+
     @param_types_validator(True, HitType)
     def __init__(self, hit_type):
         self.type = hit_type
@@ -156,6 +159,8 @@ class Hit(object):
         return sys.getsizeof(self.hit_data)
 
     def check_data_validity(self):
+        if not ((int(time.time()) * 1000) - self.timestamp) < Hit.HIT_EXPIRATION:
+            return False
         if (not bool(self.hit_data[HitFields.type]) or
                 (self.hit_data[HitFields.ds] != 'APP')):
             return False
@@ -188,11 +193,6 @@ class Page(Hit):
         self.hit_data.update(data)
 
     def check_data_validity(self):
-        # try:
-        #     import urlparse
-        # except:
-        #     from urllib.parse import urlparse
-
         from urllib.parse import urlparse
         if ((Hit.check_data_validity(self) is False) or
                 (not bool(self.hit_data[HitFields.origin])) or
@@ -528,11 +528,17 @@ class _Activate(Hit):
         # self._data.update(data)
 
     def check_data_validity(self):
+        if not ((int(time.time()) * 1000) - self.timestamp) < Hit.HIT_EXPIRATION:
+            return False
         if ((not bool(self.hit_data[HitFields.visitor_id])) or
                 (not bool(self.hit_data[HitFields.variation_group_id])) or
                 (not bool(self.hit_data[HitFields.variation_id]))):
             return False
         return True
+
+    def data(self):
+        self.hit_data[HitFields.queue_time] = (int((time.time()) * 1000) - self.timestamp)
+        return self.hit_data
 
     @staticmethod
     def from_json(content):

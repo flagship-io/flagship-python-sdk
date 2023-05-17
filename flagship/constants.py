@@ -1,11 +1,14 @@
 # URLS
+
 URL_DECISION_API = "https://decision.flagship.io/v2/"
 URL_CAMPAIGNS = "/campaigns/?exposeAllKeys=true"
 URL_TRACKING = "https://events.flagship.io/"
 URL_ACTIVATE = URL_DECISION_API + "activate"
 URL_BUCKETING = "https://cdn.flagship.io/{}/bucketing.json"
-URL_CONTEXT = "https://decision.flagship.io/v2/{}/events"
-# URL_CONTEXT_PARAM = "&sendContextEvent=false"
+
+
+
+
 
 # TAGS
 TAG_MAIN = "Flagship"

@@ -61,15 +61,15 @@ class HttpHelper:
 
     @staticmethod
     def send_hit(config, hit):
+        import flagship
+        headers = {
+            "x-sdk-client": "python",
+            "x-sdk-version": flagship.__version__
+        }
+        body = {
+            "cid": config.env_id
+        }
         try:
-            import flagship
-            headers = {
-                "x-sdk-client": "python",
-                "x-sdk-version": flagship.__version__
-            }
-            body = {
-                "cid": config.env_id
-            }
             body.update(hit.data())
             timeout = config.tracking_manager_config.timeout / 1000.0
             response = requests.post(url=URL_TRACKING, headers=headers, json=body, timeout=timeout)
@@ -128,7 +128,7 @@ class HttpHelper:
                 HttpHelper.log_request(HttpHelper.RequestType.POST, URL_ACTIVATE, headers, body, response)
                 return response
             except Exception as e:
-                HttpHelper.log_request(HttpHelper.RequestType.POST, URL_TRACKING, headers, body, None)
+                HttpHelper.log_request(HttpHelper.RequestType.POST, URL_ACTIVATE, headers, body, None)
         return None
 
     # @staticmethod
