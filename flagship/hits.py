@@ -265,7 +265,7 @@ class Event(Hit):
         Set the event description.
 
         :param label: event description. Max length 500 Bytes.
-        :return: Page
+        :return: Event
         """
         self.hit_data[HitFields.event_label] = label
         return self

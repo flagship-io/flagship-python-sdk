@@ -68,7 +68,7 @@ class CacheStrategy(Enum):
 
     def __init__(self, *args):
         """
-        This class specify the hits caching strategy to adopt into the TrackingManager and relies on the
+        This class specifies the hits caching strategy to adopt into the TrackingManager and relies on the
         HitCacheImplementation class that must be implemented in the CacheManager. Depending on the strategy the
         TrackingManager will request the CacheManager to CACHE, LOOK-UP or FLUSH hits from the linked database.
         """

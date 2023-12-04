@@ -209,7 +209,8 @@ class Visitor(IVisitorStrategy):
 
     def authenticate(self, visitor_id):
         """
-        Tag the current visitor as authenticated, This will insure to keep the same experience after fetch_flags().
+        This function will indicate to the SDK that the anonymous visitor is now authenticated,
+        this will insure to keep the same experience.
 
         Once authenticated, it is required to update the current flags by calling fetch_flags() again.
 
@@ -220,8 +221,7 @@ class Visitor(IVisitorStrategy):
 
     def unauthenticate(self):
         """
-        Tag the current visitor as unauthenticated, This will insure to get back to the initial experience after
-        fetch flags.
+        This function will indicate to the SDK the authenticated visitor is now un-authenticated and back to anonymous.
 
         Once unauthenticated, it is required to update the current flags by calling fetch_flags() again.
 

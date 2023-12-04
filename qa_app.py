@@ -711,7 +711,7 @@ class FlagView(ft.Container):
     def on_flag_exposed(self, e):
         flag: Flag = self.get_flag_from_flagship()
         if flag is not None:
-            flag.user_exposed()
+            flag.visitor_exposed()
 
     def on_visitor_synchronized(self, new_visitor: Visitor):
         if new_visitor is not None:

@@ -47,7 +47,10 @@ def test_visitor_creation_custom():
         'class': clazz()  # Won't be added
     }
     assert Flagship.get_visitor() is None
-    _visitor_2 = Flagship.new_visitor('_visitor_2', context=context, authenticated=True, consent=False,
+    _visitor_2 = Flagship.new_visitor('_visitor_2',
+                                      context=context,
+                                      authenticated=True,
+                                      consent=False,
                                       instance_type=Visitor.Instance.SINGLE_INSTANCE)
     assert _visitor_2.visitor_id == '_visitor_2'
     assert _visitor_2.anonymous_id is not None
@@ -194,19 +197,19 @@ def test_visitor_xpc():
     visitor = Flagship.new_visitor('anonymous', instance_type=Visitor.Instance.NEW_INSTANCE)
     # anonymous
     visitor.fetch_flags()
-    visitor.get_flag("visitorIdColor", "default").user_exposed()
+    visitor.get_flag("visitorIdColor", "default").visitor_exposed()
     visitor.send_hit(Screen("test_visitor.py"))
     sleep(0.3)
     # authenticate user_001
     visitor.authenticate("user_001")
     visitor.fetch_flags()
-    visitor.get_flag("visitorIdColor", "default").user_exposed()
+    visitor.get_flag("visitorIdColor", "default").visitor_exposed()
     visitor.send_hit(Screen("test_visitor.py"))
     sleep(0.3)
     # unauthenticate
     visitor.unauthenticate()
     visitor.fetch_flags()
-    visitor.get_flag("visitorIdColor", "default").user_exposed()
+    visitor.get_flag("visitorIdColor", "default").visitor_exposed()
     visitor.send_hit(Screen("test_visitor.py"))
     sleep(0.3)
     calls = responses.calls._calls
@@ -282,7 +285,7 @@ def test_visitor_strategy_panic():
     assert Flagship.status() == Flagship.status().PANIC
     visitor.update_context(("key", "value"))
     visitor.authenticate("user_001")
-    visitor.get_flag("visitorIdColor", "default").user_exposed()
+    visitor.get_flag("visitorIdColor", "default").visitor_exposed()
     visitor.send_hit(Screen("test_visitor.py"))
     visitor.fetch_flags()
     visitor.set_consent(True)
@@ -301,7 +304,7 @@ def test_visitor_strategy_panic():
     visitor.fetch_flags()
     visitor.update_context(("key", "value"))
     visitor.authenticate("user_001")
-    visitor.get_flag("visitorIdColor", "default").user_exposed()
+    visitor.get_flag("visitorIdColor", "default").visitor_exposed()
     visitor.send_hit(Screen("test_visitor.py"))
     visitor.fetch_flags()
     visitor.set_consent(False)
@@ -337,7 +340,7 @@ def test_visitor_strategy_not_ready():
     assert Flagship.status() == Flagship.status().NOT_INITIALIZED
     visitor.update_context(("key", "value"))
     visitor.authenticate("user_001")
-    visitor.get_flag("visitorIdColor", "default").user_exposed()
+    visitor.get_flag("visitorIdColor", "default").visitor_exposed()
     visitor.send_hit(Screen("test_visitor.py"))
     visitor.fetch_flags()
     visitor.set_consent(True)
@@ -378,7 +381,7 @@ def test_visitor_strategy_no_consent():
     visitor.fetch_flags() # +1
     visitor.update_context(("key", "value"))
     visitor.authenticate("user_001")
-    visitor.get_flag("visitorIdColor", "default").user_exposed()  ## X
+    visitor.get_flag("visitorIdColor", "default").visitor_exposed()  ## X
     visitor.send_hit(Screen("test_visitor.py"))  ## X
     visitor.fetch_flags() # +1
     visitor.set_consent(True)  # +1

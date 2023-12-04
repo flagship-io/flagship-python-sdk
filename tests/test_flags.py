@@ -25,6 +25,8 @@ def test_visitor_get_flags():
     class clazz():
         pass
 
+    flag = _visitor_7.get_flag("int_do_not_exists", 4)
+    assert flag.value(False) == 4
     assert _visitor_7.get_flag("int_do_not_exists", 4).value(False) == 4
     assert _visitor_7.get_flag("int_do_not_exists", 4).exists() is False
     assert _visitor_7.get_flag("string_do_not_exists", "nope").value(False) == "nope"
@@ -125,7 +127,7 @@ def test_flag_metadata():
 
 
 @responses.activate
-def test_flag_user_exposed():
+def test_flag_visitor_exposed():
     Flagship.stop()
     responses.add(responses.POST, DECISION_API_URL, json=json.loads(API_RESPONSE_1), status=200)
     # responses.add(responses.POST, ARIANE_URL, body="", status=200)
@@ -139,7 +141,7 @@ def test_flag_user_exposed():
 
     _visitor_9.fetch_flags()
 
-    _visitor_9.get_flag("visitorIdColor", "default").user_exposed()
+    _visitor_9.get_flag("visitorIdColor", "default").visitor_exposed()
     _visitor_9.get_flag("title", "default").value(True)
     assert _visitor_9.get_flag('string', "default").value(False) == "default"
     assert _visitor_9.get_flag('string', "default").value(True) == "default"

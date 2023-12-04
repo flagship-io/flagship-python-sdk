@@ -1,5 +1,6 @@
 from collections import OrderedDict
 
+
 class FlagMetadata:
     """
     This class contains the flag campaign information.

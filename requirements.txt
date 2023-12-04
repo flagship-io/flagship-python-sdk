@@ -1,4 +1,4 @@
-requests >=2.27.1
+requests >=2.31.0
 pytest >=4.6.11
 typing ~=3.7.4.3
 six ~=1.16.0

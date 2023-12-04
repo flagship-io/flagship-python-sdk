@@ -26,7 +26,7 @@ class _FlagshipConfig(object):
         self.env_id = self.get_arg(kwargs, 'env_id', str) or self.__env_id
         self.api_key = self.get_arg(kwargs, 'api_key', str) or self.__api_key
         self.log_level = self.get_arg(kwargs, 'log_level', LogLevel) or LogLevel.ALL
-        self.log_manager = self.get_arg(kwargs, 'log_manager', LogManager) or FlagshipLogManager(LogLevel.ALL)
+        self.log_manager = self.get_arg(kwargs, 'log_manager', LogManager) or FlagshipLogManager(self.log_level)
         self.polling_interval = self.get_arg(kwargs, 'polling_interval', type(1)) or 60000
         self.timeout = self.get_arg(kwargs, 'timeout', type(1)) or 2000
         self.status_listener = self.get_arg(kwargs, 'status_listener', StatusListener) or None

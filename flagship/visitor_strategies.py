@@ -286,7 +286,7 @@ class NotReadyStrategy(DefaultStrategy):
             ERROR_METHOD_DEACTIVATED.format("send_hit()", ERROR_METHOD_DEACTIVATED_NOT_READY
                                             .format(self.visitor.visitor_id)))
 
-    def update_context(self, context):
+    def     update_context(self, context):
         log(TAG_TRACKING, LogLevel.ERROR,
             ERROR_METHOD_DEACTIVATED.format("update_context()", ERROR_METHOD_DEACTIVATED_NOT_READY
                                             .format(self.visitor.visitor_id)))
