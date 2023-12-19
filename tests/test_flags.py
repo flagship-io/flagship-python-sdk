@@ -129,6 +129,7 @@ def test_flag_metadata():
 @responses.activate
 def test_flag_visitor_exposed():
     Flagship.stop()
+    responses.reset()
     responses.add(responses.POST, DECISION_API_URL, json=json.loads(API_RESPONSE_1), status=200)
     # responses.add(responses.POST, ARIANE_URL, body="", status=200)
     responses.add(responses.POST, EVENTS_URL, body="", status=200)

@@ -2,8 +2,6 @@ from __future__ import absolute_import
 
 import json
 
-import six
-
 import flagship
 from flagship.constants import TAG_CONFIG_PARAM, WARNING_CONFIGURATION_PARAM_TYPE, WARNING_CONFIGURATION_PARAM_MIN_MAX
 
@@ -94,7 +92,7 @@ def pretty_dict(node, indent=2, string="", first=True):
     else:
         if node is None:
             string += "null"
-        elif isinstance(node, six.string_types):
+        elif isinstance(node, str):
             string += ('"{}"'.format(node))
         elif isinstance(node, bool):
             string += ('{}'.format("true" if node is True else "false"))

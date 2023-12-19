@@ -35,3 +35,6 @@ flagship.egg-info/top_level.txt
 *.decision
 tests/cache/
 cache/
+pytestdebug.log
+dependencies/
+.python-version

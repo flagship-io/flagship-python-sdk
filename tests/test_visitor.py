@@ -138,6 +138,7 @@ def test_visitor_update_context():
 @responses.activate
 def test_visitor_consent():
     Flagship.stop()
+    responses.calls.reset()
     responses.add(responses.POST, DECISION_API_URL, json=json.loads(API_RESPONSE_1), status=200)
     # responses.add(responses.POST, ARIANE_URL, body="", status=200)
     responses.add(responses.POST, EVENTS_URL, body="", status=200)
@@ -145,7 +146,7 @@ def test_visitor_consent():
     Flagship.start('_env_id_', '_api_key_', DecisionApi(tracking_manager_config=TrackingManagerConfig(
                                                     cache_strategy=CacheStrategy._NO_BATCHING_CONTINUOUS_CACHING)))
 
-    _visitor_10 = Flagship.new_visitor('_visitor_10', instance_type=Visitor.Instance.NEW_INSTANCE)
+    _visitor_10 = Flagship.new_visitor('_visitor_10', instance_type=Visitor.Instance.NEW_INSTANCE)#1
     _visitor_11 = Flagship.new_visitor('_visitor_11', instance_type=Visitor.Instance.NEW_INSTANCE, consent=False)
     _visitor_11.set_consent(True)
     sleep(0.3)

@@ -64,6 +64,7 @@ class TrackingManagerCacheStrategyInterface(object):
         pass
 
 
+
 class CacheStrategy(Enum):
 
     def __init__(self, *args):
@@ -92,6 +93,14 @@ class CacheStrategy(Enum):
 
     _NO_BATCHING_CONTINUOUS_CACHING = '_NO_BATCHING_CONTINUOUS_CACHING'
 
+class ClosingStrategy(Enum):
+    def __init__(self, *args):
+        pass
+
+    CACHE_PENDING_HITS = 'CACHE_PENDING_HITS'
+    BATCH_PENDING_HITS = 'BATCH_PENDING_HITS'
+
+
 
 class TrackingManagerConfig:
 
@@ -117,6 +126,7 @@ class TrackingManagerConfig:
         self.timeout = get_args_or_default('timeout', int, self.DEFAULT_TIMEOUT, kwargs)
         self.time_interval = get_args_or_default_with_min_max('time_interval', int, self.DEFAULT_TIME_INTERVAL, kwargs, 200, 10800000)
         self.max_pool_size = get_args_or_default_with_min_max('max_pool_size', int, self.DEFAULT_MAX_POOL_SIZE, kwargs, 0, 5000)
+        self.closing_strategy = get_args_or_default('closing_strategy', ClosingStrategy, ClosingStrategy.BATCH_PENDING_HITS, kwargs)
 
     def to_dict(self):
         return {
@@ -191,14 +201,16 @@ class TrackingManager(TrackingManagerCacheStrategyInterface, Thread):
             for h in self.hitQueue.queue:
                 print(str(tag) + " / " + str(h))
 
-    def stop_running(self, do_last_polling=True):
+    def stop_running(self, ):
         if self.strategy == CacheStrategy._NO_BATCHING_CONTINUOUS_CACHING:
-            if do_last_polling:
+            if self.tracking_manager_config.closing_strategy == ClosingStrategy.CACHE_PENDING_HITS:
                 self.cache_pool()
         if self.running is True:
             self.running = False
-            if do_last_polling:
+            if self.tracking_manager_config.closing_strategy == ClosingStrategy.CACHE_PENDING_HITS:
                 self.cache_pool()
+            else:
+                self.polling()
             log(TAG_TRACKING_MANAGER, LogLevel.DEBUG, DEBUG_TRACKING_MANAGER_STOPPED)
 
     def add_hit(self, hit, new=True):

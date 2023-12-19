@@ -209,7 +209,7 @@ def test_hit_custom_cache_manager_panic():
     visitor.send_hit(Screen("test_hit_panic_3"))  # +1 Screen
     visitor.fetch_flags()  # call /campaign => PANIC
     time.sleep(0.2)
-    assert custom_cache_manager.nb_cached_hits == 8
+    assert custom_cache_manager.nb_cached_hits == 4
     # assert custom_cache_manager.nb_cached_hits == 0  # PANIC
 
     responses.reset()
@@ -729,82 +729,3 @@ def test_visitor_timeout():
 
     assert clm.nb_timeout == 1
 
-@responses.activate
-def test_____():
-    Flagship.start(env_id, api_key, DecisionApi(tracking_manager_config=TrackingManagerConfig(
-                                                    cache_strategy=CacheStrategy.PERIODIC_CACHING,
-                                                    max_pool_size=10,
-                                                    time_interval=2000)))
-    class CustomCacheManager(CacheManager, VisitorCacheImplementation, HitCacheImplementation):
-        def __init__(self):
-            super().__init__()
-
-        def open_database(self, env_id):
-            #Create or open your database
-            pass
-
-        def close_database(self):
-            #close your database
-            pass
-
-        async def cache_visitor(self, visitor_id, data):
-            #Upsert visitor information corresponding to the given id into your database here.
-            pass
-
-        async def lookup_visitor(self, visitor_id):
-            #Load and return visitor information corresponding to the given id from your database here.
-            pass
-
-        async def flush_visitor(self, visitor_id):
-            #Delete visitor information corresponding to the given id from your database here.
-            pass
-
-        def cache_hits(self, hits):
-            #Cache the given hits into your database here.
-            pass
-        async def lookup_hits(self):
-            #Load and return all the cached hits from your database here.
-            pass
-
-        def flush_hits(self, hits_ids):
-            #Delete hits corresponding to the given id from your database here.
-            pass
-
-        def flush_all_hits(self):
-            #Delete all the hits cached hits from your database here.
-            pass
-
-    Flagship.stop()
-    remove_db()
-    responses.reset()
-    responses.add(responses.POST, DECISION_API_URL, json=json.loads(API_RESPONSE_3), status=200)  # PANIC
-    responses.add(responses.POST, EVENTS_URL, body="", status=200)
-    responses.add(responses.POST, ACTIVATE_URL, body="", status=200)
-
-    custom_cache_manager = CustomCacheManager()
-    Flagship.start(env_id, api_key, DecisionApi(timeout=3000,
-                                                tracking_manager_config=TrackingManagerConfig(max_pool_size=10,
-                                                                                              time_interval=2000),
-                                                cache_manager=custom_cache_manager))
-    time.sleep(0.1)  # time to let first polling
-    visitor = Flagship.new_visitor("test_visitor_1", instance_type=Visitor.Instance.SINGLE_INSTANCE)  # +1 consent
-    visitor.send_hit(Screen("test_hit_panic_1"))  # +1 Screen
-    visitor.send_hit(Screen("test_hit_panic_2"))  # +1 Screen
-    visitor.send_hit(Screen("test_hit_panic_3"))  # +1 Screen
-    visitor.fetch_flags()  # call /campaign => PANIC
-    time.sleep(0.2)
-    assert custom_cache_manager.nb_cached_hits == 8
-    # assert custom_cache_manager.nb_cached_hits == 0  # PANIC
-
-    responses.reset()
-    responses.add(responses.POST, DECISION_API_URL, json=json.loads(API_RESPONSE_1), status=200)
-    responses.add(responses.POST, EVENTS_URL, body="", status=200)
-    responses.add(responses.POST, ACTIVATE_URL, body="", status=200)
-    visitor = Flagship.new_visitor("test_visitor_1", instance_type=Visitor.Instance.SINGLE_INSTANCE)
-    visitor.fetch_flags()  # call /Campaign => READY (tracking manager restarted)
-    time.sleep(2)
-    calls = responses.calls._calls
-    body = json.loads(calls[1].request.body)
-    hit_array = body['h']
-    for k, v in custom_cache_manager.cached_hits.items():
-        assert v['data']['content'] in hit_array

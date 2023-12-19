@@ -1,6 +1,6 @@
 import traceback
 
-from six import string_types
+# from six import string_types
 from flagship.constants import TAG_PARSING_MODIFICATION, ERROR_PARSING_MODIFICATION
 from flagship.errors import FlagshipParsingError
 from flagship.utils import log_exception
@@ -52,7 +52,7 @@ class Modifications:
             for key in values_obj:
                 value = values_obj[key]
                 t = type(value)
-                if isinstance(value, string_types):
+                if isinstance(value, str):
                     value = str(value)
                 try:
                     # if value is None or t is int or t is float or t is str or t is bool or \

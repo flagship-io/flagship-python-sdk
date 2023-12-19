@@ -1,6 +1,8 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
+import importlib_metadata
+
 from flagship.config import _FlagshipConfig
 from flagship.config_manager import ConfigManager
 from flagship.constants import TAG_STATUS, INFO_STATUS_CHANGED, TAG_INITIALIZATION, INFO_READY, ERROR_CONFIGURATION, \
@@ -13,7 +15,7 @@ from flagship.utils import log
 from flagship.visitor import Visitor
 
 __name__ = 'flagship'
-__version__ = '3.0.0'
+__version__ = importlib_metadata.distribution(__name__).version
 
 
 class Flagship:
