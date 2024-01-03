@@ -38,3 +38,4 @@ cache/
 pytestdebug.log
 dependencies/
 .python-version
+coverage.xml
