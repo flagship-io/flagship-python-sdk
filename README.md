@@ -1,6 +1,6 @@
 <p align="center">
 
-<img  src="https://mk0abtastybwtpirqi5t.kinstacdn.com/wp-content/uploads/picture-solutions-persona-product-flagship.jpg"  width="211"  height="182"  alt="flagship-python"  />
+<img  src="https://theme.zdassets.com/theme_assets/301238/72efad8140da2942f51b02aa002742a481cb69e2.svg"  width="211"  height="182"  alt="flagship-python"  />
 
 </p>
 
@@ -16,16 +16,7 @@
 ## Docs
 
 - [Installation](https://docs.developers.flagship.io/docs/python-installation)
-- [Get Started](https://developers.flagship.io/docs/sdk/python/v2.0#getting-started)
-- [Initialize and start](https://developers.flagship.io/docs/sdk/python/v2.0#initialization)
-- [Create a visitor](https://developers.flagship.io/docs/sdk/python/v2.0#updating-the-user-context)
-- [Campaign integration](https://developers.flagship.io/docs/sdk/python/v2.0#campaign-synchronization)
-- [Hit tracking](https://developers.flagship.io/docs/sdk/python/v2.0#hit-tracking)
-- [Release Notes](https://developers.flagship.io/docs/sdk/python/v2.0#release-notes)
-
-## Examples
-
-- [Ecommerce App](./examples/ecommerce)
+- [Reference](https://docs.developers.flagship.io/docs/python-reference)
 
 ## Contributors
 
