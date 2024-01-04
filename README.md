@@ -1,9 +1,3 @@
-<p align="center">
-
-<img  src="https://mk0abtastybwtpirqi5t.kinstacdn.com/wp-content/uploads/picture-solutions-persona-product-flagship.jpg"  width="211"  height="182"  alt="flagship-python"  />
-
-</p>
-
 <h3 align="center">Bring your features to life</h3>
 
 [![python](https://img.shields.io/badge/python-3.8%20%7C%203.9%20%7C%203.10%20%7C%203.11-blue)]()
@@ -15,17 +9,8 @@
 
 ## Docs
 
-- [Installation](https://developers.flagship.io/docs/sdk/python/v2.0#installation)
-- [Get Started](https://developers.flagship.io/docs/sdk/python/v2.0#getting-started)
-- [Initialize and start](https://developers.flagship.io/docs/sdk/python/v2.0#initialization)
-- [Create a visitor](https://developers.flagship.io/docs/sdk/python/v2.0#updating-the-user-context)
-- [Campaign integration](https://developers.flagship.io/docs/sdk/python/v2.0#campaign-synchronization)
-- [Hit tracking](https://developers.flagship.io/docs/sdk/python/v2.0#hit-tracking)
-- [Release Notes](https://developers.flagship.io/docs/sdk/python/v2.0#release-notes)
-
-## Examples
-
-- [Ecommerce App](./examples/ecommerce)
+- [Installation](https://docs.developers.flagship.io/docs/python-installation)
+- [Reference](https://docs.developers.flagship.io/docs/python-reference)
 
 ## Contributors
 
