@@ -1,7 +1,3 @@
-<p align="center">
-<img  src="https://theme.zdassets.com/theme_assets/301238/72efad8140da2942f51b02aa002742a481cb69e2.svg"  alt="flagship-python"  />
-</p>
-
 <h3 align="center">Bring your features to life</h3>
 
 [![python](https://img.shields.io/badge/python-3.8%20%7C%203.9%20%7C%203.10%20%7C%203.11-blue)]()
