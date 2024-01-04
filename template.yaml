@@ -1,0 +1,40 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  FlagshipLambda
+
+  Sample SAM Template for FlagshipLambda
+
+# More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
+Globals:
+  Function:
+    Timeout: 20
+    MemorySize: 128
+    Layers:
+      - !Ref FlagshipAWSLambdaLayer
+
+Resources:
+  FlagshipAWSLambdaFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: lambda.lambda_handler
+      CodeUri: ./lambda
+      Runtime: python3.7
+      Architectures:
+        - x86_64
+    Metadata:
+      SamResourceId: FlagshipAWSLambdaFunction
+
+  FlagshipAWSLambdaLayer:
+    Type: AWS::Serverless::LayerVersion
+    Properties:
+      LayerName: flagship-dependency
+      Description: Dependencies for the lambda sample app.
+      ContentUri: ./dependencies/python/
+      CompatibleRuntimes:
+        - python3.7
+    Metadata:
+      SamResourceId: FlagshipAWSLambdaLayer
+      BuildMethod: python3.7
+
+

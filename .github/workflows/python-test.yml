@@ -1,9 +1,10 @@
-name: CI Python release
+name: Python test
 
 on:
   push:
-    tags:
-      - '*.*.*'
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
 
 jobs:
   test:
@@ -11,6 +12,7 @@ jobs:
       matrix:
         os: [ "ubuntu-latest" ]
         python-version: ['3.8', '3.9', '3.10', '3.11']
+#        python-version: ['3.7', '3.8', '3.9', '3.10', '3.11']
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v3
@@ -42,9 +44,4 @@ jobs:
         with:
           file: ./coverage.xml
           fail_ci_if_error: false
-      - name: Build and publish library
-        if: matrix.python-version == 3.8
-        run: |
-#          poetry config repositories.testpypi https://test.pypi.org/legacy/
-          poetry config pypi-token.testpypi ${{ secrets.PYPI_TOKEN }}
-          poetry publish -r testpypi --build
+
