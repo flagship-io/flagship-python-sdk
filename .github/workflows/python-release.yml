@@ -45,6 +45,5 @@ jobs:
       - name: Build and publish library
         if: matrix.python-version == 3.8
         run: |
-#          poetry config repositories.testpypi https://test.pypi.org/legacy/
-          poetry config pypi-token.testpypi ${{ secrets.PYPI_TOKEN }}
-          poetry publish -r testpypi --build
+          poetry config pypi-token.pypi ${{ secrets.PYPI_TOKEN }}
+          poetry publish --build
