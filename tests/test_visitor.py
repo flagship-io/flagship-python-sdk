@@ -1,472 +1,397 @@
 import json
-import time
-import traceback
-from flagship.app import Flagship
-from flagship.config import Config
+from time import sleep
+
 import responses
-from flagship.handler import FlagshipEventHandler
-from flagship.helpers.hits import Page, Event, EventCategory, Transaction, Item, Screen
+
+from flagship import Flagship, Visitor
+from flagship.config import DecisionApi
+from flagship.flagship_context import FlagshipContext
+from flagship.hits import Screen
+from flagship.log_manager import LogManager
+from flagship.tracking_manager import TrackingManagerConfig, CacheStrategy
+from test_constants_res import API_RESPONSE_1, DECISION_API_URL, ACTIVATE_URL, \
+    API_RESPONSE_3, EVENTS_URL
 
 
-def test_create_visitor_wrong_param():
-    fs = Flagship.instance()
-    fs.start("my_env_id", "my_api_key", Config(event_handler=None))
-    try:
-        visitor = fs.create_visitor(1, False, None)
-        assert False
-    except Exception as e:
-        assert True
+def test_visitor_creation_default():
+    Flagship.start('_env_id_', '_api_key_', DecisionApi())
+
+    _visitor_1 = Flagship.new_visitor('_visitor_1')
+    assert _visitor_1.visitor_id == '_visitor_1'
+    assert _visitor_1.anonymous_id is None
+    assert len(_visitor_1.context) == 2
+    assert _visitor_1.context['fs_version'] == get_version()
+    assert _visitor_1.context['fs_client'] == 'python'
+    assert _visitor_1.is_authenticated is False
+    assert _visitor_1.has_consented is True
+    assert _visitor_1._configuration_manager is not None
+    assert _visitor_1._config is not None
+    assert isinstance(_visitor_1._config, DecisionApi)
+    assert len(_visitor_1._modifications) == 0
 
 
-def test_create_visitor():
-    fs = Flagship.instance()
-    fs.start("my_env_id", "my_api_key", Config(event_handler=None))
+def test_visitor_creation_custom():
+    Flagship.stop()
+    Flagship.start('_env_id_', '_api_key_', DecisionApi())
 
-    try:
-        visitor = fs.create_visitor("Pam", False, {'isVIP': True})
-        assert visitor._visitor_id == 'Pam'
-        assert visitor._context['isVIP'] is True
-        assert visitor._env_id == "my_env_id"
-        assert visitor._api_key == "my_api_key"
-        assert visitor._api_manager is not None
-        assert visitor._api_manager._env_id == "my_env_id"
-        assert visitor._api_manager.api_key == "my_api_key"
-        assert len(visitor._modifications) == 0
-        assert True
-    except Exception as e:
-        print(traceback.print_exc())
-        assert False
+    class clazz:
+        pass
+
+    context = {
+        'wrong': dict(),  # Won't be added
+        'float': 3.14,
+        'int': 12,
+        'str': 'custom_string',
+        'none': None,  # Won't be added
+        'bool': False,
+        'class': clazz()  # Won't be added
+    }
+    assert Flagship.get_visitor() is None
+    _visitor_2 = Flagship.new_visitor('_visitor_2',
+                                      context=context,
+                                      authenticated=True,
+                                      consent=False,
+                                      instance_type=Visitor.Instance.SINGLE_INSTANCE)
+    assert _visitor_2.visitor_id == '_visitor_2'
+    assert _visitor_2.anonymous_id is not None
+    assert len(_visitor_2.context) == 6
+    assert _visitor_2.context['fs_version'] == get_version()
+    assert _visitor_2.context['fs_client'] == 'python'
+    assert _visitor_2.is_authenticated is True
+    assert _visitor_2.has_consented is False
+    assert _visitor_2._configuration_manager is not None
+    assert _visitor_2._config is not None
+    assert isinstance(_visitor_2._config, DecisionApi)
+    assert len(_visitor_2._modifications) == 0
+
+
+def test_visitor_creation_instance():
+    Flagship.stop()
+
+    Flagship.start('_env_id_', '_api_key_', DecisionApi())
+
+    assert Flagship.get_visitor() is None
+
+    _visitor_3 = Flagship.new_visitor('_visitor_3', instance_type=Visitor.Instance.SINGLE_INSTANCE)
+
+    assert Flagship.get_visitor().visitor_id == '_visitor_3'
+
+    _visitor_4 = Flagship.new_visitor('_visitor_4', instance_type=Visitor.Instance.SINGLE_INSTANCE)
+
+    assert Flagship.get_visitor().visitor_id == '_visitor_4'
+
+    _visitor_5 = Flagship.new_visitor('_visitor_5', instance_type=Visitor.Instance.NEW_INSTANCE)
+
+    assert Flagship.get_visitor().visitor_id == '_visitor_4'
 
 
 def test_visitor_update_context():
-    fs = Flagship.instance()
-    fs.start("my_env_id", "my_api_key", Config(event_handler=None))
+    Flagship.start('_env_id_', '_api_key_', DecisionApi())
 
-    class Eight:
+    _visitor_6 = Flagship.new_visitor('_visitor_6', instance_type=Visitor.Instance.NEW_INSTANCE)
+
+    class clazz:
+        pass
+
+    context1 = {
+        'wrong': dict(),  # Won't be added
+        'float': 3.14,
+        'int': 12,
+        'str': 'custom_string',
+        'none': None,  # Won't be added
+        'bool': False,
+        'class': clazz(),  # Won't be added
+        'fs_client': 'not python',  # Won't be added
+        'fs_version': '0.0.0',  # Won't be added
+        'sdk_deviceType': 'unit_test',
+        'sdk_osName': 0,  # Won't be added
+        'sdk_interfaceName': 'test_visitor.py',
+        FlagshipContext.LOCATION_COUNTRY: 'France'
+
+    }
+    _visitor_6.update_context(context1)
+
+    assert len(_visitor_6.context) == 8  # +2 from preset context
+    assert _visitor_6.context['fs_version'] == get_version()
+    assert 'sdk_osName' not in _visitor_6.context
+    assert _visitor_6.context['sdk_interfaceName'] == 'test_visitor.py'
+    assert _visitor_6.context['int'] == 12
+    assert _visitor_6.context[FlagshipContext.LOCATION_COUNTRY.value[0]] == 'France'
+
+    _visitor_6.update_context(('sdk_interfaceName', 'test_visitor.py 2'))
+    _visitor_6.update_context(('fs_client', 'not python'))
+    _visitor_6.update_context(('sdk_osName', 'Ubuntu'))
+    _visitor_6.update_context(('class', clazz()))
+    _visitor_6.update_context(('int', 31))
+    _visitor_6.update_context((FlagshipContext.APP_VERSION_NAME, "unit_test"))
+    _visitor_6.update_context((FlagshipContext.APP_VERSION_CODE, "wrong"))
+
+    assert len(_visitor_6.context) == 10
+    assert _visitor_6.context['fs_version'] == get_version()
+    assert _visitor_6.context['sdk_interfaceName'] == 'test_visitor.py 2'
+    assert _visitor_6.context['int'] == 31
+    assert _visitor_6.context['sdk_osName'] == 'Ubuntu'
+    assert FlagshipContext.APP_VERSION_CODE.value[0] not in _visitor_6.context
+    assert _visitor_6.context[FlagshipContext.APP_VERSION_NAME.value[0]] == 'unit_test'
+
+
+@responses.activate
+def test_visitor_consent():
+    Flagship.stop()
+    responses.calls.reset()
+    responses.add(responses.POST, DECISION_API_URL, json=json.loads(API_RESPONSE_1), status=200)
+    # responses.add(responses.POST, ARIANE_URL, body="", status=200)
+    responses.add(responses.POST, EVENTS_URL, body="", status=200)
+
+    Flagship.start('_env_id_', '_api_key_', DecisionApi(tracking_manager_config=TrackingManagerConfig(
+                                                    cache_strategy=CacheStrategy._NO_BATCHING_CONTINUOUS_CACHING)))
+
+    _visitor_10 = Flagship.new_visitor('_visitor_10', instance_type=Visitor.Instance.NEW_INSTANCE)#1
+    _visitor_11 = Flagship.new_visitor('_visitor_11', instance_type=Visitor.Instance.NEW_INSTANCE, consent=False)
+    _visitor_11.set_consent(True)
+    sleep(0.3)
+    _visitor_11.set_consent(False)
+    sleep(0.3)
+    calls = responses.calls._calls
+    assert len(calls) == 4
+    for i in range(0, len(calls)):
+        c = calls[i]
+        if EVENTS_URL in c.request.url:
+            body = json.loads(c.request.body)
+            if i == 0:
+                assert body['t'] == 'EVENT'
+                assert body['ds'] == 'APP'
+                assert body['cid'] == '_env_id_'
+                assert body['vid'] == '_visitor_10'
+                assert body['ec'] == 'User Engagement'
+                assert body['ea'] == 'fs_consent'
+                assert body['el'] == 'python:true'
+            if i == 1 or i == 3:
+                assert body['t'] == 'EVENT'
+                assert body['ds'] == 'APP'
+                assert body['cid'] == '_env_id_'
+                assert body['vid'] == '_visitor_11'
+                assert body['ec'] == 'User Engagement'
+                assert body['ea'] == 'fs_consent'
+                assert body['el'] == 'python:false'
+            if i == 2:
+                assert body['t'] == 'EVENT'
+                assert body['ds'] == 'APP'
+                assert body['cid'] == '_env_id_'
+                assert body['vid'] == '_visitor_11'
+                assert body['ec'] == 'User Engagement'
+                assert body['ea'] == 'fs_consent'
+                assert body['el'] == 'python:true'
+
+
+@responses.activate
+def test_visitor_xpc():
+    Flagship.stop()
+    responses.add(responses.POST, DECISION_API_URL, json=json.loads(API_RESPONSE_1), status=200)
+    responses.add(responses.POST, EVENTS_URL, body="", status=200)
+    # responses.add(responses.POST, ARIANE_URL, body="", status=200)
+    responses.add(responses.POST, ACTIVATE_URL, body="", status=200)
+
+    Flagship.start('_env_id_', '_api_key_', DecisionApi(tracking_manager_config=TrackingManagerConfig(
+                                                    cache_strategy=CacheStrategy._NO_BATCHING_CONTINUOUS_CACHING)))
+
+    visitor = Flagship.new_visitor('anonymous', instance_type=Visitor.Instance.NEW_INSTANCE)
+    # anonymous
+    visitor.fetch_flags()
+    visitor.get_flag("visitorIdColor", "default").visitor_exposed()
+    visitor.send_hit(Screen("test_visitor.py"))
+    sleep(0.3)
+    # authenticate user_001
+    visitor.authenticate("user_001")
+    visitor.fetch_flags()
+    visitor.get_flag("visitorIdColor", "default").visitor_exposed()
+    visitor.send_hit(Screen("test_visitor.py"))
+    sleep(0.3)
+    # unauthenticate
+    visitor.unauthenticate()
+    visitor.fetch_flags()
+    visitor.get_flag("visitorIdColor", "default").visitor_exposed()
+    visitor.send_hit(Screen("test_visitor.py"))
+    sleep(0.3)
+    calls = responses.calls._calls
+    assert len(calls) == 10
+    for i in range(0, len(calls)):
+        body = json.loads(calls[i].request.body)
+        if i == 0:
+            assert body['vid'] == 'anonymous'
+            assert body['cuid'] is None
+        if i == 1:
+            assert body['visitorId'] == 'anonymous'
+            assert body['anonymousId'] is None
+        if i == 2:
+            # assert body['vid'] == 'anonymous'
+            # assert body['aid'] is None
+            assert body['batch'][0]['vid'] == 'anonymous'
+            assert body['batch'][0]['aid'] is None
+        if i == 3:
+            assert body['vid'] == 'anonymous'
+            assert body['cuid'] is None
+        if i == 4:
+            assert body['visitorId'] == 'user_001'
+            assert body['anonymousId'] == 'anonymous'
+        if i == 5:
+            # assert body['vid'] == 'user_001'
+            # assert body['aid'] == 'anonymous'
+            assert body['batch'][0]['vid'] == 'user_001'
+            assert body['batch'][0]['aid'] == 'anonymous'
+        if i == 6:
+            assert body['vid'] == 'anonymous'
+            assert body['cuid'] == 'user_001'
+        if i == 7:
+            assert body['visitorId'] == 'anonymous'
+            assert body['anonymousId'] is None
+        if i == 8:
+            # assert body['vid'] == 'anonymous'
+            # assert body['aid'] is None
+            assert body['batch'][0]['vid'] == 'anonymous'
+            assert body['batch'][0]['aid'] is None
+        if i == 9:
+            assert body['vid'] == 'anonymous'
+            assert body['cuid'] is None
+
+
+@responses.activate
+def test_visitor_strategy_panic():
+    class CustomLogManager(LogManager):
+
         def __init__(self):
+            self.deactivated_method_log_cnt = 0
+
+        def log(self, tag, level, message):
+            print(message)
+            if 'deactivated: SDK is running in panic mode' in message:
+                self.deactivated_method_log_cnt += 1
+
+        def exception(self, exception, traceback):
             pass
 
-    visitor = fs.create_visitor("Pam", False, {'isVIP': True})
-    visitor.update_context(('one', 1), False)
-    visitor.update_context(('two', 2, 2))
-    visitor.update_context({
-        0: 'zero',
-        'three': 3,
-        'four': {},
-        'five': "five",
-        'six': [],
-        'seven': 7.334,
-        'eight': Eight()
-    }, False)
-    assert 0 not in visitor._context
-    assert visitor._context['isVIP'] is True
-    assert visitor._context['one'] == 1
-    assert 'two' not in visitor._context
-    assert visitor._context['three'] == 3
-    assert 'four' not in visitor._context
-    assert visitor._context['five'] == 'five'
-    assert 'six' not in visitor._context
-    assert visitor._context['seven'] == 7.334
-    assert 'eight' not in visitor._context
+    custom_log_manager = CustomLogManager()
+    Flagship.stop()
+    responses.add(responses.POST, DECISION_API_URL, json=json.loads(API_RESPONSE_3), status=200)
+    responses.add(responses.POST, EVENTS_URL, body="", status=200)
+    # responses.add(responses.POST, ARIANE_URL, body="", status=200)
+    responses.add(responses.POST, ACTIVATE_URL, body="", status=200)
+
+    Flagship.start('_env_id_', '_api_key_', DecisionApi(log_manager=custom_log_manager, tracking_manager_config=TrackingManagerConfig(
+                                                    cache_strategy=CacheStrategy._NO_BATCHING_CONTINUOUS_CACHING)))
+    assert Flagship.status() == Flagship.status().READY
+    visitor = Flagship.new_visitor("visitor_xxx")
+    visitor.fetch_flags()
+    sleep(0.3)
+    assert Flagship.status() == Flagship.status().PANIC
+    visitor.update_context(("key", "value"))
+    visitor.authenticate("user_001")
+    visitor.get_flag("visitorIdColor", "default").visitor_exposed()
+    visitor.send_hit(Screen("test_visitor.py"))
+    visitor.fetch_flags()
+    visitor.set_consent(True)
+    calls = responses.calls._calls
+    sleep(0.1)
+    assert len(calls) == 3
+    assert custom_log_manager.deactivated_method_log_cnt == 4
+
+    sleep(1)
+    custom_log_manager.deactivated_method_log_cnt = 0
+    responses.reset()
+    responses.add(responses.POST, DECISION_API_URL, json=json.loads(API_RESPONSE_1), status=200)
+    responses.add(responses.POST, EVENTS_URL, body="", status=200)
+    responses.add(responses.POST, ACTIVATE_URL, body="", status=200)
+    sleep(0.1)
+    visitor.fetch_flags()
+    visitor.update_context(("key", "value"))
+    visitor.authenticate("user_001")
+    visitor.get_flag("visitorIdColor", "default").visitor_exposed()
+    visitor.send_hit(Screen("test_visitor.py"))
+    visitor.fetch_flags()
+    visitor.set_consent(False)
+    calls = responses.calls._calls
+    assert len(calls) == 5
+    assert custom_log_manager.deactivated_method_log_cnt == 0
 
 
 @responses.activate
-def test_visitor_synchronize():
-    json_response = '{"visitorId":"visitor_1","campaigns":[{"id":"xxxxd0qhl5801abv9ib0",' \
-                    '"variationGroupId":"xxxxd0qhl5801abv9ic0","variation":{"id":"xxxxd0qhl5801abv9icg",' \
-                    '"modifications":{"type":"FLAG","value":{"featureEnabled":true}}}}]} '
+def test_visitor_strategy_not_ready():
+    Flagship.stop()
+    class CustomLogManager(LogManager):
 
-    json_response2 = '{"visitorId":"visitor_1","campaigns":[{"id":"xxxxesjojh803lh57qo0",' \
-                     '"variationGroupId":"xxxxesjojh803lh57qp0","variation":{"id":"xxxxesjojh803lh57qpg",' \
-                     '"modifications":{"type":"FLAG","value":{"my_flag_nb":100}}}},{"id":"xxxxsp9j5mf4g0fdhkv2g",' \
-                     '"variationGroupId":"xxxxp9j5mf4g0fdhkv3g","variation":{"id":"xxxxp9j5mf4g0fdhkv4g",' \
-                     '"modifications":{"type":"JSON","value":{"btn-color":"red"}}}},{"id":"xxxxrfe4jaeg0gi1bhog",' \
-                     '"variationGroupId":"xxxxrfe4jaeg0gi1bhpg","variation":{"id":"xxxxrfe4jaeg0gi1bhq0",' \
-                     '"modifications":{"type":"FLAG","value":{"featureEnabled":true}}}},{"id":"xxxx9b1q4vl00quhh0rg",' \
-                     '"variationGroupId":"xxxx9b1q4vl00quhh0sg","variation":{"id":"xxxx9b1q4vl00quhh0tg",' \
-                     '"modifications":{"type":"JSON","value":{"k1":"v1","k2":null,"k3":null,"k6":"v6","k7":null}}}}]} '
-
-    fs = Flagship.instance()
-    fs.start("my_env_id", "my_api_key", Config(event_handler=None, mode=Config.Mode.API))
-    visitor = fs.create_visitor("visitor_1", True)
-    responses.reset()
-    responses.add(responses.POST,
-                  'https://decision.flagship.io/v2/my_env_id/campaigns/?exposeAllKeys=true&sendContextEvent=false',
-                  json=json.loads(json_response), status=200)
-    responses.add(responses.POST, 'https://decision.flagship.io/v2/my_env_id/events', status=200)
-
-    visitor.synchronize_modifications()
-    assert 'featureEnabled' in visitor._modifications
-    assert visitor._modifications['featureEnabled'].value is True
-    assert visitor._modifications['featureEnabled'].variation_group_id == 'xxxxd0qhl5801abv9ic0'
-    assert visitor._modifications['featureEnabled'].variation_id == 'xxxxd0qhl5801abv9icg'
-
-    responses.reset()
-    responses.add(responses.POST, 'https://decision.flagship.io/v2/my_env_id/events', status=200)
-    responses.add(responses.POST,
-                  'https://decision.flagship.io/v2/my_env_id/campaigns/?exposeAllKeys=true&sendContextEvent=false',
-                  json=json.loads(json_response2), status=200)
-    visitor.synchronize_modifications()
-
-    assert 'featureEnabled' in visitor._modifications
-    assert visitor._modifications['featureEnabled'].value is True
-    assert visitor._modifications['featureEnabled'].variation_group_id == 'xxxxrfe4jaeg0gi1bhpg'
-    assert visitor._modifications['featureEnabled'].variation_id == 'xxxxrfe4jaeg0gi1bhq0'
-
-    assert 'my_flag_nb' in visitor._modifications
-    assert visitor._modifications['my_flag_nb'].value == 100
-    assert visitor._modifications['my_flag_nb'].variation_group_id == 'xxxxesjojh803lh57qp0'
-    assert visitor._modifications['my_flag_nb'].variation_id == 'xxxxesjojh803lh57qpg'
-
-    assert 'k7' in visitor._modifications
-    assert visitor._modifications['k7'].value is None
-    assert visitor._modifications['k7'].variation_group_id == 'xxxx9b1q4vl00quhh0sg'
-    assert visitor._modifications['k7'].variation_id == 'xxxx9b1q4vl00quhh0tg'
-
-    info = visitor.get_modification_info('k7')
-
-    assert info['campaignId'] == 'xxxx9b1q4vl00quhh0rg'
-    assert info['variationGroupId'] == 'xxxx9b1q4vl00quhh0sg'
-    assert info['variationId'] == 'xxxx9b1q4vl00quhh0tg'
-
-
-@responses.activate
-def test_visitor_get_modification():
-    print("_______________________________1_____________________________________")
-    json_response2 = '{"visitorId":"visitor_1","campaigns":[{"id":"xxxxesjojh803lh57qo0",' \
-                     '"variationGroupId":"xxxxesjojh803lh57qp0","variation":{"id":"xxxxesjojh803lh57qpg",' \
-                     '"modifications":{"type":"FLAG","value":{"my_flag_nb":100}}}},{"id":"xxxxsp9j5mf4g0fdhkv2g",' \
-                     '"variationGroupId":"xxxxp9j5mf4g0fdhkv3g","variation":{"id":"xxxxp9j5mf4g0fdhkv4g",' \
-                     '"modifications":{"type":"JSON","value":{"btn-color":"red"}}}},{"id":"xxxxrfe4jaeg0gi1bhog",' \
-                     '"variationGroupId":"xxxxrfe4jaeg0gi1bhpg","variation":{"id":"xxxxrfe4jaeg0gi1bhq0",' \
-                     '"modifications":{"type":"FLAG","value":{"featureEnabled":true}}}},{"id":"xxxx9b1q4vl00quhh0rg",' \
-                     '"variationGroupId":"xxxx9b1q4vl00quhh0sg","variation":{"id":"xxxx9b1q4vl00quhh0tg",' \
-                     '"modifications":{"type":"JSON","value":{"k1":"v1","k2":null,"k3":null,"k6":"v6","k7":null}}}}]} '
-
-    fs = Flagship.instance()
-    fs.start("my_env_id", "my_api_key", Config(event_handler=None, mode=Config.Mode.API))
-    visitor = fs.create_visitor("visitor_1", True)
-
-    responses.reset()
-    responses.add(responses.POST,
-                  'https://decision.flagship.io/v2/my_env_id/campaigns/?exposeAllKeys=true&sendContextEvent=false',
-                  json=json.loads(json_response2), status=200)
-    responses.add(responses.POST,
-                  'https://decision.flagship.io/v2/my_env_id/events', status=200)
-    responses.add(responses.POST, 'https://decision.flagship.io/v2/activate', status=200)
-
-    val = visitor.synchronize_modifications()
-    assert visitor.get_modification("aaaaaaaa", "bbbb", True) == 'bbbb'
-    assert visitor.get_modification("btn-color", 'blue', True) == 'red'
-
-
-@responses.activate
-def test_visitor_get_modification2():
-    json_response2 = '{"visitorId":"visitor_1","campaigns":[{"id":"xxxxesjojh803lh57qo0",' \
-                     '"variationGroupId":"xxxxesjojh803lh57qp0","variation":{"id":"xxxxesjojh803lh57qpg",' \
-                     '"modifications":{"type":"FLAG","value":{"my_flag_nb":100}}}},{"id":"xxxxsp9j5mf4g0fdhkv2g",' \
-                     '"variationGroupId":"xxxxp9j5mf4g0fdhkv3g","variation":{"id":"xxxxp9j5mf4g0fdhkv4g",' \
-                     '"modifications":{"type":"JSON","value":{"btn-color":"red"}},"reference":true}},' \
-                     '{"id":"xxxxrfe4jaeg0gi1bhog","variationGroupId":"xxxxrfe4jaeg0gi1bhpg","variation":{' \
-                     '"id":"xxxxrfe4jaeg0gi1bhq0","modifications":{"type":"FLAG","value":{"featureEnabled":true}}}},' \
-                     '{"id":"xxxx9b1q4vl00quhh0rg","variationGroupId":"xxxx9b1q4vl00quhh0sg","variation":{' \
-                     '"id":"xxxx9b1q4vl00quhh0tg","modifications":{"type":"JSON","value":{"k1":"v1","k2":null,' \
-                     '"k3":null,"k6":"v6","k7":null}}}},{"id":"bsbgq4rjhsqg11tntt1g",' \
-                     '"variationGroupId":"bsbgq4rjhsqg11tntt2g","variation":{"id":"bsbgq4rjhsqg11tntt3g",' \
-                     '"modifications":{"type":"JSON","value":{"array":[1,2,3],"complex":{"carray":[{"cobject":0}]},' \
-                     '"object":{"value":123456}}},"reference":false}}]} '
-
-    fs = Flagship.instance()
-    fs.start("my_env_id", "my_api_key", Config(event_handler=None, mode=Config.Mode.API))
-    visitor = fs.create_visitor("visitor_1", True)
-
-    responses.reset()
-    responses.add(responses.POST,
-                  'https://decision.flagship.io/v2/my_env_id/campaigns/?exposeAllKeys=true&sendContextEvent=false',
-                  json=json.loads(json_response2), status=200)
-    responses.add(responses.POST,
-                  'https://decision.flagship.io/v2/my_env_id/events', status=200)
-
-    responses.add(responses.POST, 'https://decision.flagship.io/v2/activate', status=200)
-
-    visitor.update_context(('titi', 4), True)
-
-    assert visitor.get_modification("aaaaaaaa", "bbbb", True) == 'bbbb'
-    assert visitor.get_modification("btn-color", 'blue', True) == 'red'
-    assert visitor.get_modification("k2", 'yellow', True) == 'yellow'
-
-    assert visitor.get_modification_info("btn-color")["isReference"] is True
-    assert visitor.get_modification_info("k2")["isReference"] is False
-
-
-    assert visitor.get_modification("btn-color", "yellow") == 'red'
-    assert visitor.get_modification("do_not_exists", 'None') is "None"
-
-    assert visitor.get_modification("complex", {}) == {"carray": [{"cobject": 0}]}
-    assert visitor.get_modification("array", []) == [1, 2, 3]
-
-
-@responses.activate
-def test_visitor_get_activate():
-    fs = Flagship.instance()
-    fs.start("my_env_id", "my_api_key", Config(event_handler=None))
-    visitor = fs.create_visitor("visitor_1", True)
-
-    json_response = '{"visitorId":"visitor_1","campaigns":[{"id":"xxxxd0qhl5801abv9ib0",' \
-                    '"variationGroupId":"xxxxd0qhl5801abv9ic0","variation":{"id":"xxxxd0qhl5801abv9icg",' \
-                    '"modifications":{"type":"FLAG","value":{"featureEnabled":true}}}}]} '
-
-    responses.reset()
-    responses.add(responses.POST,
-                  'https://decision.flagship.io/v2/my_env_id/campaigns/?exposeAllKeys=true&sendContextEvent=false',
-                  json=json.loads(json_response), status=200)
-    responses.add(responses.POST,
-                  'https://decision.flagship.io/v2/my_env_id/events', status=200)
-    visitor.synchronize_modifications()
-
-    responses.add(responses.POST, 'https://decision.flagship.io/v2/activate', status=200)
-    visitor.activate_modification('featureEnabled')
-    visitor.activate_modification('xxxxxxx')
-
-
-hit_nb = 0
-
-
-@responses.activate
-def test_visitor_send_hits():
-    fs = Flagship.instance()
-    fs.start("my_env_id", "my_api_key", Config(event_handler=None, mode=Config.Mode.API))
-    visitor = fs.create_visitor("visitor_1", True)
-
-    json_response = '{"visitorId":"visitor_1","campaigns":[{"id":"xxxxd0qhl5801abv9ib0",' \
-                    '"variationGroupId":"xxxxd0qhl5801abv9ic0","variation":{"id":"xxxxd0qhl5801abv9icg",' \
-                    '"modifications":{"type":"FLAG","value":{"featureEnabled":true}}}}]} '
-
-    responses.reset()
-    responses.add(responses.POST,
-                  'https://decision.flagship.io/v2/my_env_id/campaigns/?exposeAllKeys=true&sendContextEvent=false',
-                  json=json.loads(json_response), status=200)
-    responses.add(responses.POST,
-                  'https://decision.flagship.io/v2/my_env_id/events', status=200)
-    visitor.synchronize_modifications()
-
-    responses.add(responses.POST, 'https://ariane.abtasty.com/', status=200)
-
-    visitor.send_hit(Screen("script.py")
-                     .with_ip("133.3.223.1")
-                     .with_locale("fr-fr")
-                     .with_resolution(640, 480)
-                     .with_session_number(3))
-
-    visitor.send_hit(Page("not working"))
-    visitor.send_hit(Page("http://working.com"))
-
-    visitor.send_hit(Event(EventCategory.USER_ENGAGEMENT, "this is action")
-                     .with_ip('6.6.6.6')
-                     .with_event_label('this is my label')
-                     .with_locale('lol_hihi')
-                     .with_event_value(323))
-
-    visitor.send_hit(Transaction("#309830", "purchases")
-                     .with_locale("uk-uk")
-                     .with_ip("30.334.3.33")
-                     .with_session_number(3)
-                     .with_currency("EUR")
-                     .with_item_count(3)
-                     .with_payment_method("credit_card")
-                     .with_shipping_cost(4.99)
-                     .with_shipping_method("1d")
-                     .with_taxes(9.99)
-                     .with_total_revenue(420.00)
-                     .with_coupon_code("#SAVE10"))
-
-    visitor.send_hit(Item("#309830", "ATX2080", "#cg_atx_20802020")
-                     .with_item_category("hardware")
-                     .with_item_quantity(2)
-                     .with_price(210.00))
-
-    class FakeHit:
         def __init__(self):
+            self.deactivated_method_log_cnt = 0
+
+        def log(self, tag, level, message):
+            print(message)
+            if 'deactivated: SDK is not started yet' in message:
+                self.deactivated_method_log_cnt += 1
+
+        def exception(self, exception, traceback):
             pass
 
-    visitor.send_hit(FakeHit())
-    assert len(responses.calls) == 7
+    custom_log_manager = CustomLogManager()
+    configuration_manager = Flagship.new_visitor("visitor_xxx")._configuration_manager
+    configuration_manager.flagship_config.log_manager = custom_log_manager
+
+    visitor = Visitor(configuration_manager, "visitor_xxx")
+
+    visitor.fetch_flags()
+    sleep(0.3)
+    assert Flagship.status() == Flagship.status().NOT_INITIALIZED
+    visitor.update_context(("key", "value"))
+    visitor.authenticate("user_001")
+    visitor.get_flag("visitorIdColor", "default").visitor_exposed()
+    visitor.send_hit(Screen("test_visitor.py"))
+    visitor.fetch_flags()
+    visitor.set_consent(True)
+    calls = responses.calls._calls
+    sleep(0.1)
+    assert len(calls) == 0
+    assert custom_log_manager.deactivated_method_log_cnt == 10
 
 
 @responses.activate
-def test_visitor_panic():
-    responses.reset()
+def test_visitor_strategy_no_consent():
+    class CustomLogManager(LogManager):
 
-    fs = Flagship.instance()
-    fs.start("my_env_id", "my_api_key", Config(event_handler=None, mode=Config.Mode.API))
-    visitor = fs.create_visitor("visitor_1", True)
+        def __init__(self):
+            self.deactivated_method_log_cnt = 0
 
-    json_response = '{"visitorId":"visitor_1","campaigns":[{"id":"xxxxd0qhl5801abv9ib0",' \
-                    '"variationGroupId":"xxxxd0qhl5801abv9ic0","variation":{"id":"xxxxd0qhl5801abv9icg",' \
-                    '"modifications":{"type":"FLAG","value":{"featureEnabled":true}}}}]} '
-    responses.add(responses.POST,
-                  'https://decision.flagship.io/v2/my_env_id/campaigns/?exposeAllKeys=true&sendContextEvent=false',
-                  json=json.loads(json_response), status=200)
+        def log(self, tag, level, message):
+            print(message)
+            if 'deactivated' in message and 'consent' in message:
+                self.deactivated_method_log_cnt += 1
 
-    responses.add(responses.POST,
-                  'https://decision.flagship.io/v2/my_env_id/events', status=200)
+        def exception(self, exception, traceback):
+            pass
 
-    responses.add(responses.POST, 'https://ariane.abtasty.com/', status=200)
+    custom_log_manager = CustomLogManager()
+    Flagship.stop()
 
-    visitor.synchronize_modifications()
+    # responses.add(responses.POST, DECISION_API_URL, json=json.loads(API_RESPONSE_1), status=200)
+    responses.add(responses.POST, DECISION_API_URL, json=json.loads(API_RESPONSE_1), status=200)
+    responses.add(responses.POST, EVENTS_URL, body="", status=200)
+    # responses.add(responses.POST, ARIANE_URL, body="", status=200)
+    responses.add(responses.POST, ACTIVATE_URL, body="", status=200)
 
-    visitor.send_hit(Screen("script.py")
-                     .with_ip("133.3.223.1")
-                     .with_locale("fr-fr")
-                     .with_resolution(640, 480)
-                     .with_session_number(3))
-
-    responses.add(responses.POST, 'https://decision.flagship.io/v2/activate', status=200)
-    visitor.activate_modification('featureEnabled')
-
-    assert visitor.get_modification("featureEnabled", False) is True
-    assert len(responses.calls) == 4
-
-    responses.reset()
-    json_response_panic = '{"visitorId":"Toto3000","campaigns":[],"panic":true}'
-    responses.add(responses.POST,
-                  'https://decision.flagship.io/v2/my_env_id/campaigns/?exposeAllKeys=true&sendContextEvent=false',
-                  json=json.loads(json_response_panic), status=200)
-
-    responses.add(responses.POST,
-                  'https://decision.flagship.io/v2/my_env_id/events', status=200)
-
-    responses.add(responses.POST, 'https://ariane.abtasty.com/', status=200)
-
-    visitor.synchronize_modifications()
-
-    visitor.send_hit(Page("script.py")
-                     .with_ip("133.3.223.1")
-                     .with_locale("fr-fr")
-                     .with_resolution(640, 480)
-                     .with_session_number(3))
-
-    responses.add(responses.POST, 'https://decision.flagship.io/v2/activate', status=200)
-    visitor.activate_modification('featureEnabled')
-
-    visitor.synchronize_modifications()
-
-    assert visitor._is_panic_mode() is True
-    assert visitor.get_modification("featureEnabled", False) is False
-    assert len(responses.calls) == 2
+    Flagship.start('_env_id_', '_api_key_', DecisionApi(log_manager=custom_log_manager, tracking_manager_config=TrackingManagerConfig(
+                                                    cache_strategy=CacheStrategy._NO_BATCHING_CONTINUOUS_CACHING)))
+    assert Flagship.status() == Flagship.status().READY
+    visitor = Flagship.new_visitor("visitor_xxx", consent=False)  # +1
+    visitor.fetch_flags() # +1
+    visitor.update_context(("key", "value"))
+    visitor.authenticate("user_001")
+    visitor.get_flag("visitorIdColor", "default").visitor_exposed()  ## X
+    visitor.send_hit(Screen("test_visitor.py"))  ## X
+    visitor.fetch_flags() # +1
+    visitor.set_consent(True)  # +1
+    calls = responses.calls._calls
+    sleep(0.1)
+    assert len(calls) == 4
+    assert custom_log_manager.deactivated_method_log_cnt == 2
 
 
-@responses.activate
-def test_visitor_authentication():
-    responses.reset()
-
-    json_response = '{"visitorId":"visitor_1","campaigns":[{"id":"xxxxd0qhl5801abv9ib0",' \
-                    '"variationGroupId":"xxxxd0qhl5801abv9ic0","variation":{"id":"xxxxd0qhl5801abv9icg",' \
-                    '"modifications":{"type":"FLAG","value":{"featureEnabled":true}}}}]} '
-
-    responses.add(responses.POST,
-                  'https://decision.flagship.io/v2/my_env_id/campaigns/?exposeAllKeys=true&sendContextEvent'
-                  '=false', json=json.loads(json_response), status=200)
-
-    responses.add(responses.POST,
-                  'https://decision.flagship.io/v2/my_env_id/events', status=200)
-
-    responses.add(responses.POST, 'https://ariane.abtasty.com/', status=200)
-
-    responses.add(responses.POST, 'https://decision.flagship.io/v2/activate', status=200)
-
-    fs = Flagship.instance()
-    fs.start("my_env_id", "my_api_key", Config(mode=Config.Mode.API, timeout=3000))
-    visitor = fs.create_visitor()
-    visitor.synchronize_modifications()
-
-    assert len(json.loads(responses.calls[0].request.body)["visitorId"]) == 19
-    assert 'anonymousId' not in json.loads(responses.calls[0].request.body)
-    assert len(visitor._visitor_id) == 19
-
-    responses.calls.reset()
-    visitor.send_hit(Page("https://www.page.com"))
-    assert len(json.loads(responses.calls[0].request.body)["vid"]) == 19
-    assert 'cuid' not in json.loads(responses.calls[0].request.body)
-
-    responses.calls.reset()
-    visitor.activate_modification("featureEnabled")
-    assert len(json.loads(responses.calls[0].request.body)["vid"]) == 19
-    assert 'aid' not in json.loads(responses.calls[0].request.body)
-
-    #############
-    responses.calls.reset()
-    visitor.authenticate("log_1", {"age": 31}, True)
-    assert len(json.loads(responses.calls[0].request.body)["anonymousId"]) == 19
-    assert json.loads(responses.calls[0].request.body)["visitorId"] == "log_1"
-    assert visitor._visitor_id == "log_1"
-    assert len(visitor._anonymous_id) == 19
-    assert visitor.get_context()['age'] == 31
-
-    responses.calls.reset()
-    visitor.send_hit(Page("https://www.page.com"))
-    assert len(json.loads(responses.calls[0].request.body)["vid"]) == 19
-    assert json.loads(responses.calls[0].request.body)["cuid"] == "log_1"
-
-    responses.calls.reset()
-    visitor.activate_modification("featureEnabled")
-    assert json.loads(responses.calls[0].request.body)["vid"] == "log_1"
-    assert len(json.loads(responses.calls[0].request.body)["aid"]) == 19
-
-    #############
-    responses.calls.reset()
-    visitor.unauthenticate(dict(), True)
-    assert len(json.loads(responses.calls[0].request.body)["visitorId"]) == 19
-    assert "anonymousId" not in json.loads(responses.calls[0].request.body)
-    assert len(visitor._visitor_id) == 19
-    assert visitor._anonymous_id is None
-    assert len(visitor.get_context()) == 0
-
-    responses.calls.reset()
-    visitor.send_hit(Page("https://www.page.com"))
-    assert len(json.loads(responses.calls[0].request.body)["vid"]) == 19
-    assert "cuid" not in json.loads(responses.calls[0].request.body)
-
-    responses.calls.reset()
-    visitor.activate_modification("featureEnabled")
-    assert 'aid' not in json.loads(responses.calls[0].request.body)
-    assert len(json.loads(responses.calls[0].request.body)["vid"]) == 19
-
-    #############
-    responses.calls.reset()
-    visitor.authenticate("log_2", {"age": 31}, True)
-    assert len(json.loads(responses.calls[0].request.body)["anonymousId"]) == 19
-    assert json.loads(responses.calls[0].request.body)["visitorId"] == "log_2"
-    assert visitor._visitor_id == "log_2"
-    assert len(visitor._anonymous_id) == 19
-    assert visitor.get_context()['age'] == 31
-
-    responses.calls.reset()
-    visitor.send_hit(Page("https://www.page.com"))
-    assert json.loads(responses.calls[0].request.body)["cuid"] == "log_2"
-    assert len(json.loads(responses.calls[0].request.body)["vid"]) == 19
-
-    responses.calls.reset()
-    visitor.activate_modification("featureEnabled")
-    assert json.loads(responses.calls[0].request.body)["vid"] == "log_2"
-    assert len(json.loads(responses.calls[0].request.body)["aid"]) == 19
-
-    #############
-    responses.calls.reset()
-    visitor2 = fs.create_visitor("visitor_2", True)
-    visitor2.synchronize_modifications()
-
-    assert json.loads(responses.calls[0].request.body)["visitorId"] == "visitor_2"
-    assert len(json.loads(responses.calls[0].request.body)["anonymousId"]) == 19
-    assert visitor2._visitor_id == "visitor_2"
-    assert len(visitor2._anonymous_id) == 19
-
-    responses.calls.reset()
-    visitor2.send_hit(Screen("Here"))
-    assert len(json.loads(responses.calls[0].request.body)["vid"]) == 19
-    assert json.loads(responses.calls[0].request.body)["cuid"] == "visitor_2"
-
-    responses.calls.reset()
-    visitor2.activate_modification("featureEnabled")
-    assert len(json.loads(responses.calls[0].request.body)["aid"]) == 19
-    assert json.loads(responses.calls[0].request.body)["vid"] == "visitor_2"
+def get_version():
+    from flagship import __version__
+    return __version__

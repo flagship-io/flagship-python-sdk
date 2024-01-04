@@ -1,246 +1,258 @@
-# coding: utf8
-
 import json
 import os
-import random
-import string
-import time
-from unittest import TestCase
+from time import sleep
 
 import responses
 
-from flagship.app import Flagship
-from flagship.config import Config
-from flagship.helpers.hits import Page, Screen
+from flagship import Flagship, Visitor, Status
+from flagship.config import Bucketing
+from flagship.hits import Screen
+from flagship.log_manager import LogLevel, LogManager
+from flagship.status_listener import StatusListener
+from flagship.targeting_comparator import TargetingComparator
+from flagship.tracking_manager import TrackingManagerConfig, CacheStrategy
+from test_constants_res import BUCKETING_RESPONSE_1, BUCKETING_URL, BUCKETING_LAST_MODIFIED_1, \
+    BUCKETING_CACHED_RESPONSE_1, ACTIVATE_URL, SEGMENT_URL, BUCKETING_RESPONSE_2, BUCKETING_RESPONSE_PANIC, \
+    BUCKETING_RESPONSE_EMPTY, EVENTS_URL
 
 
-def test_bucketing_wrong_config():
-    class Wrong:
-        def __init__(self):
+@responses.activate
+def test_bucketing_config():
+    responses.add(responses.GET, BUCKETING_URL, json=json.loads(BUCKETING_RESPONSE_1), status=200,
+                  headers=[("Last-Modified", BUCKETING_LAST_MODIFIED_1)])
+
+    Flagship.stop()
+    Flagship.start('_env_id_', '_api_key_', Bucketing(polling_interval=500))
+    calls = responses.calls._calls
+    sleep(2)
+    assert len(calls) >= 4
+
+    responses.reset()
+    responses.add(responses.GET, BUCKETING_URL, json=json.loads(BUCKETING_RESPONSE_1), status=200,
+                  headers=[("Last-Modified", BUCKETING_LAST_MODIFIED_1)])
+
+    Flagship.stop()
+    Flagship.start('_env_id_', '_api_key_', Bucketing(polling_interval=200))
+    calls = responses.calls._calls
+    sleep(2)
+    assert len(calls) >= 10
+
+    responses.reset()
+    responses.add(responses.GET, BUCKETING_URL, json=json.loads(BUCKETING_RESPONSE_1), status=200,
+                  headers=[("Last-Modified", BUCKETING_LAST_MODIFIED_1)])
+
+    Flagship.stop()
+    Flagship.start('_env_id_', '_api_key_', Bucketing(polling_interval=-1))
+    calls = responses.calls._calls
+    sleep(0.5)
+    assert len(calls) == 1
+
+@responses.activate
+def test_bucketing_file():
+
+    responses.add(responses.GET, BUCKETING_URL, json=json.loads(BUCKETING_RESPONSE_1), status=200,
+                  headers=[("Last-Modified", BUCKETING_LAST_MODIFIED_1)])
+    os.path.isfile('._env_id_.decision')
+
+    Flagship.stop()
+    Flagship.start('_env_id_', '_api_key_', Bucketing(polling_interval=0, log_level=LogLevel.NONE))
+    sleep(0.5)
+    assert os.path.isfile('._env_id_.decision')
+    with open('._env_id_.decision', 'r') as f:
+        content = f.read()
+        assert json.loads(content) == json.loads(BUCKETING_CACHED_RESPONSE_1)
+
+@responses.activate
+def test_bucketing_campaigns():
+    responses.add(responses.GET, BUCKETING_URL, json=json.loads(BUCKETING_RESPONSE_1), status=200,
+                  headers=[("Last-Modified", BUCKETING_LAST_MODIFIED_1)])
+    responses.add(responses.POST, EVENTS_URL, body="", status=200)
+    responses.add(responses.POST, ACTIVATE_URL, body="", status=200)
+    responses.add(responses.POST, SEGMENT_URL, body="", status=200)
+    Flagship.stop()
+    Flagship.start('_env_id_', '_api_key_', Bucketing(polling_interval=0,
+                                                      log_level=LogLevel.NONE,
+                                                      tracking_manager_config=TrackingManagerConfig(
+                                                          cache_strategy=CacheStrategy.
+                                                          _NO_BATCHING_CONTINUOUS_CACHING)))  # 1 bucketing
+    sleep(0.5)
+
+    visitor = Flagship.new_visitor("87524982740", instance_type=Visitor.Instance.NEW_INSTANCE,
+                                   context={'isVIPUser': False}) #2 consent
+    visitor.fetch_flags() #3 segment
+    assert visitor.get_flag('featureEnabled', True).value() is False #4 activate
+    assert visitor.get_flag('target', 'default').value() == 'default' #0
+
+    visitor.update_context({
+        'isVIPUser': True,
+        'sdk_deviceModel': 'Google Pixel X'
+    })
+
+    calls = responses.calls._calls
+    assert len(calls) == 4
+    sleep(0.2)
+
+    visitor.fetch_flags() #5 segment
+    assert visitor.get_flag('featureEnabled', False).value() is True #6 activate
+    assert visitor.get_flag('target', 'default').value() == 'is' #7 activate
+
+    visitor.update_context({
+        'isVIPUser': True,
+        'sdk_deviceModel': 'Test Unit'
+    })
+
+    calls = responses.calls._calls
+    assert len(calls) == 7
+    sleep(0.2)
+
+    visitor.fetch_flags() #8 segment
+    assert visitor.get_flag('featureEnabled', False).value() is True #9 activate
+    assert visitor.get_flag('target', 'default').value() == 'is not' #10 activate
+
+
+    calls = responses.calls._calls
+    assert len(calls) == 10
+    for i in range(0, len(calls)):
+        try:
+            body = json.loads(calls[i].request.body)
+            if i == 10:
+                assert body['vid'] == '87524982740'
+                assert body['cuid'] is None
+                assert body['vaid'] == 'bu6lttip17b01emhqqqq'
+        except:
             pass
 
+@responses.activate
+def test_bucketing_targeting():
+    comparator = TargetingComparator()
+    assert comparator.compare('EQUALS', 1, 1) is True
+    assert comparator.compare('EQUALS', '_hey_', '_hey_') is True
+    assert comparator.compare('EQUALS', 1.0, 1) is True
+    assert comparator.compare('EQUALS', True, True) is True
+    assert comparator.compare('EQUALS', 1, 2) is False
+    assert comparator.compare('EQUALS', '_hey_', '__hey__') is False
+    assert comparator.compare('EQUALS', 3.1, 3) is False
+    assert comparator.compare('EQUALS', True, False) is False
+    assert comparator.compare('EQUALS', 'two', ['one', 2, 'two', 3, 'three']) is True
+    assert comparator.compare('EQUALS', 'two', ['one', 2, '-two-', 3, 'three']) is False
+
+    assert comparator.compare('NOT_EQUALS', 1, 1) is False
+    assert comparator.compare('NOT_EQUALS', '_hey_', '_hey_') is False
+    assert comparator.compare('NOT_EQUALS', 1.0, 1) is False
+    assert comparator.compare('NOT_EQUALS', True, True) is False
+    assert comparator.compare('NOT_EQUALS', 1, 2) is True
+    assert comparator.compare('NOT_EQUALS', '_hey_', '__hey__') is True
+    assert comparator.compare('NOT_EQUALS', 3.1, 3) is True
+    assert comparator.compare('NOT_EQUALS', True, False) is True
+    assert comparator.compare('NOT_EQUALS', 'two', ['one', 2, 'two', 3, 'three']) is False
+    assert comparator.compare('NOT_EQUALS', 'two', ['one', 2, '-two-', 3, 'three']) is True
+
+    assert comparator.compare('CONTAINS', 'two', ['one', 2, 'two', 3, 'three']) is True
+    assert comparator.compare('CONTAINS', 'two', ['one', 2, '-two-', 3, 'three']) is False
+    assert comparator.compare('CONTAINS', 'mm-t-w-o-mm', ['one', 2, '-t-w-o-', 3, 'three']) is True
+    assert comparator.compare('CONTAINS', 'twenty-two', 'two') is True
+    assert comparator.compare('CONTAINS', 3, ['one', 2, '-t-w-o-', 3, 'three']) is True
+    assert comparator.compare('CONTAINS', True, ['one', 2, '-t-w-o-', 3, 'three', True]) is True
+
+    assert comparator.compare('NOT_CONTAINS', 'two', ['one', 2, 'two', 3, 'three']) is False
+    assert comparator.compare('NOT_CONTAINS', 'two', ['one', 2, '-two-', 3, 'three']) is True
+    assert comparator.compare('NOT_CONTAINS', 'mm-t-w-o-mm', ['one', 2, '-t-w-o-', 3, 'three']) is False
+    assert comparator.compare('NOT_CONTAINS', 'twenty-two', 'two') is False
+    assert comparator.compare('NOT_CONTAINS', 3, ['one', 2, '-t-w-o-', 3, 'three']) is False
+    assert comparator.compare('NOT_CONTAINS', True, ['one', 2, '-t-w-o-', 3, 'three', True]) is False
+
+    assert comparator.compare('GREATER_THAN', 'zzzz', ['a', 2, 'l', 3, 'a', True]) is True
+    assert comparator.compare('GREATER_THAN', 'cccc', ['ddd', 'eeeeee']) is False
+    assert comparator.compare('GREATER_THAN', 'zzzz', 'zzza') is True
+    assert comparator.compare('GREATER_THAN', 'zzzz', 'zzzza') is False
+
+    assert comparator.compare('LOWER_THAN', 'zzzz', ['a', 2, 'l', 3, 'a', True]) is False
+    assert comparator.compare('LOWER_THAN', 'cccc', ['ddd', 'eeeeee']) is True
+    assert comparator.compare('LOWER_THAN', 'zzzz', 'zzza') is False
+    assert comparator.compare('LOWER_THAN', 'zzzz', 'zzzza') is True
+
+    assert comparator.compare('GREATER_THAN_OR_EQUALS', 'zzzz', ['a', 2, 'l', 3, 'a', True]) is True
+    assert comparator.compare('GREATER_THAN_OR_EQUALS', 'cccc', ['ddd', 'eeeeee']) is False
+    assert comparator.compare('GREATER_THAN_OR_EQUALS', 'zzzz', 'zzza') is True
+    assert comparator.compare('GREATER_THAN_OR_EQUALS', 'zzzz', 'zzzza') is False
+    assert comparator.compare('GREATER_THAN_OR_EQUALS', 'zzzz', ['zzzza', 'zzzz']) is True
+
+    assert comparator.compare('LOWER_THAN_OR_EQUALS', 'zzzz', ['a', 2, 'l', 3, 'a', True]) is False
+    assert comparator.compare('LOWER_THAN_OR_EQUALS', 'cccc', ['ddd', 'eeeeee']) is True
+    assert comparator.compare('LOWER_THAN_OR_EQUALS', 'zzzz', 'zzza') is False
+    assert comparator.compare('LOWER_THAN_OR_EQUALS', 'zzzz', 'zzzza') is True
+    assert comparator.compare('LOWER_THAN_OR_EQUALS', 'zzzz', ['zzzza', 'zzzz']) is True
+
+    assert comparator.compare('STARTS_WITH', 'zzzz', ['a', 2, 'l', 3, 'a', True]) is False
+    assert comparator.compare('STARTS_WITH', 'cccc', ['ddd', 'eeeeee']) is False
+    assert comparator.compare('STARTS_WITH', 'zzzz', 'zzza') is False
+    assert comparator.compare('STARTS_WITH', 'zzzz', 'zzzza') is False
+    assert comparator.compare('STARTS_WITH', 'zzzz', ['zzzza', 2, True, 'zzzz']) is True
+
+@responses.activate
+def test_bucketing_cached_file():
     try:
-        fs = Flagship.instance()
-        fs.start("my_env_id", "my_api", Config(mode=Wrong))
-        assert False
-    except Exception as e:
-        assert True
+        os.remove('._env_id_.decision')
+    except OSError:
+        pass
+    responses.add(responses.GET, BUCKETING_URL, json=json.loads(BUCKETING_RESPONSE_1), status=200,
+                  headers=[("Last-Modified", BUCKETING_LAST_MODIFIED_1)])
+    responses.add(responses.POST, EVENTS_URL, body="", status=200)
+    # responses.add(responses.POST, ARIANE_URL, body="", status=200)
+    responses.add(responses.POST, ACTIVATE_URL, body="", status=200)
+    responses.add(responses.POST, SEGMENT_URL, body="", status=200)
+    Flagship.stop()
+    Flagship.start('_env_id_', '_api_key_', Bucketing(polling_interval=0, log_level=LogLevel.NONE, tracking_manager_config=TrackingManagerConfig(cache_strategy=CacheStrategy._NO_BATCHING_CONTINUOUS_CACHING)))  # 1 bucketing
+    sleep(0.2)
 
-
-def test_bucketing_suite():
-    a_test_bucketing_init()
-    b_test_bucketing_304()
-    c_test_bucketing_200_again()
-
-
-@responses.activate
-def b_test_bucketing_304():
-    json_response = '{}'
-    headers = {
-        "Last-Modified": "fake"
-    }
     responses.reset()
-    responses.add(responses.GET,
-                  'https://cdn.flagship.io/my_env_id/bucketing.json',
-                  json=json.loads(json_response), status=304, adding_headers=headers)
-    responses.add(responses.POST,
-                  'https://decision.flagship.io/v2/my_env_id/events',
-                  json=json.loads('{}'), status=200)
-    responses.add(responses.POST,
-                  'https://decision.flagship.io/v2/activate',
-                  json=json.loads('{}'), status=200)
+    responses.remove(responses.GET, BUCKETING_URL)
+    responses.add(responses.GET, BUCKETING_URL, json=json.loads(BUCKETING_RESPONSE_1), status=500,
+                  headers=[("Last-Modified", BUCKETING_LAST_MODIFIED_1)])
+    # responses.add(responses.POST, ARIANE_URL, body="", status=200)
+    responses.add(responses.POST, EVENTS_URL, body="", status=200)
+    responses.add(responses.POST, ACTIVATE_URL, body="", status=200)
+    responses.add(responses.POST, SEGMENT_URL, body="", status=200)
+    Flagship.stop()
 
-    fs = Flagship.instance()
-    fs.start("my_env_id", "my_api_key", Config(mode=Config.Mode.BUCKETING, polling_interval=-1))
-    visitor = Flagship.instance().create_visitor("ä", True,
-                                                 {'isVIPUser': True, 'bin_a': 1,
-                                                  'bin_b': 1})  # type: FlagshipVisitor
-    visitor.update_context(('access', 'password'), True)
-    assert visitor.get_modification('rank', "=null", True) != "=null"
-    contains_activate = False
-    contains_events = False
-    for c in responses.calls:
+    Flagship.start('_env_id_', '_api_key_', Bucketing(polling_interval=0, log_level=LogLevel.NONE, tracking_manager_config=TrackingManagerConfig(cache_strategy=CacheStrategy._NO_BATCHING_CONTINUOUS_CACHING)))  # 1 bucketing
+    sleep(0.2)
+    visitor = Flagship.new_visitor("9356925", instance_type=Visitor.Instance.NEW_INSTANCE,
+                                   context={'isVIPUser': False})  # 2 consent
+    visitor.fetch_flags() #3 segment
+    assert visitor.get_flag('featureEnabled', True).value() is False #4 activate
+    assert visitor.get_flag('target', 'default').value() == 'default' #0
 
-        if contains_events is False and c.request.url.__contains__('events'):
-            contains_events = True
-        if contains_activate is False and c.request.url.__contains__('activate'):
-            contains_events = True
-    assert contains_events is True
-    assert contains_events is True
+    visitor.update_context({
+        'isVIPUser': True,
+        'sdk_deviceModel': 'Google Pixel X'
+    })
 
-    with open("bucketing.json", 'r') as f:
-        content = f.read()
-        assert len(content) > 2
-        json_object = json.loads(content)
-        last_modified = json_object['last_modified']
-        assert last_modified is not None
-        assert last_modified == "Fri,  05 Jun 2020 12:20:40 GMT"
+    calls = responses.calls._calls
+    assert len(calls) == 4
+    sleep(0.2)
 
-
-@responses.activate
-def a_test_bucketing_init():
+db_path = "./cache/"
+def remove_db():
+    import shutil
     try:
-        try:
-            os.remove("bucketing.json")
-        except Exception as e:
-            print("No Bucketing file")
-        json_response = '{"campaigns":[{"variationGroups":[{"variations":[{"allocation":100,"modifications":{"type":"FLAG","value":{"featureEnabled":true}},"id":"xxxx"}],"targeting":{"targetingGroups":[{"targetings":[{"operator":"EQUALS","value":true,"key":"isVIPUser"}]}]},"id":"yyyy"},{"variations":[{"allocation":100,"modifications":{"type":"FLAG","value":{"featureEnabled":false}},"id":"cccc"}],"targeting":{"targetingGroups":[{"targetings":[{"operator":"EQUALS","value":false,"key":"isVIPUser"}]}]},"id":"vvvv"}],"type":"toggle","id":"aaaa"},{"id":"bu6lgeu3bdt014iawwww","type":"perso","variationGroups":[{"id":"bu6lgeu3bdt014iaxxxx","targeting":{"targetingGroups":[{"targetings":[{"operator":"CONTAINS","key":"sdk_deviceModel","value":["Google Pixel 3","Google Pixel X","Google Pixel 0"]}]}]},"variations":[{"id":"bu6lgeu3bdt014iacccc","modifications":{"type":"JSON","value":{"target":null}},"reference":true},{"id":"bu6lgeu3bdt014iavvvv","modifications":{"type":"JSON","value":{"target":"is"}},"allocation":100}]},{"id":"bu6lttip17b01emhbbbb","targeting":{"targetingGroups":[{"targetings":[{"operator":"NOT_CONTAINS","key":"sdk_deviceModel","value":["Google Pixel 9","Google Pixel 9000"]}]}]},"variations":[{"id":"bu6lttip17b01emhnnnn","modifications":{"type":"JSON","value":{"target":null}},"reference":true},{"id":"bu6lttip17b01emhqqqq","modifications":{"type":"JSON","value":{"target":"is not"}},"allocation":100}]}]},{"variationGroups":[{"variations":[{"allocation":25,"modifications":{"type":"JSON","value":{"rank_plus":null,"rank":null}},"id":"zzzz","reference":true},{"allocation":25,"modifications":{"type":"JSON","value":{"rank_plus":null,"rank":1111}},"id":"eeee"},{"allocation":25,"modifications":{"type":"JSON","value":{"rank_plus":null,"rank":3333}},"id":"rrrr"},{"allocation":25,"modifications":{"type":"JSON","value":{"rank_plus":22.22,"rank":2222}},"id":"tttt"}],"targeting":{"targetingGroups":[{"targetings":[{"operator":"EQUALS","value":"password","key":"access"}]}]},"id":"yyyy"}],"type":"ab","id":"iiii"}]}'
-        headers = {
-            "Last-Modified": "Fri,  05 Jun 2020 12:20:40 GMT"
-        }
-        responses.reset()
-        responses.add(responses.GET,
-                      'https://cdn.flagship.io/my_env_id/bucketing.json',
-                      json=json.loads(json_response), status=200, adding_headers=headers)
-        responses.add(responses.POST,
-                      'https://decision.flagship.io/v2/my_env_id/events',
-                      json=json.loads('{}'), status=200)
-
-        fs = Flagship.instance()
-        fs.start("my_env_id", "my_api_key", Config(mode=Config.Mode.BUCKETING, polling_interval=-1))
-        assert os.path.isfile("bucketing.json")
-        with open("bucketing.json", 'r') as f:
-            json_object = json.loads(f.read())
-            last_modified = json_object['last_modified']
-            assert last_modified is not None
-            assert last_modified == "Fri,  05 Jun 2020 12:20:40 GMT"
-            # test_bucketing_304()
-
-        visitor = fs.create_visitor("visitor_1", True, {'sdk_deviceModel': 'Google Pixel 9000'})
-        assert visitor.get_modification("target", "default", False) == 'default'
-        visitor.update_context(('sdk_deviceModel', 'Google Pixel 10'), True)
-        assert visitor.get_modification("target", "default", False) == 'is not'
-        visitor.update_context(('sdk_deviceModel', 'Google Pixel XXX'), True)
-        assert visitor.get_modification("target", "default", False) == 'is'
-    except Exception as e:
-        print(e)
-        assert False
-
+        shutil.rmtree(db_path)
+    except:
+        pass
 
 @responses.activate
-def c_test_bucketing_200_again():
-    json_response = '{"campaigns":[{"variationGroups":[{"variations":[{"allocation":100,"modifications":{"type":"FLAG","value":{"featureEnabled":true}},"id":"xxxx"}],"targeting":{"targetingGroups":[{"targetings":[{"operator":"EQUALS","value":true,"key":"isVIPUser"}]}]},"id":"yyyy"},{"variations":[{"allocation":100,"modifications":{"type":"FLAG","value":{"featureEnabled":false}},"id":"cccc"}],"targeting":{"targetingGroups":[{"targetings":[{"operator":"EQUALS","value":false,"key":"isVIPUser"}]}]},"id":"vvvv"}],"type":"toggle","id":"aaaa"},{"variationGroups":[{"variations":[{"allocation":25,"modifications":{"type":"JSON","value":{"rank_plus":null,"rank":null}},"id":"zzzz","reference":true},{"allocation":25,"modifications":{"type":"JSON","value":{"rank_plus":null,"rank":1111}},"id":"eeee"},{"allocation":25,"modifications":{"type":"JSON","value":{"rank_plus":null,"rank":3333}},"id":"rrrr"},{"allocation":25,"modifications":{"type":"JSON","value":{"rank_plus":22.22,"rank":2222}},"id":"tttt"}],"targeting":{"targetingGroups":[{"targetings":[{"operator":"EQUALS","value":"password","key":"access"}]}]},"id":"yyyy"}],"type":"ab","id":"iiii"}]}'
-    headers = {
-        "Last-Modified": "Fri,  05 Jun 2023 12:20:40 GMT"
-    }
-    responses.reset()
-    responses.add(responses.GET,
-                  'https://cdn.flagship.io/my_env_id/bucketing.json',
-                  json=json.loads(json_response), status=200, adding_headers=headers)
-    fs = Flagship.instance()
-    fs.start("my_env_id", "my_api_key", Config(mode=Config.Mode.BUCKETING, polling_interval=-1))
-    with open("bucketing.json", 'r') as f:
-        content = f.read()
-        assert len(content) > 2
-        json_object = json.loads(content)
-        last_modified = json_object['last_modified']
-        assert last_modified is not None
-        assert last_modified == "Fri,  05 Jun 2023 12:20:40 GMT"
-
-
-def get_random_string(length):
-    letters = string.ascii_lowercase
-    result_str = ''.join(random.choice(letters) for i in range(length))
-    return result_str
-
-
-# @responses.activate
-# def test_bucketing_alloc():
-#     try:
-#         try:
-#             os.remove("bucketing.json")
-#         except Exception as e:
-#             print("No Bucketing file")
-#
-#         json_response = '{"campaigns":[{"id":"bs8qvmo4nlr01fl9aaaa","type":"ab","variationGroups":[{"id":"bs8qvmo4nlr01fl9bbbb","targeting":{"targetingGroups":[{"targetings":[{"operator":"EQUALS","key":"fs_all_users","value":""}]}]},"variations":[{"id":"bs8qvmo4nlr01fl9cccc","modifications":{"type":"JSON","value":{"variation":null}},"reference":true},{"id":"bs8qvmo4nlr01fl9dddd","modifications":{"type":"JSON","value":{"variation":1}},"allocation":25},{"id":"bs8r09g4nlr01c77eeee","modifications":{"type":"JSON","value":{"variation":2}},"allocation":25},{"id":"bs8r09g4nlr01cdkffff","modifications":{"type":"JSON","value":{"variation":3}},"allocation":25},{"id":"bs8r09hsbs4011lbgggg","modifications":{"type":"JSON","value":{"variation":4}},"allocation":25}]}]},{"id":"bs8r119sbs4016mehhhh","type":"ab","variationGroups":[{"id":"bs8r119sbs4016meiiii","targeting":{"targetingGroups":[{"targetings":[{"operator":"EQUALS","key":"fs_all_users","value":""}]}]},"variations":[{"id":"bs8r119sbs4016mejjjj","modifications":{"type":"JSON","value":{"variation50":null}},"reference":true},{"id":"bs8r119sbs4016mekkkk","modifications":{"type":"JSON","value":{"variation50":1}},"allocation":50},{"id":"bs8r119sbs4016mellll","modifications":{"type":"JSON","value":{"variation50":2}},"allocation":50}]}]}]}'
-#         responses.reset()
-#         headers = {
-#             "Last-Modified": "Fri,  05 Jun 2020 12:20:40 GMT"
-#         }
-#         responses.add(responses.GET,
-#                       'https://cdn.flagship.io/my_env_id/bucketing.json',
-#                       json=json.loads(json_response), status=200, headers=headers)
-#         responses.add(responses.POST,
-#                       'https://decision.flagship.io/v2/my_env_id/events',
-#                       json=json.loads('{}'), status=200)
-#
-#         fs = Flagship.instance()
-#         fs.start("my_env_id", "my_api_key", Config(mode=Config.Mode.BUCKETING, polling_interval=-1))
-#
-#         v150 = 0
-#         v250 = 0
-#         v125 = 0
-#         v225 = 0
-#         v325 = 0
-#         v425 = 0
-#
-#         x = 50000
-#         for i in range(0, x):
-#             v = Flagship.instance().create_visitor(get_random_string(10) + "_" + str(i))
-#             v.synchronize_modifications()
-#             variation = v.get_modification("variation", 0)
-#             variation50 = v.get_modification("variation50", 0)
-#
-#             if variation50 == 1:
-#                 v150 += 1
-#             elif variation50 == 2:
-#                 v250 += 1
-#             else:
-#                 assert False
-#             if variation == 1:
-#                 v125 += 1
-#             elif variation == 2:
-#                 v225 += 1
-#             elif variation == 3:
-#                 v325 += 1
-#             elif variation == 4:
-#                 v425 += 1
-#             else:
-#                 assert False
-#
-#         print("Results : v150 {}, v250 {}".format(v150, v250))
-#         print("Results : v125 {}, v225 {}, v325 {}, v425 {}".format(v125, v225, v325, v425))
-#
-#         min = (x / 2 - (x * 0.008))
-#         max = (x / 2 + (x * 0.008))
-#         assert min <= v150 <= max
-#         assert min <= v250 <= max
-#         assert v150 + v250 == x
-#
-#         min1 = (x / 4 - (x * 0.008))
-#         max1 = (x / 4 + (x * 0.008))
-#         assert min1 <= v125 <= max1
-#         assert min1 <= v225 <= max1
-#         assert min1 <= v325 <= max1
-#         assert min1 <= v425 <= max1
-#         assert v125 + v225 + v325 + v425 == x
-#
-#     except Exception as e:
-#         print(e)
-#         assert False
-
-
-@responses.activate
-def test_bucketing_alloc2():
-    try:
-        os.remove("bucketing.json")
-    except Exception as e:
-        print("No Bucketing file")
-
-    json_response = '{"campaigns":[{"id":"bs8qvmo4nlr01fl9aaaa","type":"ab","variationGroups":[{"id":"bs8qvmo4nlr01fl9bbbb","targeting":{"targetingGroups":[{"targetings":[{"operator":"EQUALS","key":"fs_all_users","value":""}]}]},"variations":[{"id":"bs8qvmo4nlr01fl9cccc","modifications":{"type":"JSON","value":{"variation":null}},"reference":true},{"id":"bs8qvmo4nlr01fl9dddd","modifications":{"type":"JSON","value":{"variation":1}},"allocation":25},{"id":"bs8r09g4nlr01c77eeee","modifications":{"type":"JSON","value":{"variation":2}},"allocation":25},{"id":"bs8r09g4nlr01cdkffff","modifications":{"type":"JSON","value":{"variation":3}},"allocation":25},{"id":"bs8r09hsbs4011lbgggg","modifications":{"type":"JSON","value":{"variation":4}},"allocation":25}]}]},{"id":"bs8r119sbs4016mehhhh","type":"ab","variationGroups":[{"id":"bs8r119sbs4016meiiii","targeting":{"targetingGroups":[{"targetings":[{"operator":"EQUALS","key":"fs_all_users","value":""}]}]},"variations":[{"id":"bs8r119sbs4016mejjjj","modifications":{"type":"JSON","value":{"variation50":null}},"reference":true},{"id":"bs8r119sbs4016mekkkk","modifications":{"type":"JSON","value":{"variation50":1}},"allocation":50},{"id":"bs8r119sbs4016mellll","modifications":{"type":"JSON","value":{"variation50":2}},"allocation":50}]}]}]}'
-    responses.reset()
-    headers = {
-        "Last-Modified": "Fri,  05 Jun 2020 12:20:40 GMT"
-    }
-    responses.add(responses.GET,
-                  'https://cdn.flagship.io/my_env_id/bucketing.json',
-                  json=json.loads(json_response), status=200, headers=headers)
-    responses.add(responses.POST,
-                  'https://decision.flagship.io/v2/my_env_id/events',
-                  json=json.loads('{}'), status=200)
-
-    fs = Flagship.instance()
-    fs.start("my_env_id", "my_api_key", Config(mode=Config.Mode.BUCKETING, polling_interval=-1))
+def test_bucketing_alloc():
+    remove_db()
+    responses.add(responses.GET, BUCKETING_URL, json=json.loads(BUCKETING_RESPONSE_2), status=200,
+                  headers=[("Last-Modified", BUCKETING_LAST_MODIFIED_1)])
+    responses.add(responses.POST, EVENTS_URL, body="", status=200)
+    # responses.add(responses.POST, ARIANE_URL, body="", status=200)
+    responses.add(responses.POST, ACTIVATE_URL, body="", status=200)
+    responses.add(responses.POST, SEGMENT_URL, body="", status=200)
+    Flagship.stop()
+    Flagship.start('_env_id_', '_api_key_', Bucketing(polling_interval=0, log_level=LogLevel.NONE, tracking_manager_config=TrackingManagerConfig(
+                                                    strategy=CacheStrategy._NO_BATCHING_CONTINUOUS_CACHING)))  # 1 bucketing
+    sleep(1)
     ids = ["202072017183814142",
            "202072017183860649",
            "202072017183828850",
@@ -266,203 +278,141 @@ def test_bucketing_alloc2():
     variation25 = [4, 1, 2, 4, 2, 4, 1, 3, 2, 1, 4, 4, 1, 1, 2, 3, 4, 1, 3, 4]
 
     for i in range(0, len(ids)):
-        v = Flagship.instance().create_visitor(ids[i], True)
-        v.synchronize_modifications()
-        v25 = v.get_modification("variation", 0)
-        v50 = v.get_modification("variation50", 0)
-        print("{} v50 {} == variation50[{}] {}".format(ids[i], v50, i, variation50[i]))
+        visitor = Flagship.new_visitor(ids[i], instance_type=Visitor.Instance.NEW_INSTANCE,
+                                       context={'isVIPUser': False})  # 2 consent
+        visitor.fetch_flags()
+        v25 = visitor.get_flag("variation", 0).value(False)
+        v50 = visitor.get_flag("variation50", 0).value(False)
         print("{} v25 {} == variation25[{}] {}".format(ids[i], v25, i, variation25[i]))
+        print("{} v50 {} == variation50[{}] {}".format(ids[i], v50, i, variation50[i]))
+        if v25 != variation25[i]:
+            print("Error = {} - expected {} got {}".format(ids[i], variation25[i], v25))
+        if v50 != variation50[i]:
+            print("Error = {} - expected {} got {}".format(ids[i], variation50[i], v50))
         assert v25 == variation25[i]
         assert v50 == variation50[i]
 
 
 @responses.activate
-def test_bucketing_polling():
-    responses.reset()
-    try:
-        os.remove("bucketing.json")
-    except Exception as e:
-        print("No Bucketing file")
-    json_response = '{"campaigns":[{"variationGroups":[{"variations":[{"allocation":100,"modifications":{"type":"FLAG","value":{"featureEnabled":true}},"id":"xxxx"}],"targeting":{"targetingGroups":[{"targetings":[{"operator":"EQUALS","value":true,"key":"isVIPUser"}]}]},"id":"yyyy"},{"variations":[{"allocation":100,"modifications":{"type":"FLAG","value":{"featureEnabled":false}},"id":"cccc"}],"targeting":{"targetingGroups":[{"targetings":[{"operator":"EQUALS","value":false,"key":"isVIPUser"}]}]},"id":"vvvv"}],"type":"toggle","id":"aaaa"},{"variationGroups":[{"variations":[{"allocation":25,"modifications":{"type":"JSON","value":{"rank_plus":null,"rank":null}},"id":"zzzz","reference":true},{"allocation":25,"modifications":{"type":"JSON","value":{"rank_plus":null,"rank":1111}},"id":"eeee"},{"allocation":25,"modifications":{"type":"JSON","value":{"rank_plus":null,"rank":3333}},"id":"rrrr"},{"allocation":25,"modifications":{"type":"JSON","value":{"rank_plus":22.22,"rank":2222}},"id":"tttt"}],"targeting":{"targetingGroups":[{"targetings":[{"operator":"EQUALS","value":"password","key":"access"}]}]},"id":"yyyy"}],"type":"ab","id":"iiii"}]}'
-    headers = {
-        "Last-Modified": "Fri,  05 Jun 2020 12:20:40 GMT"
-    }
-    responses.add(responses.GET, 'https://cdn.flagship.io/my_env_id/bucketing.json', json=json.loads(json_response),
-                  status=200, headers=headers)
-
-    def add_responses():
-        responses.add(responses.POST,
-                      'https://decision.flagship.io/v2/my_env_id/events',
-                      json=json.loads('{}'), status=200)
-
-        responses.add(responses.POST,
-                      'https://decision.flagship.io/v2/my_env_id/events', status=200)
-
-        responses.add(responses.POST, 'https://ariane.abtasty.com/', status=200)
-
-        responses.add(responses.POST, 'https://decision.flagship.io/v2/activate', status=200)
-
-    add_responses()
-
-    fs = Flagship.instance()
-    # # print "#=> " + str(fs._bucketing_manager.is_bucketing_thread_running())
-    fs.start("my_env_id", "my_api_key", Config(mode=Config.Mode.BUCKETING, polling_interval=2))  # 1
-
-    visitor = fs.create_visitor("visitor1", True)
-    visitor2 = fs.create_visitor("visitor2", True)
-
-    hit = Screen("test_bucketing_polling_panic")
-    i = 0
-    while i < 10:  # 10 + 5 polling
-
-        visitor.update_context(("isVIPUser", i % 2 == 0), True)  # 1
-        visitor.activate_modification("featureEnabled")  # 1
-        visitor.send_hit(hit)  # 1
-
-        visitor2.update_context(("isVIPUser", i % 2 == 1), True)  # 1
-        visitor2.activate_modification("featureEnabled")  # 1
-        visitor2.send_hit(hit)  # 1
-
-        assert visitor.get_modification("featureEnabled", False) == (i % 2 == 0)
-        assert visitor2.get_modification("featureEnabled", False) == (i % 2 == 1)
-
-        i += 1
-        time.sleep(1)
-    # assert len(responses.calls) == 6
-    assert len(responses.calls) == 67
-    fs.close()
-
-
-@responses.activate
 def test_bucketing_panic():
-    try:
-        os.remove("bucketing.json")
-    except Exception as e:
-        print("No Bucketing file")
 
-    json_response = '{"panic":true}'
-    responses.reset()
-    headers = {
-        "Last-Modified": "Fri,  05 Jun 2020 12:20:40 GMT"
-    }
-    responses.add(responses.GET,
-                  'https://cdn.flagship.io/my_env_id/bucketing.json',
-                  json=json.loads(json_response), status=200, headers=headers)
-    fs = Flagship.instance()
-    fs.start("my_env_id", "my_api_key", Config(mode=Config.Mode.BUCKETING, polling_interval=2))  # 1
+    class CustomLogManager(LogManager):
 
-    visitor = fs.create_visitor("visitor1", True)
-    visitor2 = fs.create_visitor("visitor2", True)
-    hit = Screen("test_bucketing_polling_panic")
+        def __init__(self):
+            self.deactivated_method_log_cnt = 0
 
-    i = 0
-    while i < 10:  # 6 polling
+        def log(self, tag, level, message):
+            print(message)
+            if 'deactivated: SDK is running in panic mode' in message:
+                self.deactivated_method_log_cnt += 1
 
-        visitor.update_context(("isVIPUser", i % 2 == 0), True)
-        visitor.activate_modification("featureEnabled")
-        visitor.send_hit(hit)
+        def exception(self, exception, traceback):
+            pass
 
-        visitor2.update_context(("isVIPUser", i % 2 == 1), True)
-        visitor2.activate_modification("featureEnabled")
-        visitor2.send_hit(hit)
+    class CustomStatusListener(StatusListener):
 
-        assert visitor.get_modification("featureEnabled", False) is False
-        assert visitor2.get_modification("featureEnabled", False) is False
+        def __init__(self, function):
+            self.function = function
 
-        i += 1
-        time.sleep(1)
+        def on_status_changed(self, new_status):
+            print("New status = " + str(new_status))
+            if new_status.value >= Status.PANIC.value:
+                self.function()
 
-    assert (len(responses.calls) == 7 or len(responses.calls) == 6)
-    fs.close()
+    custom_log_manager = CustomLogManager()
 
 
-def save_to_file(visitor_id, visitor_data):
-    try:
-        f = open("./cache/" + visitor_id + ".cache", "w")
-        f.write(json.dumps(visitor_data))
-        f.close()
-    except Exception as e:
-        print(e)
+    def run():
+        visitor = Flagship.new_visitor("87ab-5c2c-fe49-82dd-403a", instance_type=Visitor.Instance.NEW_INSTANCE,
+                                       context={'isVIPUser': False})  # +0 consent
+        visitor.fetch_flags()  # +0 context
+        visitor.send_hit(Screen("test_bucketing_panic"))  #+0 hit
+        visitor.authenticate("disabled")
+        assert visitor.get_flag("key", 0).value() == 0  # +0 activate
 
 
-def load_from_file(visitor_id):
-    try:
-        f = open("./cache/" + visitor_id + ".cache", "r")
-        visitor_data = f.read()
-        f.close()
-        return json.loads(visitor_data)
-    except Exception as e:
-        return dict()
 
+    responses.add(responses.GET, BUCKETING_URL, json=json.loads(BUCKETING_RESPONSE_PANIC), status=200,  # +2 bucketing
+                  headers=[("Last-Modified", BUCKETING_LAST_MODIFIED_1)])
+    responses.add(responses.POST, EVENTS_URL, body="", status=200)
+    responses.add(responses.POST, ACTIVATE_URL, body="", status=200)
+    responses.add(responses.POST, SEGMENT_URL, body="", status=200)
+    Flagship.stop()
+    Flagship.start('_env_id_', '_api_key_', Bucketing(polling_interval=600, status_listener=CustomStatusListener(run),
+                                                      log_manager=custom_log_manager))
+    sleep(1)
+    calls = responses.calls._calls
+    assert len(calls) == 2
+    assert custom_log_manager.deactivated_method_log_cnt == 4
+    sleep(1)
 
-def delete_file(visitor_id):
-    try:
-        os.remove("./cache/" + visitor_id + ".cache")
-        print("delete file ./cache/" + visitor_id + ".cache")
-    except Exception as e:
-        print(e)
 
 
 @responses.activate
-def test_cache():
-    try:
-        try:
-            os.remove("bucketing.json")
-        except Exception as e:
-            print("No Bucketing file")
-        json_response = '{"campaigns":[{"variationGroups":[{"variations":[{"allocation":100,"modifications":{"type":"FLAG","value":{"featureEnabled":true}},"id":"xxxx"}],"targeting":{"targetingGroups":[{"targetings":[{"operator":"EQUALS","value":true,"key":"isVIPUser"}]}]},"id":"yyyy"},{"variations":[{"allocation":100,"modifications":{"type":"FLAG","value":{"featureEnabled":false}},"id":"cccc"}],"targeting":{"targetingGroups":[{"targetings":[{"operator":"EQUALS","value":false,"key":"isVIPUser"}]}]},"id":"vvvv"}],"type":"toggle","id":"aaaa"},{"id":"bu6lgeu3bdt014iawwww","type":"perso","variationGroups":[{"id":"bu6lgeu3bdt014iaxxxx","targeting":{"targetingGroups":[{"targetings":[{"operator":"CONTAINS","key":"sdk_deviceModel","value":["Google Pixel 3","Google Pixel X","Google Pixel 0"]}]}]},"variations":[{"id":"bu6lgeu3bdt014iacccc","modifications":{"type":"JSON","value":{"target":null}},"reference":true},{"id":"bu6lgeu3bdt014iavvvv","modifications":{"type":"JSON","value":{"target":"is"}},"allocation":100}]},{"id":"bu6lttip17b01emhbbbb","targeting":{"targetingGroups":[{"targetings":[{"operator":"NOT_CONTAINS","key":"sdk_deviceModel","value":["Google Pixel 9","Google Pixel 9000"]}]}]},"variations":[{"id":"bu6lttip17b01emhnnnn","modifications":{"type":"JSON","value":{"target":null}},"reference":true},{"id":"bu6lttip17b01emhqqqq","modifications":{"type":"JSON","value":{"target":"is not"}},"allocation":100}]}]},{"variationGroups":[{"variations":[{"allocation":25,"modifications":{"type":"JSON","value":{"rank_plus":null,"rank":null}},"id":"zzzz","reference":true},{"allocation":25,"modifications":{"type":"JSON","value":{"rank_plus":null,"rank":1111}},"id":"eeee"},{"allocation":25,"modifications":{"type":"JSON","value":{"rank_plus":null,"rank":3333}},"id":"rrrr"},{"allocation":25,"modifications":{"type":"JSON","value":{"rank_plus":22.22,"rank":2222}},"id":"tttt"}],"targeting":{"targetingGroups":[{"targetings":[{"operator":"EQUALS","value":"password","key":"access"}]}]},"id":"yyyy"}],"type":"ab","id":"iiii"}]}'
-        headers = {
-            "Last-Modified": "Fri,  05 Jun 2020 12:20:40 GMT"
-        }
-        responses.reset()
-        responses.add(responses.GET,
-                      'https://cdn.flagship.io/my_env_id/bucketing.json',
-                      json=json.loads(json_response), status=200, adding_headers=headers)
-        responses.add(responses.POST,
-                      'https://decision.flagship.io/v2/my_env_id/events',
-                      json=json.loads('{}'), status=200)
+def test_bucketing_304():
 
-        from flagship.cache.cache_visitor import VisitorCacheManager
-        class cache_manager(VisitorCacheManager):
+    class CustomStatusListener(StatusListener):
 
-            def save(self, visitor_id, visitor_data):
-                save_to_file(visitor_id, visitor_data)
+        def __init__(self, function):
+            self.function = function
 
-            def lookup(self, visitor_id):
-                return load_from_file(visitor_id)
+        def on_status_changed(self, new_status):
+            print("New status = " + str(new_status))
+            if new_status.value >= Status.PANIC.value:
+                self.function()
 
-        fs = Flagship.instance()
-        fs.start("my_env_id", "my_api_key",
-                 Config(mode=Config.Mode.BUCKETING, polling_interval=-1, visitor_cache_manager=cache_manager()))
-        delete_file("visitor_1234")
-        visitor = fs.create_visitor("visitor_1234", True, {'isVIPUser': True, 'daysSinceLastLaunch': 3, "access": "password"})
 
-        visitor.synchronize_modifications()
-        assert os.path.isfile("./cache/visitor_1234.cache")
-        data = load_from_file("visitor_1234")
-        assert 'version' in data
-        assert 'data' in data
-        assert 'vId' in data['data']
-        assert 'vaIds' in data['data']
-        assert 'rrrr' in data['data']['vaIds']
-        assert visitor.get_modification('rank_plus', 'default', False) == 'default'
-        assert visitor.get_modification('rank', 0, False) == 3333
+    class Runner():
 
-        new_variations = list()
-        new_variations.append("tttt")
-        data['data']['vaIds'] = new_variations
-        save_to_file('visitor_1234', data)
+        visitor = None
+        errors = 0
 
-        visitor.synchronize_modifications()
-        data = load_from_file("visitor_1234")
-        assert 'version' in data
-        assert 'data' in data
-        assert 'vId' in data['data']
-        assert 'vaIds' in data['data']
-        assert 'tttt' in data['data']['vaIds']
-        assert visitor.get_modification('rank_plus', 0, False) == 22.22
-        assert visitor.get_modification('rank', 0, False) == 2222
+        def run(self, step=0):
+            try:
+                pass
+                if self.visitor is None:
+                    self.visitor = Flagship.new_visitor("87ab-5c2c-fe49-82dd-403a", instance_type=Visitor.Instance.NEW_INSTANCE,
+                                                   context={'isVIPUser': True})  # +1 consent
+                if step == 0:
+                    self.visitor.fetch_flags()  # +1 context
+                    assert self.visitor.get_flag("featureEnabled", False).value() is True  # +1 activate
+                if step == 1:
+                    self.visitor.fetch_flags()  # +1 context
+                    assert self.visitor.get_flag("featureEnabled", False).value() is True  # +1 activate
+                if step == 2:
+                    self.visitor.fetch_flags()  # +1 context
+                    assert self.visitor.get_flag("featureEnabled", 0).value() == 0  # +0 activate
+            except Exception as e:
+                self.errors += 1
 
-    except Exception as e:
-        print(e)
-        assert False
+    runner = Runner()
+
+    responses.reset()
+    responses.add(responses.GET, BUCKETING_URL, json=json.loads(BUCKETING_RESPONSE_1), status=200,
+                  headers=[("Last-Modified", BUCKETING_LAST_MODIFIED_1)])
+    responses.add(responses.POST, EVENTS_URL, body="", status=200)
+    responses.add(responses.POST, ACTIVATE_URL, body="", status=200)
+    responses.add(responses.POST, SEGMENT_URL, body="", status=200)
+    Flagship.stop()
+    Flagship.start('_env_id_', '_api_key_', Bucketing(polling_interval=200, status_listener=CustomStatusListener(runner.run)))  # +1 bucketing
+    sleep(0.2)
+
+    responses.reset()
+    responses.add(responses.GET, BUCKETING_URL, json=json.loads(BUCKETING_RESPONSE_EMPTY), status=304,
+                  headers=[("Last-Modified", BUCKETING_LAST_MODIFIED_1)])
+    responses.add(responses.POST, EVENTS_URL, body="", status=200)
+    responses.add(responses.POST, ACTIVATE_URL, body="", status=200)
+    responses.add(responses.POST, SEGMENT_URL, body="", status=200)
+    runner.run(1)
+    sleep(0.2)  # +1 Bucketing
+
+    responses.reset()
+    responses.add(responses.GET, BUCKETING_URL, json=json.loads(BUCKETING_RESPONSE_EMPTY), status=200,
+                  headers=[("Last-Modified", BUCKETING_LAST_MODIFIED_1)])
+    responses.add(responses.POST, EVENTS_URL, body="", status=200)
+    responses.add(responses.POST, ACTIVATE_URL, body="", status=200)
+    responses.add(responses.POST, SEGMENT_URL, body="", status=200)
+    runner.run(2)
+    sleep(0.2)  # +1 Bucketing
+    assert runner.errors == 0
+
