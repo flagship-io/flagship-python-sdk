@@ -1,7 +1,5 @@
 <p align="center">
-
-<img  src="https://theme.zdassets.com/theme_assets/301238/72efad8140da2942f51b02aa002742a481cb69e2.svg"  width="211"  height="182"  alt="flagship-python"  />
-
+<img  src="https://theme.zdassets.com/theme_assets/301238/72efad8140da2942f51b02aa002742a481cb69e2.svg"  alt="flagship-python"  />
 </p>
 
 <h3 align="center">Bring your features to life</h3>
