@@ -15,7 +15,7 @@
 
 ## Docs
 
-- [Installation](https://developers.flagship.io/docs/sdk/python/v2.0#installation)
+- [Installation](https://docs.developers.flagship.io/docs/python-installation)
 - [Get Started](https://developers.flagship.io/docs/sdk/python/v2.0#getting-started)
 - [Initialize and start](https://developers.flagship.io/docs/sdk/python/v2.0#initialization)
 - [Create a visitor](https://developers.flagship.io/docs/sdk/python/v2.0#updating-the-user-context)
