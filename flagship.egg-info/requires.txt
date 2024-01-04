@@ -1,6 +1,0 @@
-requests==2.27.1
-pytest==4.6.11
-typing==3.7.4.3
-six==1.16.0
-enum34~=1.1.10
-responses==0.17.0
