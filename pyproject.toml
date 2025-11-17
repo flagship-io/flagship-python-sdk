@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "flagship"
-version = "3.0.0"
+version = "3.0.1"
 description = "Flagship Python SDK"
 authors = ["Raphael <raphael@abtasty.com>"]
 license = "Apache License Version 2.0"

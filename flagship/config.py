@@ -29,10 +29,10 @@ class _FlagshipConfig(object):
         self.log_manager = self.get_arg(kwargs, 'log_manager', LogManager) or FlagshipLogManager(self.log_level)
         self.polling_interval = self.get_arg(kwargs, 'polling_interval', type(1)) or 60000
         self.timeout = self.get_arg(kwargs, 'timeout', type(1)) or 2000
-        self.status_listener = self.get_arg(kwargs, 'status_listener', StatusListener) or None
         self.tracking_manager_config = self.get_arg(kwargs, 'tracking_manager_config',
                                                     TrackingManagerConfig) or TrackingManagerConfig()
         self.cache_manager = self.get_arg(kwargs, 'cache_manager', CacheManager) or None
+        self.status_listener = self.get_arg(kwargs, 'status_listener', StatusListener) or None
 
     def get_arg(self, kwargs, name, c_type):
         return kwargs[name] if name in kwargs and isinstance(kwargs[name], c_type) else None

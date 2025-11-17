@@ -26,9 +26,9 @@ class ConfigManager:
             self.flagship_config.log_manager.log(TAG_INITIALIZATION, LogLevel.WARNING, WARNING_DEFAULT_CONFIG)
         self.flagship_config.env_id = env_id
         self.flagship_config.api_key = api_key
-        self.init_decision_manager(update_status)
         self.init_cache_manager()
         self.init_tracking_manager()
+        self.init_decision_manager(update_status)
         self.decision_manager.start_running()
 
     def init_decision_manager(self, update_status=None):
@@ -39,13 +39,9 @@ class ConfigManager:
 
     def init_cache_manager(self):
         try:
-            # if self.cache_manager is None:
-            #     self.cache_manager = CacheManager()
             if self.flagship_config.cache_manager is not None:
                 self.cache_manager = self.flagship_config.cache_manager
                 self.cache_manager.init(self.flagship_config)
-            # if self.flagship_config.cache_manager is not None:
-            #     self.flagship_config.cache_manager.init(env_id)
         except Exception as e:
             print(e)
 
@@ -53,7 +49,6 @@ class ConfigManager:
         if self.tracking_manager is None:
             self.tracking_manager = TrackingManager(self.flagship_config, self.cache_manager)
         self.tracking_manager.init(self.flagship_config, self.cache_manager)
-        # self.tracking_manager.start_running()
 
     def is_set(self):
         return self.flagship_config.is_set() and self.decision_manager is not None

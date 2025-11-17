@@ -572,9 +572,15 @@ class _Segment(Hit):
         Hit.__init__(self, HitType.SEGMENT)
         data = {
             HitFields.visitor_id: visitor_id,
-            HitFields.segment_list: context
+            HitFields.segment_list: self.stringify_values(context)
         }
         self.hit_data.update(data)
+
+    def stringify_values(self, obj):
+        new_obj = {}
+        for key, value in obj.items():
+            new_obj[key] = str(value)
+        return new_obj
 
     def check_data_validity(self):
         if ((Hit.check_data_validity(self) is False) or
