@@ -20,7 +20,7 @@ pytest-cov = "^4.1.0"
 
 [tool.poetry.urls]
 Sources = "https://github.com/abtasty/flagship-python-sdk"
-Documentation = "https://docs.developers.flagship.io/docs/python"
+Documentation = "https://docs.abtasty.com/server-side/sdks/python"
 
 [build-system]
 requires = ["poetry-core"]
